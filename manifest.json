@@ -1,7 +1,8 @@
 {
     "name": "BetterDiscord",
     "version": "1.0",
-    "description": "Allows you to use BetterDiscord on web. Some plugins might not be working correctly. Just let me know and i try to fix that",
+    "manifest_version": 2,
+    "description": "Allows you to use BetterDiscord on web. Some plugins might not be working correctly.",
     "icons": {
         "16": "./assets/logo.png",
         "48": "./assets/logo.png",
@@ -13,7 +14,7 @@
         "windows"
     ],
     "page_action": {
-        
+
     },
     "content_scripts": [
         {
@@ -21,7 +22,6 @@
             "js": ["./dist/backend.js"]
         }
     ],
-    "content_security_policy": "script-src 'self' https://cdn.statically.io/gh/Strencher/*; object-src 'self'; script-src 'self' https://github.com/*; script-src 'self' https://codemirror.net/*",
-    "manifest_version": 2,
+    "content_security_policy": "script-src 'self' https://static.tsukasa.io; object-src 'self';",
     "web_accessible_resources": ["index.js"]
- }
+}
