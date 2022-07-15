@@ -21,6 +21,7 @@ window.value = null;
 window.firstArray = [];
 window.user = "";
 
+window.global = window;
 window.DiscordNative = DiscordNative;
 window.require = require;
 window.process = process;
@@ -49,7 +50,7 @@ ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         try {
             eval(`((fetch) => {${bd}})(window.fetchWithoutCSP)`);
         } catch (error) {
-            Logger.error("FronEnd", "Failed to load BD:\n", error);
+            Logger.error("Frontend", "Failed to load BD:\n", error);
         }
     };
 
