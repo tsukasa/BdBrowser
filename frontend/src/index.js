@@ -30,7 +30,7 @@ window.fetchWithoutCSP = fetchAPI;
 window.monaco = monaco;
 window.IPC = ipcRenderer;
 
-Logger.log("Frontend", `Loading. environment=${ENV}`);
+Logger.log("Frontend", `Loading, Environment = ${ENV}`);
 
 import "./modules/patches";
 
@@ -46,14 +46,17 @@ ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
     const callback = async () => {
         Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
 
-        Logger.log("Frontend", "Loading BD...");
+        Logger.log("Frontend", "Loading BetterDiscord...");
+
         try {
             eval(`((fetch) => {${bd}})(window.fetchWithoutCSP)`);
         } catch (error) {
-            Logger.error("Frontend", "Failed to load BD:\n", error);
+            Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
         }
     };
 
-    if (!Webpack.findByProps("getCurrentUser")?.getCurrentUser()) Dispatcher.subscribe("CONNECTION_OPEN", callback);
-    else setImmediate(callback);
+    if (!Webpack.findByProps("getCurrentUser")?.getCurrentUser())
+        Dispatcher.subscribe("CONNECTION_OPEN", callback);
+    else
+        setImmediate(callback);
 });
