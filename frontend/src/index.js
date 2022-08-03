@@ -41,7 +41,9 @@ DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`
 ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
     url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : "https://static.tsukasa.io/BdBrowser/dist/betterdiscord.js"
 }, async bd => {
-    const Dispatcher = Webpack.findByProps("dirtyDispatch");
+    const Dispatcher = Webpack.findByProps("dispatch", "subscribe");
+
+    Logger.log("Frontend", "Dispatcher found:", (typeof Dispatcher != "undefined"));
 
     const callback = async () => {
         Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
