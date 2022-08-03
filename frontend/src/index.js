@@ -43,7 +43,7 @@ ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
 }, async bd => {
     const Dispatcher = Webpack.findByProps("dispatch", "subscribe");
 
-    Logger.log("Frontend", "Dispatcher found:", (typeof Dispatcher != "undefined"));
+    Logger.log("Frontend", "Dispatcher found:", Dispatcher);
 
     const callback = async () => {
         Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
@@ -57,8 +57,16 @@ ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         }
     };
 
-    if (!Webpack.findByProps("getCurrentUser")?.getCurrentUser())
-        Dispatcher.subscribe("CONNECTION_OPEN", callback);
-    else
+    const UserStore = Webpack.findByProps("getCurrentUser");
+    if (!UserStore.getCurrentUser())
+    {
+        Logger.log("Frontend", "getCurrentUser failed.");
+        /* Dispatcher.subscribe("CONNECTION_OPEN", callback); */
         setImmediate(callback);
+    }
+    else
+    {
+        Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+        setImmediate(callback);
+    }
 });
