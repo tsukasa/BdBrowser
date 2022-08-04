@@ -41,9 +41,12 @@ DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`
 ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
     url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : "https://static.tsukasa.io/BdBrowser/dist/betterdiscord.js"
 }, async bd => {
-    const Dispatcher = Webpack.findByProps("dispatch", "subscribe");
 
-    Logger.log("Frontend", "Dispatcher found:", Dispatcher);
+    const Dispatcher = Webpack.findByProps("dispatch", "subscribe", "wait", "unsubscribe");
+    const UserStore = Webpack.findByProps("getCurrentUser");
+
+    Logger.log("Frontend", "Dispatcher:", Dispatcher);
+    Logger.log("Frontend", "UserStore:", UserStore);
 
     const callback = async () => {
         Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
@@ -57,12 +60,10 @@ ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         }
     };
 
-    const UserStore = Webpack.findByProps("getCurrentUser");
-    if (!UserStore.getCurrentUser())
+    if (!UserStore?.getCurrentUser())
     {
-        Logger.log("Frontend", "getCurrentUser failed.");
-        /* Dispatcher.subscribe("CONNECTION_OPEN", callback); */
-        setImmediate(callback);
+        Logger.log("Frontend", "getCurrentUser failed, registering callback.");
+        Dispatcher.subscribe("CONNECTION_OPEN", callback);
     }
     else
     {
