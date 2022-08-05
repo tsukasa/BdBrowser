@@ -4,7 +4,7 @@ import ipcRenderer from "../ipc";
 import fetch from "./fetch";
 import Webpack from "./webpack";
 
-const UserSettingsStore = Webpack.findByProps("theme", "afkTimeout");
+const UserSettingsStore = Webpack.findByProps("guildPositions");
 const version = "5.62.0";
 
 const links = [
