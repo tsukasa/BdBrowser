@@ -1,2 +1,3 @@
 /betterdiscord
 /node_modules
+/dist/*.js.map

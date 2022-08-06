@@ -8,6 +8,7 @@ Logger.log("Backend", "Initializing modules");
 const ipcMain = new IPC("backend");
 
 Logger.log("Backend", "Registering events");
+
 ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
     DOM.injectCSS(data.id, data.css);
 });
@@ -24,9 +25,13 @@ ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
         })
 });
 
+ipcMain.on(IPCEvents.GET_EXTENSION_URL, (event, data) => {
+    ipcMain.reply(event, chrome.runtime.getURL(data.url));
+});
+
 const SCRIPT_URL = (() => {
     switch (ENV) {
-        case "production": return "https://static.tsukasa.io/BdBrowser/dist/frontend.js";
+        case "production": return chrome.runtime.getURL('dist/frontend.js');
         case "development": return "http://127.0.0.1:5500/frontend.js";
         default: throw new Error("Unknown Environment")
     }

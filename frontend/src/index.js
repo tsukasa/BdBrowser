@@ -38,36 +38,41 @@ DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`
 
 // const getConfig = key => new Promise(resolve => chrome.storage.sync.get(key, resolve));
 
-ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-    url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : "https://static.tsukasa.io/BdBrowser/dist/betterdiscord.js"
-}, async bd => {
+ipcRenderer.send(IPCEvents.GET_EXTENSION_URL, {
+    url: "dist/betterdiscord.js"
+}, async extension_url => {
 
-    const Dispatcher = Webpack.findByProps("dispatch", "subscribe", "wait", "unsubscribe");
-    const UserStore = Webpack.findByProps("getCurrentUser");
+    ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
+        url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : extension_url
+    }, async bd => {
 
-    Logger.log("Frontend", "Dispatcher:", Dispatcher);
-    Logger.log("Frontend", "UserStore:", UserStore);
+        const Dispatcher = Webpack.findByProps("dispatch", "subscribe", "wait", "unsubscribe");
+        const UserStore = Webpack.findByProps("getCurrentUser");
 
-    const callback = async () => {
-        Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
+        Logger.log("Frontend", "Dispatcher:", Dispatcher);
+        Logger.log("Frontend", "UserStore:", UserStore);
 
-        Logger.log("Frontend", "Loading BetterDiscord...");
+        const callback = async () => {
+            Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
 
-        try {
-            eval(`((fetch) => {${bd}})(window.fetchWithoutCSP)`);
-        } catch (error) {
-            Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
+            Logger.log("Frontend", `Loading BetterDiscord from ${extension_url}...`);
+
+            try {
+                eval(`((fetch) => {${bd}})(window.fetchWithoutCSP)`);
+            } catch (error) {
+                Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
+            }
+        };
+
+        if (!UserStore?.getCurrentUser())
+        {
+            Logger.log("Frontend", "getCurrentUser failed, registering callback.");
+            Dispatcher.subscribe("CONNECTION_OPEN", callback);
         }
-    };
-
-    if (!UserStore?.getCurrentUser())
-    {
-        Logger.log("Frontend", "getCurrentUser failed, registering callback.");
-        Dispatcher.subscribe("CONNECTION_OPEN", callback);
-    }
-    else
-    {
-        Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
-        setImmediate(callback);
-    }
+        else
+        {
+            Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+            setImmediate(callback);
+        }
+    });
 });
