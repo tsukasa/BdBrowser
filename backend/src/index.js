@@ -25,13 +25,13 @@ ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
         })
 });
 
-ipcMain.on(IPCEvents.GET_EXTENSION_URL, (event, data) => {
+ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
     ipcMain.reply(event, chrome.runtime.getURL(data.url));
 });
 
 const SCRIPT_URL = (() => {
     switch (ENV) {
-        case "production": return chrome.runtime.getURL('dist/frontend.js');
+        case "production": return chrome.runtime.getURL("dist/frontend.js");
         case "development": return "http://127.0.0.1:5500/frontend.js";
         default: throw new Error("Unknown Environment")
     }

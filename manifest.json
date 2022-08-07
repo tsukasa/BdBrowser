@@ -15,18 +15,26 @@
     "content_scripts":
     [
         {
-            "matches": [ "*://*.discord.com/*" ],
-            "js": [ "dist/backend.js" ]
+            "matches":
+            [
+                "*://*.discord.com/*"
+            ],
+            "js":
+            [
+                "dist/backend.js"
+            ]
         }
     ],
     "web_accessible_resources":
     [
         {
-            "resources": [
+            "resources":
+            [
                 "dist/betterdiscord.js",
                 "dist/frontend.js"
             ],
-            "matches": [
+            "matches":
+            [
                 "*://discord.com/*"
             ]
         }

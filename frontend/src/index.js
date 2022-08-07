@@ -38,14 +38,11 @@ DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`
 
 // const getConfig = key => new Promise(resolve => chrome.storage.sync.get(key, resolve));
 
-ipcRenderer.send(IPCEvents.GET_EXTENSION_URL, {
-    url: "dist/betterdiscord.js"
-}, async extension_url => {
-
+ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, { url: "dist/betterdiscord.js" }, async resource_url => {
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-        url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : extension_url
-    }, async bd => {
-
+        url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : resource_url
+    },
+    async bd => {
         const Dispatcher = Webpack.findByProps("dispatch", "subscribe", "wait", "unsubscribe");
         const UserStore = Webpack.findByProps("getCurrentUser");
 
@@ -55,11 +52,14 @@ ipcRenderer.send(IPCEvents.GET_EXTENSION_URL, {
         const callback = async () => {
             Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
 
-            Logger.log("Frontend", `Loading BetterDiscord from ${extension_url}...`);
+            Logger.log("Frontend", `Loading BetterDiscord from ${resource_url}...`);
 
-            try {
+            try
+            {
                 eval(`((fetch) => {${bd}})(window.fetchWithoutCSP)`);
-            } catch (error) {
+            }
+            catch (error)
+            {
                 Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
             }
         };
