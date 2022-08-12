@@ -1,10 +1,9 @@
-import {IPCEvents} from "common/constants";
 import DOM from "common/dom";
+import {IPCEvents} from "common/constants";
 import ipcRenderer from "../ipc";
+import DiscordModules from "./discordmodules";
 import fetch from "./fetch";
-import Webpack from "./webpack";
 
-const UserSettingsStore = Webpack.findByProps("guildPositions");
 const version = "5.62.0";
 
 const links = [
@@ -48,14 +47,16 @@ for (const css of cssCodes) {
 
 export const editor = {
     _active: [],
-    setTheme: theme => {editor._active.forEach(e => e.setOption("theme", theme));},
+    setTheme: theme => {
+        editor._active.forEach(e => e.setOption("theme", theme));
+    },
     create: (element, props) => {
         const textarea = DOM.createElement("textarea", {});
         element.appendChild(textarea);
         const Editor = CodeMirror.fromTextArea(textarea, {
             mode: props.language,
             lineNumbers: true,
-            theme: UserSettingsStore.theme === "light" ? "xq-light" : "material-darker",
+            theme: DiscordModules.UserSettingsStore.theme === "light" ? "xq-light" : "material-darker",
         });
         Editor.setValue(props.value);
         editor._active.push(Editor);
@@ -69,10 +70,14 @@ export const editor = {
             },
             getValue: () => Editor.getValue(),
             setValue: value => Editor.setValue(value),
-            layout: () => {},
+            layout: () => {
+            },
             $defaultHandler: {
                 commands: {
-                    showSettingsMenu: {exec: () => {}}
+                    showSettingsMenu: {
+                        exec: () => {
+                        }
+                    }
                 }
             }
         }

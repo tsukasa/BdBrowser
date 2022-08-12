@@ -1,34 +1,37 @@
-import ipcRenderer from "./ipc";
-import Logger from "common/logger";
-import require from "./modules/require";
-import * as DiscordNative from "./modules/discordnative";
-import process from "./modules/process";
-import fs from "./modules/fs";
-import { IPCEvents } from "common/constants";
-import { default as fetchAPI } from "./modules/fetch";
-import * as monaco from "./modules/monaco";
 import DOM from "common/dom";
-import Webpack from "webpack";
-import * as localStorage from "./modules/localStorage";
+import Logger from "common/logger";
+import {IPCEvents} from "common/constants";
+import ipcRenderer from "./ipc";
+import DiscordModules from "./modules/discordmodules";
+import * as DiscordNative from "./modules/discordnative";
+import {default as fetchAPI} from "./modules/fetch";
+import Filesystem from "./modules/fs";
+import * as Monaco from "./modules/monaco";
+import process from "./modules/process";
+import require from "./modules/require";
 
-Object.defineProperty(Webpack.findByProps("requireModule"), "canBootstrapNewUpdater", {
-    value: false,
-    configurable: true
-});
+Object.defineProperty(
+    DiscordModules.ElectronModule,
+    "canBootstrapNewUpdater",
+    {
+        value: false,
+        configurable: true
+    }
+);
 
-window.fallbackClassName = "bdfdb_is_garbage";
+window.fallbackClassName = "bdfdb_fallbackClass";
 window.value = null;
 window.firstArray = [];
 window.user = "";
-
 window.global = window;
-window.DiscordNative = DiscordNative;
-window.require = require;
-window.process = process;
-window.fs = fs;
+
 window.fetchWithoutCSP = fetchAPI;
-window.monaco = monaco;
+window.fs = Filesystem;
+window.DiscordNative = DiscordNative;
 window.IPC = ipcRenderer;
+window.monaco = Monaco;
+window.process = process;
+window.require = require;
 
 Logger.log("Frontend", `Loading, Environment = ${ENV}`);
 
@@ -38,39 +41,28 @@ DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`
 
 // const getConfig = key => new Promise(resolve => chrome.storage.sync.get(key, resolve));
 
-ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, { url: "dist/betterdiscord.js" }, async resource_url => {
+ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, async resource_url => {
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : resource_url
-    },
-    async bd => {
-        const Dispatcher = Webpack.findByProps("dispatch", "subscribe", "wait", "unsubscribe");
-        const UserStore = Webpack.findByProps("getCurrentUser");
-
-        Logger.log("Frontend", "Dispatcher:", Dispatcher);
-        Logger.log("Frontend", "UserStore:", UserStore);
-
+    }, async bd => {
         const callback = async () => {
-            Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
+            DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
 
             Logger.log("Frontend", `Loading BetterDiscord from ${resource_url}...`);
 
-            try
-            {
-                eval(`((fetch) => {${bd}})(window.fetchWithoutCSP)`);
-            }
-            catch (error)
-            {
+            try {
+                eval(`((fetch) => {
+                    ${bd}
+                })(window.fetchWithoutCSP)`);
+            } catch (error) {
                 Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
             }
         };
 
-        if (!UserStore?.getCurrentUser())
-        {
+        if (!DiscordModules.UserStore?.getCurrentUser()) {
             Logger.log("Frontend", "getCurrentUser failed, registering callback.");
-            Dispatcher.subscribe("CONNECTION_OPEN", callback);
-        }
-        else
-        {
+            DiscordModules.Dispatcher.subscribe("CONNECTION_OPEN", callback);
+        } else {
             Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
             setImmediate(callback);
         }

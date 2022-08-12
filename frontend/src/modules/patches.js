@@ -1,7 +1,7 @@
-import ipcRenderer from "../ipc";
-import {IPCEvents} from "common/constants";
 import DOM from "common/dom";
+import {IPCEvents} from "common/constants";
 import Logger from "common/logger";
+import ipcRenderer from "../ipc";
 
 for (const method of Object.keys(console)) {
     if (console[method]?.__sentry_original__) {
@@ -12,13 +12,17 @@ for (const method of Object.keys(console)) {
 const appendMethods = ["append", "appendChild", "prepend"];
 
 const originalInsertBefore = document.head.insertBefore;
+
 document.head.insertBefore = function (node) {
     if (node?.href?.includes("monaco-editor")) {
         ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
             url: node.href
         }, data => {
             DOM.injectCSS(node.id || "monaco-styles", data);
-            if (typeof node.onload === "function") node.onload();
+
+            if (typeof node.onload === "function")
+                node.onload();
+
             Logger.log("CSP:Bypass", "Loaded monaco stylesheet.");
         });
         document.head.insertBefore = originalInsertBefore;
@@ -31,7 +35,7 @@ document.head.insertBefore = function (node) {
 function patchMethods(node, callback) {
     for (const method of appendMethods) {
         const original = node[method];
-    
+
         node[method] = function () {
             const data = {
                 args: arguments,
@@ -40,7 +44,7 @@ function patchMethods(node, callback) {
 
             return callback(data);
         };
-    
+
         node[method].__bd_original = original;
     }
 
@@ -56,7 +60,7 @@ function patchMethods(node, callback) {
 
 const unpatchHead = patchMethods(document.head, data => {
     const [node] = data.args;
-    
+
     if (node?.id === "monaco-style") {
         ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
             url: node.href
@@ -79,16 +83,25 @@ const unpatchHead = patchMethods(document.head, data => {
                         type: "script"
                     }, data => {
                         eval(data);
-                        if (typeof node.onload === "function") node.onload();
+
+                        if (typeof node.onload === "function")
+                            node.onload();
+
                         Logger.log("CSP:Bypass", `Loaded script with url ${node.src}`);
                     });
                 });
             } else if (node?.localName === "bd-themes") {
                 patchMethods(node, data => {
                     const [node] = data.args;
-                    if (node.getAttribute("data-bd-native")) return data.callOriginalMethod();
+
+                    if (node.getAttribute("data-bd-native"))
+                        return data.callOriginalMethod();
+
                     injectTheme(node);
-                    if (typeof node.onload === "function") node.onload();
+
+                    if (typeof node.onload === "function")
+                        node.onload();
+
                     Logger.log("CSP:Bypass", `Loaded theme ${node.id}`);
                 });
             }
@@ -101,12 +114,16 @@ const unpatchHead = patchMethods(document.head, data => {
             type: "script"
         }, data => {
             eval(data);
-            if (typeof node.onload === "function") node.onload();
+
+            if (typeof node.onload === "function")
+                node.onload();
+
             Logger.log("CSP:Bypass", `Loaded script with url ${node.src}`);
         });
         return;
     } else if (node?.id?.endsWith("-script-container")) {
         Logger.log("CSP:Bypass", `Loading plugin ${node.id.replace("-script-container", "")}`);
+
         eval(`(() => {
             try {
                 ${node.textContent}
@@ -114,6 +131,7 @@ const unpatchHead = patchMethods(document.head, data => {
                 console.error("Failed to load plugin:", e);
             }
         })()`);
+
         return;
     }
 

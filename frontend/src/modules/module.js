@@ -1,5 +1,5 @@
 import fs from "./fs";
-import { extname } from "./path";
+import {extname} from "./path";
 
 const globalPaths = [];
 const _extensions = {
@@ -15,11 +15,20 @@ const _extensions = {
 function _require(path, req) {
     const extension = "." + extname(path);
     const loader = _extensions[extension];
-    if (!loader) throw new Error("Unkown File extension " + path);
+
+    if (!loader)
+        throw new Error("Unkown File extension " + path);
+
     const existsFile = fs.existsSync(path);
-    if (!path) console.log(path);
-    if (!existsFile) throw new Error("Module not found!");
-    if (req.cache[path]) return req.cache[path];
+
+    if (!path)
+        console.log(path);
+
+    if (!existsFile)
+        throw new Error("Module not found!");
+
+    if (req.cache[path])
+        return req.cache[path];
 
     const final = {
         exports: {},
@@ -32,8 +41,9 @@ function _require(path, req) {
                     module
                 };
             })({exports: {}}, window)`);
-            
-            if (Object.keys(module.exports).length) final.exports = module.exports;
+
+            if (Object.keys(module.exports).length)
+                final.exports = module.exports;
 
             return final.exports;
         }
@@ -41,7 +51,6 @@ function _require(path, req) {
     loader(final, path);
     return req.cache[path] = final.exports;
 }
-
 
 export default {
     Module: {globalPaths, _extensions},

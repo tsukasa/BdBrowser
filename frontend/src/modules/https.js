@@ -6,29 +6,37 @@ export function request(url, options, callback) {
         options = {};
     }
 
-    fetch(url).then(res => res.text()).then(data => {
-        callback({
-            on: (event, callback) => {
-                switch(event) {
-                    case "data": return callback(data);
-                    case "end": return callback();
+    fetch(url)
+        .then(res => res.text())
+        .then(data => {
+            callback({
+                on: (event, callback) => {
+                    switch (event) {
+                        case "data":
+                            return callback(data);
+                        case "end":
+                            return callback();
+                    }
                 }
-            }
+            });
         });
-    });
 
     return {
         statusCode: 200,
-        on: () => {},
-        end: () => {}
+        on: () => {
+        },
+        end: () => {
+        }
     }
 }
 
-export const get = request;
-
 export function createServer() {
     return {
-        listen: () => {},
-        close: () => {}
+        listen: () => {
+        },
+        close: () => {
+        }
     };
 }
+
+export const get = request;

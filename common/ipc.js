@@ -1,25 +1,33 @@
-export default class IPC {
-    constructor(context) {
-        if (!context) throw new Error("Context is required");
+export default class IPC
+{
+    constructor(context)
+    {
+        if (!context)
+            throw new Error("Context is required");
 
         this.context = context;
     }
 
-    createHash() {
+    createHash()
+    {
         return Math.random().toString(36).substr(2, 10);
     }
 
-    reply(message, data) {
+    reply(message, data)
+    {
         this.send(message.event + "-reply", data, void 0, message.hash);
     }
 
-    on(event, listener, once = false) {
+    on(event, listener, once = false)
+    {
         const wrappedListener = message => {
-            if (message.data.event !== event || message.data.context === this.context) return;
+            if (message.data.event !== event || message.data.context === this.context)
+                return;
 
             const returnValue = listener(message.data, message.data.data);
 
-            if (returnValue == true && once) {
+            if (returnValue == true && once)
+            {
                 window.removeEventListener("message", wrappedListener);
             }
         };
@@ -27,16 +35,20 @@ export default class IPC {
         window.addEventListener("message", wrappedListener);
     }
 
-    send(event, data, callback = null, hash) {
-        if (!hash) hash = this.createHash();
+    send(event, data, callback = null, hash)
+    {
+        if (!hash)
+            hash = this.createHash();
 
-        if (callback) {
+        if (callback)
+        {
             this.on(event + "-reply", message => {
-                if (message.hash === hash) {
+                if (message.hash === hash)
+                {
                     callback(message.data);
                     return true;
                 }
-                
+
                 return false;
             }, true);
         }

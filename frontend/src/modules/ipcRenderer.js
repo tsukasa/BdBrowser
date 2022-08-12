@@ -1,6 +1,4 @@
-import Webpack from "./webpack";
-
-const Router = Webpack.findByProps("listeners", "flushRoute");
+import DiscordModules from "discordmodules";
 
 // https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API
 const [hidden, visibilityChange] = (() => {
@@ -16,12 +14,14 @@ const [hidden, visibilityChange] = (() => {
 export default class IPCRenderer {
     static listeners = {};
 
-    static initialize() {
-        this.addWindowListeners();
-    }
-
-    static onSwitch(callback) {
-        Router.listeners.add(callback);
+    static addWindowListeners() {
+        document.addEventListener(visibilityChange, () => {
+            if (document[hidden]) {
+                this.fire("bd-window-maximize");
+            } else {
+                this.fire("bd-window-minimize");
+            }
+        });
     }
 
     static createEvent(event) {
@@ -38,41 +38,48 @@ export default class IPCRenderer {
         }
     }
 
-    static addWindowListeners() {
-        document.addEventListener(visibilityChange, () => {
-            if (document[hidden]) {
-                this.fire("bd-window-maximize");
-            } else {
-                this.fire("bd-window-minimize");
-            }
-        });
-    }
-
-    static on(event, callback) {
-        switch (event) {
-            case "bd-did-navigate-in-page": return this.onSwitch(callback);
-            default:
-                this.createEvent(event);
-                this.listeners[event].add(callback);
-        }   
+    static initialize() {
+        this.addWindowListeners();
     }
 
     static async invoke(event) {
         console.log("INVOKE:", event);
         switch (event) {
-           case "bd-config": return {
-              version: "0.6.0",
-              local: false,
-              localPath: "",
-              branch: "development",
-              bdVersion: "1.0.0",
-              minSupportedVersion: "0.3.0",
-              hash: "gh-pages",
-              dataPath: "AppData/BetterDiscord/"
-           };
-           case "bd-injector-info": return { version: "1.0.0" };
-           default: null;
+            case "bd-config":
+                return {
+                    version: "0.6.0",
+                    local: false,
+                    localPath: "",
+                    branch: "development",
+                    bdVersion: "1.0.0",
+                    minSupportedVersion: "0.3.0",
+                    hash: "gh-pages",
+                    dataPath: "AppData/BetterDiscord/"
+                };
+
+            case "bd-injector-info":
+                return {
+                    version: "1.0.0"
+                };
+
+            default:
+                null;
         }
+    }
+
+    static on(event, callback) {
+        switch (event) {
+            case "bd-did-navigate-in-page":
+                return this.onSwitch(callback);
+
+            default:
+                this.createEvent(event);
+                this.listeners[event].add(callback);
+        }
+    }
+
+    static onSwitch(callback) {
+        DiscordModules.RouterModule.listeners.add(callback);
     }
 
     static send() {

@@ -8,7 +8,7 @@ module.exports = env => {
         mode: mode,
         target: "node",
         entry: "./src/index.js",
-        devtool: "cheap-module-source-map",
+        devtool: false,
         output: {
             filename: env.type + ".js",
             path: path.resolve(__dirname, "dist"),

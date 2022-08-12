@@ -7,7 +7,9 @@ class RequestResponse extends Response {
         this.res = res;
     }
 
-    get headers() {return Object.fromEntries(Array.from(this.res.headers));}
+    get headers() {
+        return Object.fromEntries(Array.from(this.res.headers));
+    }
 };
 
 export default function request(url, options, callback) {
@@ -36,7 +38,10 @@ export function head(url, options, callback) {
     }, err => callback(err));
 }
 
-Object.assign(request, {
-    get: request,
-    head: head
-});
+Object.assign(
+    request,
+    {
+        get: request,
+        head: head
+    }
+);
