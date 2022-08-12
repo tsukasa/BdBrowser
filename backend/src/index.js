@@ -1,11 +1,11 @@
 import {IPCEvents} from "common/constants";
 import DOM from "common/dom";
-import ipcRenderer from "common/ipc";
+import IPC from "common/ipc";
 import Logger from "common/logger";
 
 Logger.log("Backend", "Initializing modules");
 
-const ipcMain = new ipcRenderer("backend");
+const ipcMain = new IPC("backend");
 
 Logger.log("Backend", "Registering events");
 
