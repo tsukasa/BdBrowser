@@ -191,10 +191,15 @@ export function readFileSync(path) {
 
 export function existsSync(path) {
     path = normalizePath(path);
-    const stats = statSync(path);
 
-    let exist = stats.isFile() || stats.isDirectory();
-    return exist;
+    try {
+        const stats = statSync(path);
+
+        let exist = stats.isFile() || stats.isDirectory();
+        return exist;
+    } catch(err) {
+        return false;
+    }
 }
 
 export function statSync(path) {
@@ -209,7 +214,7 @@ export function statSync(path) {
 
     /* Throw an exception if the file is unknown.            */
     /* Required for BetterDiscord's automatic reload/unload. */
-    if(file?.type !== "file" && file?.type !== "dir")
+    if(file.type !== "file" && file.type !== "dir")
     {
         const error = new Error(`${path} does not exist.`);
         error.code = "ENOENT";
