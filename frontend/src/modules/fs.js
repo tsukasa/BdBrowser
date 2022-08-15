@@ -1,4 +1,3 @@
-import Logger from "common/logger";
 import Events from "./events";
 import {getItem, setItem} from "./localStorage";
 

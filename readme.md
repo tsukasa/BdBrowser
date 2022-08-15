@@ -7,16 +7,16 @@ It is basically a simple NodeJS environment which allows BetterDiscord plugins t
 Installation is done by downloading this repository as an ZIP archive, extracting the contents and loading the resulting folder as an unpacked extension in your browser while having developer mode enabled.
 
 ## Installing BdBrowser
-Download the [current code as a zip archive](archive/refs/heads/master.zip) and unpack the folder within it to a destination of your choice.
+Download the [current code as a zip archive](../../archive/refs/heads/master.zip) and unpack the folder within it to a destination of your choice.
 
-Go to your [chrome://extensions](chrome://extensions) page, click this button and browse to the path you unpacked the archive to.
+Go to your <a href="chrome://extensions">chrome://extensions page</a>, click this button and browse to the path you unpacked the archive to.
 
 ![image](https://user-images.githubusercontent.com/46447572/131920173-901089d2-6743-492b-ae9f-1bdcae7a35a5.png)
 
 Now with the extension loaded and enabled, reload the [Discord](https://discordapp.com/channels/@me) tab. BetterDiscord should load and show the changelog.
 
 ## Updating BdBrowser
-To update the extension, remove the extension through the [chrome://extensions](chrome://extensions) page and perform the same steps as for the installation (downloading a more recent copy of the source-code, unpack the zip archive etc.).
+To update the extension, remove the extension through the <a href="chrome://extensions">chrome://extensions page</a> and perform the same steps as for the installation (downloading a more recent copy of the source-code, unpack the zip archive etc.).
 
 If you have loaded an unpacked version of the zip archive, you can manually replace the `dist/betterdiscord.js` file with a more recent version, in case that becomes necessary.
 
