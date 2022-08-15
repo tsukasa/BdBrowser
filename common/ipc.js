@@ -1,3 +1,5 @@
+const IPC_REPLY_SUFFIX = "-reply";
+
 export default class IPC
 {
     constructor(context)
@@ -10,12 +12,12 @@ export default class IPC
 
     createHash()
     {
-        return Math.random().toString(36).substr(2, 10);
+        return Math.random().toString(36).substring(2, 10);
     }
 
     reply(message, data)
     {
-        this.send(message.event + "-reply", data, void 0, message.hash);
+        this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
     }
 
     on(event, listener, once = false)
@@ -26,7 +28,7 @@ export default class IPC
 
             const returnValue = listener(message.data, message.data.data);
 
-            if (returnValue == true && once)
+            if (returnValue === true && once)
             {
                 window.removeEventListener("message", wrappedListener);
             }
@@ -42,7 +44,7 @@ export default class IPC
 
         if (callback)
         {
-            this.on(event + "-reply", message => {
+            this.on(event.concat(IPC_REPLY_SUFFIX), message => {
                 if (message.hash === hash)
                 {
                     callback(message.data);
@@ -54,7 +56,7 @@ export default class IPC
         }
 
         window.postMessage({
-            source: "betterdiscord-browser-" + this.context,
+            source: "betterdiscord-browser".concat("-", this.context),
             event: event,
             context: this.context,
             hash: hash,

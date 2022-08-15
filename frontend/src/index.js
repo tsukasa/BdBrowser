@@ -5,7 +5,7 @@ import ipcRenderer from "./ipc";
 import DiscordModules from "./modules/discordmodules";
 import * as DiscordNative from "./modules/discordnative";
 import {default as fetchAPI} from "./modules/fetch";
-import Filesystem from "./modules/fs";
+import fs from "./modules/fs";
 import * as Monaco from "./modules/monaco";
 import process from "./modules/process";
 import require from "./modules/require";
@@ -25,17 +25,17 @@ window.firstArray = [];
 window.user = "";
 window.global = window;
 
-window.fetchWithoutCSP = fetchAPI;
-window.fs = Filesystem;
 window.DiscordNative = DiscordNative;
+window.fetchWithoutCSP = fetchAPI;
+window.fs = fs;
 window.IPC = ipcRenderer;
 window.monaco = Monaco;
 window.process = process;
 window.require = require;
 
-Logger.log("Frontend", `Loading, Environment = ${ENV}`);
-
 import "./modules/patches";
+
+Logger.log("Frontend", `Loading, Environment = ${ENV}`);
 
 DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
 
@@ -51,7 +51,7 @@ ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, asy
             Logger.log("Frontend", `Loading BetterDiscord from ${resource_url}...`);
 
             try {
-                eval(`((fetch) => {
+                eval(`(() => {
                     ${bd}
                 })(window.fetchWithoutCSP)`);
             } catch (error) {

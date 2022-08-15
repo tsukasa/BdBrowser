@@ -1,16 +1,20 @@
-import * as electron from './electron';
-import * as fs from './fs';
+import * as electron from "./electron";
+import * as fs from "./fs";
 import * as Https from "./https";
-import * as path from './path';
-import * as vm from './vm';
-import * as Webpack from './webpack';
-import Events from './events';
-import Module from './module';
+import * as path from "./path";
+import * as vm from "./vm";
+import * as Webpack from "./webpack";
+import DiscordModules from "./discordmodules";
+import Events from "./events";
+import Module from "./module";
 import process from "./process";
-import RequestModule from './request';
+import RequestModule from "./request";
 
 export default function require(mod) {
     switch (mod) {
+        case "_discordmodules":
+            return DiscordModules;
+
         case "fs":
             return fs;
 

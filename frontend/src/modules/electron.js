@@ -3,7 +3,6 @@ import ipcRenderer from "ipcRenderer";
 import fs from "./fs";
 
 ipcRenderer.initialize();
-
 export {ipcRenderer};
 
 export const remote = {
@@ -25,13 +24,6 @@ export const shell = {
                 const reader = new FileReader();
                 reader.onload = () => {
                     fs.writeFileSync(`AppData/BetterDiscord/${item.split("/").pop()}/${file.name}`, reader.result);
-                    BdApi.showConfirmationModal("Reload Required", "You need to reload the page that the changes get applied.", {
-                        confirmText: "Reload Now",
-                        cancelText: "Cancel",
-                        onConfirm: () => {
-                            location.reload();
-                        }
-                    });
                 };
                 reader.readAsText(file);
             }

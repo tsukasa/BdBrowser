@@ -1,5 +1,4 @@
-export default class DOM
-{
+export default class DOM {
     /**@returns {HTMLElement} */
     static createElement(type, options = {}, ...children) {
         const node = document.createElement(type);
@@ -53,7 +52,10 @@ export default class DOM
 
         this.headAppend(script);
 
-        if (silent) script.addEventListener("load", () => {script.remove();}, {once: true});
+        if (silent)
+            script.addEventListener("load", () => {
+                script.remove();
+            }, {once: true});
     }
 }
 

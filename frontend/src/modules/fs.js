@@ -1,3 +1,4 @@
+import Logger from "common/logger";
 import Events from "./events";
 import {getItem, setItem} from "./localStorage";
 
@@ -93,6 +94,7 @@ export function writeFileSync(path, content) {
         }
     }
     setItem("bd-files", JSON.stringify(files));
+    emitter.emit("change", path, "change");
 };
 
 export function writeFile(path, content, callback) {
@@ -206,6 +208,15 @@ export function statSync(path) {
         file = file?.files?.[item];
     }
 
+    /* Throw an exception if the file is unknown.            */
+    /* Required for BetterDiscord's automatic reload/unload. */
+    if(file?.type !== "file" && file?.type !== "dir")
+    {
+        const error = new Error(`${path} does not exist.`);
+        error.code = "ENOENT";
+        throw error;
+    }
+
     return {
         mtime: {getTime: () => Date.now()},
         isFile: () => file?.type === "file",
@@ -237,6 +248,7 @@ export function unlinkSync(path) {
             delete segment.files[filename]
     }
     setItem("bd-files", JSON.stringify(files));
+    emitter.emit("change", path, "rename");
 }
 
 export function normalizePath(path) {
@@ -251,7 +263,6 @@ export function basename(path) {
 }
 
 export function watch(file, options, listener) {
-    return;
 
     if (typeof (options) === "function") {
         listener = options;

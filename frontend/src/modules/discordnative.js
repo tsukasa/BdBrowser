@@ -6,7 +6,7 @@ export const app = {
     },
 
     getVersion() {
-        return "1.0.9005"
+        return "1.0.9006"
     },
 
     async getPath(path) {
@@ -17,8 +17,12 @@ export const app = {
             default:
                 throw new Error("Cannot find path: " + path);
         }
+    },
+
+    relaunch() {
+        location.reload();
     }
-};
+}
 
 export const globals = {
     get releaseChannel() {
