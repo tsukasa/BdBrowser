@@ -214,9 +214,9 @@ export function statSync(path) {
 
     /* Throw an exception if the file is unknown.            */
     /* Required for BetterDiscord's automatic reload/unload. */
-    if(file.type !== "file" && file.type !== "dir")
+    if(file?.type !== "file" && file?.type !== "dir")
     {
-        const error = new Error(`${path} does not exist.`);
+        const error = new Error(`"${path}" does not exist.`);
         error.code = "ENOENT";
         throw error;
     }
