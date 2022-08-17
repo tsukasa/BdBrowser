@@ -222,7 +222,9 @@ export function statSync(path) {
     }
 
     return {
-        mtime: {getTime: () => Date.now()},
+        mtime: {
+            getTime: () => Date.now()
+        },
         isFile: () => file?.type === "file",
         isDirectory: () => file?.type === "dir"
     };

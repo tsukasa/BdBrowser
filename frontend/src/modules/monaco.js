@@ -56,7 +56,7 @@ export const editor = {
         const Editor = CodeMirror.fromTextArea(textarea, {
             mode: props.language,
             lineNumbers: true,
-            theme: DiscordModules.UserSettingsStore.theme === "light" ? "xq-light" : "material-darker",
+            theme: DiscordModules.ThemeStore.theme === "light" ? "xq-light" : "material-darker",
         });
         Editor.setValue(props.value);
         editor._active.push(Editor);

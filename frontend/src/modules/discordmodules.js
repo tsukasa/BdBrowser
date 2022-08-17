@@ -3,7 +3,7 @@ import Webpack   from "webpack";
 
 export default Utilities.memoizeObject({
     /* Current User Info, State and Settings */
-    get UserSettingsStore() { return Webpack.findByProps("getAllSettings", "theme"); },
+    get ThemeStore() { return Webpack.findByProps("addChangeListener", "theme"); },
 
     /* User Stores and Utils */
     get UserStore() { return Webpack.findByProps("getCurrentUser"); },

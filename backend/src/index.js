@@ -29,7 +29,7 @@ function injectFrontend(scriptUrl) {
 }
 
 function registerEvents() {
-    Logger.log("Backend", "Registering events");
+    Logger.log("Backend", "Registering events.");
     const ipcMain = new IPC("backend");
 
     ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
@@ -42,10 +42,11 @@ function registerEvents() {
 
     ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
         fetch(data.url)
-            .catch(console.error.bind(null, "REQUEST FAILED:"))
-            .then(res => res.text()).then(text => {
-            ipcMain.reply(event, text);
-        })
+            .then(res => res.text())
+            .then(text => {
+                ipcMain.reply(event, text);
+            })
+            .catch(console.error.bind(null, "BdBrowser Backend MAKE_REQUESTS failed:"))
     });
 
     ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {

@@ -18,6 +18,8 @@ Now with the extension loaded and enabled, reload the [Discord](https://discorda
 ## Updating BdBrowser
 To update the extension, remove the extension through the <a href="chrome://extensions">chrome://extensions page</a> and perform the same steps as for the installation (downloading a more recent copy of the source-code, unpack the zip archive etc.).
 
+You will not lose your BetterDiscord data (plugins, themes, settings) during the removal/re-installation of the extension.
+
 If you have loaded an unpacked version of the zip archive, you can manually replace the `dist/betterdiscord.js` file with a more recent version, in case that becomes necessary.
 
 Please note that you will need to click the `Update` button on the extension page for Chrome to register the changes.
