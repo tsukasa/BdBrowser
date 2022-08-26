@@ -1,0 +1,9 @@
+mime-types
+Copyright(c) 2014 Jonathan Ong
+Copyright(c) 2015 Douglas Christopher Wilson
+MIT Licensed
+
+Homepage: https://github.com/jshttp/mime-types
+
+This project uses a slightly modified version of the mime-types project's index.js,
+residing in frontend/src/modules/mime-types.js.

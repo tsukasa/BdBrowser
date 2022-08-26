@@ -5,7 +5,7 @@ const FILE_REGEX = /\.(.+)$/;
 
 function isFile(name) {
     return FILE_REGEX.test(name);
-};
+}
 
 const emitter = new Events();
 
@@ -62,7 +62,7 @@ function convertPath(path) {
     }
 
     return newPath;
-};
+}
 
 export function writeFileSync(path, content) {
     path = normalizePath(path);
@@ -89,17 +89,18 @@ export function writeFileSync(path, content) {
             if (segment.type !== "dir")
                 return "NOT_A_DIR";
 
-            segment.files[filename] = {type: "file", content};
+            let fileSize = new Blob([content]).size;
+            segment.files[filename] = {type: "file", size: fileSize, content};
         }
     }
     setItem("bd-files", JSON.stringify(files));
     emitter.emit("change", path, "change");
-};
+}
 
 export function writeFile(path, content, callback) {
     try {
         writeFileSync(path, content);
-        callback(null);
+        callback(undefined);
     } catch (e) {
         callback(e);
     }
@@ -137,7 +138,7 @@ export function mkdirSync(path) {
         }
     }
     setItem("bd-files", JSON.stringify(files));
-};
+}
 
 export function readdirSync(path) {
     path = normalizePath(path);
@@ -163,7 +164,7 @@ export function readdirSync(path) {
         }
     }
     return found.sort();
-};
+}
 
 export function readFileSync(path) {
     path = normalizePath(path);
@@ -189,6 +190,21 @@ export function readFileSync(path) {
     }
 }
 
+export function readFile(path, options, callback) {
+    if (typeof (options) === "function") {
+        callback = options;
+        options = {};
+    }
+
+    try {
+        let data = readFileSync(path);
+        callback(undefined, data);
+    } catch (e) {
+        callback(e, undefined);
+    }
+
+}
+
 export function existsSync(path) {
     path = normalizePath(path);
 
@@ -197,7 +213,7 @@ export function existsSync(path) {
 
         let exist = stats.isFile() || stats.isDirectory();
         return exist;
-    } catch(err) {
+    } catch (e) {
         return false;
     }
 }
@@ -212,22 +228,32 @@ export function statSync(path) {
         file = file?.files?.[item];
     }
 
-    /* Throw an exception if the file is unknown.            */
-    /* Required for BetterDiscord's automatic reload/unload. */
-    if(file?.type !== "file" && file?.type !== "dir")
-    {
-        const error = new Error(`"${path}" does not exist.`);
-        error.code = "ENOENT";
-        throw error;
-    }
+    if (file?.type !== "file" && file?.type !== "dir")
+        throw Object.assign(new Error(`"${path}" does not exist.`), {code: "ENOENT"});
+
+    let fileSize;
+    if(!file.size)
+        fileSize = new Blob([readFileSync(path)]).size;
+    else
+        fileSize = file.size;
 
     return {
         mtime: {
             getTime: () => Date.now()
         },
+        size: fileSize,
         isFile: () => file?.type === "file",
         isDirectory: () => file?.type === "dir"
     };
+}
+
+export function unlink(path, callback) {
+    try {
+        unlinkSync(path);
+        callback();
+    } catch (e) {
+        callback(e);
+    }
 }
 
 export function unlinkSync(path) {
@@ -290,18 +316,20 @@ export const exists = existsSync;
 export const realpathSync = normalizePath;
 
 const fs = {
-    watch,
-    mkdirSync,
-    readdirSync,
-    readFileSync,
-    existsSync,
-    writeFileSync,
-    getStore,
-    statSync,
-    realpathSync,
-    writeFile,
     basename,
-    unlinkSync
+    existsSync,
+    getStore,
+    mkdirSync,
+    readFile,
+    readFileSync,
+    readdirSync,
+    realpathSync,
+    statSync,
+    unlink,
+    unlinkSync,
+    watch,
+    writeFile,
+    writeFileSync
 };
 
 export default fs;

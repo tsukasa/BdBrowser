@@ -4,7 +4,7 @@ import ipcRenderer from "../ipc";
 import DiscordModules from "./discordmodules";
 import fetch from "./fetch";
 
-const version = "5.62.0";
+const version = "6.65.7";
 
 const links = [
     `https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/codemirror.min.js`,
@@ -21,22 +21,26 @@ const cssCodes = [
 ];
 
 Promise.all(links.map((link, i) => {
-    return fetch(link).then(res => res.text()).then(async code => {
-        if (i > 0 && !window.CodeMirror) {
-            while (!window.CodeMirror) {
-                await new Promise(res => setTimeout(res, 200));
+    return fetch(link)
+        .then(res => res.text())
+        .then(async code => {
+            if (i > 0 && !window.CodeMirror) {
+                while (!window.CodeMirror) {
+                    await new Promise(res => setTimeout(res, 200));
+                }
             }
-        }
-        eval(code);
-    });
+            eval(code);
+        });
 }));
 
-fetch(`https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/codemirror.min.css`).then(res => res.text()).then(code => {
-    ipcRenderer.send(IPCEvents.INJECT_CSS, {
-        css: code,
-        id: "code-mirror-style"
+fetch(`https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/codemirror.min.css`)
+    .then(res => res.text())
+    .then(code => {
+        ipcRenderer.send(IPCEvents.INJECT_CSS, {
+            css: code,
+            id: "code-mirror-style"
+        });
     });
-});
 
 for (const css of cssCodes) {
     ipcRenderer.send(IPCEvents.INJECT_CSS, {
@@ -55,7 +59,7 @@ export const editor = {
         element.appendChild(textarea);
         const Editor = CodeMirror.fromTextArea(textarea, {
             mode: props.language,
-            lineNumbers: true,
+            lineNumbers: props.lineNumbers,
             theme: DiscordModules.ThemeStore.theme === "light" ? "xq-light" : "material-darker",
         });
         Editor.setValue(props.value);

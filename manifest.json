@@ -1,39 +1,39 @@
 {
     "name": "BetterDiscord",
     "version": "1.0",
-    "manifest_version": 3,
     "description": "Allows you to use BetterDiscord on web. Some plugins might not be working correctly.",
-    "icons":
-    {
+    "icons": {
         "16": "assets/logo.png",
         "48": "assets/logo.png",
         "128": "assets/logo.png"
     },
-    "content_scripts":
-    [
-        {
-            "matches":
-            [
-                "*://*.discord.com/*"
-            ],
-            "js":
-            [
-                "dist/backend.js"
-            ]
-        }
+    "manifest_version": 3,
+    "permissions": [
+        "declarativeNetRequestWithHostAccess"
     ],
-    "web_accessible_resources":
-    [
-        {
-            "resources":
-            [
-                "dist/betterdiscord.js",
-                "dist/frontend.js"
-            ],
-            "matches":
-            [
-                "*://discord.com/*"
-            ]
-        }
-    ]
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "dist/service.js"
+    },
+    "content_scripts": [{
+        "matches": [
+            "*://discord.com/*",
+            "*://canary.discord.com/*",
+            "*://ptb.discord.com/*"
+        ],
+        "js": [
+            "dist/backend.js"
+        ]
+    }],
+    "web_accessible_resources": [{
+        "resources": [
+            "dist/betterdiscord.js",
+            "dist/frontend.js"
+        ],
+        "matches": [
+            "*://*.discord.com/*"
+        ]
+    }]
 }

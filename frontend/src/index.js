@@ -47,13 +47,10 @@ ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, asy
     }, async bd => {
         const callback = async () => {
             DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
-
             Logger.log("Frontend", `Loading BetterDiscord from ${resource_url}...`);
 
             try {
-                eval(`(() => {
-                    ${bd}
-                })(window.fetchWithoutCSP)`);
+                eval(`(() => { ${bd} })(window.fetchWithoutCSP)`);
             } catch (error) {
                 Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
             }

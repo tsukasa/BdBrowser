@@ -1,0 +1,12 @@
+/**
+ * @name Hide Download Apps Button
+ * @author tsukasa
+ * @version 1.0
+ * @source https://github.com/tsukasa/BdBrowser
+ * @description Removes the unwanted "Download Apps" button from the guild list in the web-client.
+*/
+
+ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(2),
+ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(3) {
+    visibility: hidden;
+}

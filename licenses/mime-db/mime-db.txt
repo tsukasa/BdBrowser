@@ -1,0 +1,8 @@
+mime-db
+Copyright(c) 2014 Jonathan Ong
+Copyright(c) 2015-2022 Douglas Christopher Wilson
+MIT Licensed
+
+Homepage: https://github.com/jshttp/mime-db
+
+This project uses the db.json from mime-db, residing in assets/mime-db.json.

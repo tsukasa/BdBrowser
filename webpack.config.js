@@ -52,7 +52,8 @@ module.exports = env => {
                 path: path.join(__dirname, "src", "modules", "path.js"),
                 storage: path.join(__dirname, "src", "modules", "localStorage.js"),
                 require: path.join(__dirname, "src", "modules", "require.js"),
-                common: path.join(__dirname, "common")
+                common: path.join(__dirname, "common"),
+                assets: path.join(__dirname, "assets")
             }
         }
     };

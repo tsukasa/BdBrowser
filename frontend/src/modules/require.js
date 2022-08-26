@@ -6,6 +6,7 @@ import * as vm from "./vm";
 import * as Webpack from "./webpack";
 import DiscordModules from "./discordmodules";
 import Events from "./events";
+import mimeTypes from "./mime-types";
 import Module from "./module";
 import process from "./process";
 import RequestModule from "./request";
@@ -43,14 +44,12 @@ export default function require(mod) {
             return process;
 
         case "mime-types":
-            return {
-                lookup: () => {
-                }
-            };
+            return mimeTypes;
 
         case "url":
             return {
-                parse: () => {
+                parse: (urlString) => {
+                    return new URL(urlString);
                 }
             };
 

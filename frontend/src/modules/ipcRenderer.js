@@ -82,7 +82,7 @@ export default class IPCRenderer {
         DiscordModules.RouterModule.listeners.add(callback);
     }
 
-    static send() {
-        console.log("SEND:", ...arguments);
+    static send(event, ...args) {
+        console.log("SEND:", event, args);
     }
 }

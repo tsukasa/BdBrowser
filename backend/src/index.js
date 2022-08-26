@@ -41,12 +41,21 @@ function registerEvents() {
     });
 
     ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
-        fetch(data.url)
-            .then(res => res.text())
-            .then(text => {
-                ipcMain.reply(event, text);
-            })
-            .catch(console.error.bind(null, "BdBrowser Backend MAKE_REQUESTS failed:"))
+        chrome.runtime.sendMessage({
+            operation: "fetch",
+            parameters: {
+                url: data.url,
+                options: data.options
+            }
+        }, function(response) {
+            if(response.error) {
+                console.error("BdBrowser Backend MAKE_REQUESTS failed:", data, response.error);
+            }
+            else
+            {
+                ipcMain.reply(event, response.body);
+            }
+        });
     });
 
     ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
