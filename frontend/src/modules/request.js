@@ -19,7 +19,7 @@ export default function request(url, options, callback) {
     }
 
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-        url: url
+        url: url, options: options
     }, data => {
         const res = new Response(data);
         res.statusCode = res.status;

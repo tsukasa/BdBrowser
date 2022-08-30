@@ -229,7 +229,14 @@ export function statSync(path) {
     }
 
     if (file?.type !== "file" && file?.type !== "dir")
-        throw Object.assign(new Error(`"${path}" does not exist.`), {code: "ENOENT"});
+        throw Object.assign(new Error(`"ENOENT, No such file or directory '${path}'`), {
+            stack: undefined,
+            arguments: undefined,
+            errno: 2,
+            type: undefined,
+            code: "ENOENT",
+            path: path
+        });
 
     let fileSize;
     if(!file.size)

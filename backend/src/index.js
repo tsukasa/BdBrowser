@@ -41,6 +41,18 @@ function registerEvents() {
     });
 
     ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
+        // If the data is an object instead of a string, we probably
+        // deal with a "request"-style request and have to re-order
+        // the options.
+        if(data.url && typeof(data.url) === "object") {
+            // Deep clone data.url into the options and remove the url
+            data.options = JSON.parse(JSON.stringify(data.url));
+            data.options.url = undefined;
+
+            if(data.url.url)
+                data.url = data.url.url;
+        }
+
         chrome.runtime.sendMessage({
             operation: "fetch",
             parameters: {
@@ -49,7 +61,7 @@ function registerEvents() {
             }
         }, function(response) {
             if(response.error) {
-                console.error("BdBrowser Backend MAKE_REQUESTS failed:", data, response.error);
+                console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
             }
             else
             {

@@ -33,35 +33,42 @@ window.monaco = Monaco;
 window.process = process;
 window.require = require;
 
+let bdScriptUrl;
+
 import "./modules/patches";
-
-Logger.log("Frontend", `Loading, Environment = ${ENV}`);
-
-DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
 
 // const getConfig = key => new Promise(resolve => chrome.storage.sync.get(key, resolve));
 
-ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, async resource_url => {
-    ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-        url: ENV === "development" ? "http://127.0.0.1:5500/betterdiscord.js" : resource_url
-    }, async bd => {
-        const callback = async () => {
-            DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
-            Logger.log("Frontend", `Loading BetterDiscord from ${resource_url}...`);
+function initialize() {
+    Logger.log("Frontend", `Loading, Environment = ${ENV}`);
+    DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
+    ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, selectBetterDiscordEnvironment);
+}
 
-            try {
-                eval(`(() => { ${bd} })(window.fetchWithoutCSP)`);
-            } catch (error) {
-                Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
-            }
-        };
+async function selectBetterDiscordEnvironment(localScriptUrl) {
+    bdScriptUrl = (ENV === "development") ? "http://127.0.0.1:5500/betterdiscord.js" : localScriptUrl;
+    ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: bdScriptUrl }, loadBetterDiscord);
+}
 
-        if (!DiscordModules.UserStore?.getCurrentUser()) {
-            Logger.log("Frontend", "getCurrentUser failed, registering callback.");
-            DiscordModules.Dispatcher.subscribe("CONNECTION_OPEN", callback);
-        } else {
-            Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
-            setImmediate(callback);
+async function loadBetterDiscord(scriptBody) {
+    const callback = async () => {
+        DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
+        Logger.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
+
+        try {
+            eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
+        } catch (error) {
+            Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
         }
-    });
-});
+    };
+
+    if (!DiscordModules.UserStore?.getCurrentUser()) {
+        Logger.log("Frontend", "getCurrentUser failed, registering callback.");
+        DiscordModules.Dispatcher.subscribe("CONNECTION_OPEN", callback);
+    } else {
+        Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+        setImmediate(callback);
+    }
+}
+
+initialize();

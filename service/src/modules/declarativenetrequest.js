@@ -5,7 +5,7 @@ const NET_REQUEST_RULE_IDS = [1, 2];
 
 // Rule blocks any Discord webhook being accessed/called from within Discord's domains.
 // Same thing renderer/src/secure.js from BetterDiscord does but via dNR.
-export function getBlockWebhookRule() {
+function getBlockWebhookRule() {
     return {
         id: NET_REQUEST_RULE_IDS[0],
         priority: 100,
@@ -21,7 +21,7 @@ export function getBlockWebhookRule() {
 
 // Rule removes/eases the Content Security Policy from Discord's domains.
 // Same thing injector/src/modules/csp.js from BetterDiscord does but via dNR.
-export function getAlterContentSecurityPolicyRule(cspHeaderValue) {
+function getAlterContentSecurityPolicyRule(cspHeaderValue) {
     return {
         id: NET_REQUEST_RULE_IDS[1],
         priority: 100,
@@ -41,7 +41,7 @@ export function getAlterContentSecurityPolicyRule(cspHeaderValue) {
     };
 }
 
-export function installOrUpdateRules() {
+function installOrUpdateRules() {
     // Remove the rules before trying to work with the CSP headers!
     // Otherwise, we potentially work with pre-tainted headers...
     chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: NET_REQUEST_RULE_IDS }).then(() => {
@@ -56,14 +56,18 @@ export function installOrUpdateRules() {
     });
 }
 
-export function removeRules() {
+function removeRules() {
     Logger.log("Service", "Removing Declarative Net Request rules.");
     chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: NET_REQUEST_RULE_IDS });
 }
 
-export function registerDeclarativeNetRequestEvents() {
+function registerEvents() {
     chrome.runtime.onInstalled.addListener(installOrUpdateRules);
     chrome.runtime.onStartup.addListener(installOrUpdateRules);
     chrome.runtime.onSuspend.addListener(removeRules);
     chrome.runtime.onSuspendCanceled.addListener(installOrUpdateRules);
+}
+
+export default {
+    registerEvents
 }

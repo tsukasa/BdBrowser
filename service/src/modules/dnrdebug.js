@@ -1,16 +1,20 @@
 import Logger from "common/logger";
 
-export function registerOnRuleMatchedDebug() {
+function registerEvents() {
     chrome.permissions.contains({ permissions: ["declarativeNetRequestFeedback"] }, enableOnRuleMatchedDebug);
 }
 
-export function enableOnRuleMatchedDebug(hasPermission) {
+function enableOnRuleMatchedDebug(hasPermission) {
     if(hasPermission) {
         Logger.log("Service", "Registering onRuleMatchedDebug listener.");
         chrome.declarativeNetRequest.onRuleMatchedDebug.addListener(processOnRuleMatchedDebug);
     }
 }
 
-export function processOnRuleMatchedDebug(matchedRuleInfo) {
+function processOnRuleMatchedDebug(matchedRuleInfo) {
     console.log(`[DEBUG] Matched rule, Initiator: ${matchedRuleInfo.request.initiator}, Requested URL ${matchedRuleInfo.request.url}`);
+}
+
+export default {
+    registerEvents
 }

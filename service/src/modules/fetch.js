@@ -1,6 +1,6 @@
 import Logger from "common/logger";
 
-export function registerMessageEvents() {
+function registerEvents() {
     Logger.log("Service", "Registering Message events.");
     chrome.runtime.onMessage.addListener(
         function(request, sender, sendResponse) {
@@ -13,7 +13,7 @@ export function registerMessageEvents() {
     );
 }
 
-export async function processFetchMessage(request) {
+async function processFetchMessage(request) {
     let returnValue;
     try {
         let fetchOptions = request.parameters.options || {};
@@ -42,4 +42,8 @@ export async function processFetchMessage(request) {
     finally {
         return returnValue;
     }
+}
+
+export default {
+    registerEvents
 }
