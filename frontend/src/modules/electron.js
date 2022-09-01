@@ -36,4 +36,14 @@ export const shell = {
 
 export const clipboard = {
     writeText: text => navigator.clipboard.writeText(text),
+    write: data => {
+        if(typeof(data) != "object")
+            return;
+        if(data.text)
+            return navigator.clipboard.writeText(data.text);
+        if(data.html)
+            return navigator.clipboard.writeText(data.html);
+        if(data.rtf)
+            return navigator.clipboard.writeText(data.rtf);
+    },
 }

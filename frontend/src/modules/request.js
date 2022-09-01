@@ -18,6 +18,12 @@ export default function request(url, options, callback) {
         options = {};
     }
 
+    if(typeof url === "object") {
+        options = JSON.parse(JSON.stringify(url));
+        options.url = undefined;
+        url = url.url;
+    }
+
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         url: url, options: options
     }, data => {
