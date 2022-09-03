@@ -10,3 +10,7 @@ ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']
 ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(3) {
     visibility: hidden;
 }
+
+ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(2), ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(3) {
+    display: none;
+}    
