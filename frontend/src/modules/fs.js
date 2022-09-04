@@ -12,16 +12,6 @@ const DB_STORE = "vfs";
 const DB_DURABILITY = "relaxed"; // Possible values: default, relaxed, strict
 const DB_FORCE_COMMIT = false;
 
-/**
- * Controls whether the VFS should run based off strings or Uint8Array.
- * Strings have the advantage of being cheap and fast, however binary
- * data can not be stored properly (excluding binary strings).
- * Uint8Arrays are slower due to the need to convert them to strings,
- * however they can hold any type of data just fine.
- * @type {boolean}
- */
-const VFS_USE_STRINGS = true;
-
 // Strencher's return values for fs functions
 // TODO: Get rid of this, replace with proper Node-like handling!
 const NOT_FOUND = "NOT_FOUND";
@@ -343,20 +333,11 @@ function upgradeVfsData() {
         // Migrate between string and UInt8Array for content storage          |
         // --------------------------------------------------------------------
 
-        if(VFS_USE_STRINGS) {
-            if(vfsObject.nodeType === "file" && vfsObject.contents.constructor.name === "Uint8Array") {
-                console.log(`♻ Converting "contents" from Uint8Array to String for: ${vfsObject.fullName}.`);
-                vfsObject.contents = textDecoder.decode(vfsObject.contents).toString();
-                vfsObject.size = (new Blob([vfsObject.contents])).size;
-                hasChanged = true;
-            }
-        } else {
-            if(vfsObject.nodeType === "file" && vfsObject.contents.constructor.name === "String") {
-                console.log(`♻ Converting "contents" from String to Uint8Array for: ${vfsObject.fullName}.`);
-                vfsObject.contents = textEncoder.encode(vfsObject.contents);
-                vfsObject.size = vfsObject.contents.byteLength;
-                hasChanged = true;
-            }
+        if(vfsObject.nodeType === "file" && vfsObject.contents.constructor.name === "String") {
+            console.log(`♻ Converting "contents" from String to Uint8Array for: ${vfsObject.fullName}.`);
+            vfsObject.contents = textEncoder.encode(vfsObject.contents);
+            vfsObject.size = vfsObject.contents.byteLength;
+            hasChanged = true;
         }
 
         // --------------------------------------------------------------------
@@ -627,17 +608,14 @@ export function readFileSync(path, options) {
     if(!fsEntry)
         return NOT_FOUND;
 
-    if(VFS_USE_STRINGS)
-        return fsEntry.contents;
-    else
-        if(useEncoding) {
-            let textDecoder = new TextDecoder(useEncoding);
-            // Call toString() - it is a DOMString!
-            return textDecoder.decode(fsEntry.contents).toString();
-        } else {
-            // Always return a VfsBuffer, so .toString() works as expected.
-            return new VfsBuffer(fsEntry.contents);
-        }
+    if(useEncoding) {
+        let textDecoder = new TextDecoder(useEncoding);
+        // Call toString() - it is a DOMString!
+        return textDecoder.decode(fsEntry.contents).toString();
+    } else {
+        // Always return a VfsBuffer, so .toString() works as expected.
+        return new VfsBuffer(fsEntry.contents);
+    }
 }
 
 /**
@@ -735,11 +713,10 @@ export function writeFileSync(path, content) {
     // Uniform Date.now() for all fs timestamps
     let dateNow = Date.now();
 
-    if(!VFS_USE_STRINGS)
-        if(typeof(content) === "string")
-            encodedContent = new TextEncoder().encode(content)
-        else
-            encodedContent = content;
+    if(typeof(content) === "string")
+        encodedContent = new TextEncoder().encode(content)
+    else
+        encodedContent = content;
 
     let objFile = Object.assign(new VfsEntry(path, "file"), {
         /* Node Information */
@@ -748,8 +725,8 @@ export function writeFileSync(path, content) {
         ctime: dateNow,
         mtime: dateNow,
         /* Content Information */
-        contents: (VFS_USE_STRINGS) ? content : encodedContent,
-        size: (VFS_USE_STRINGS) ? (new Blob([content])).size : encodedContent.byteLength,
+        contents: encodedContent,
+        size: encodedContent.byteLength,
     });
 
     writeOrUpdateMemoryCache(path, objFile);
@@ -888,7 +865,6 @@ const fs = {
     initializeVfs,
     openDatabase,
     upgradeVfsData,
-    VFS_USE_STRINGS,
     /* tooling */
     basename,
     normalizePath,

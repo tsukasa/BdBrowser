@@ -1,6 +1,5 @@
 import DOM from "common/dom";
 import ipcRenderer from "ipcRenderer";
-import fs from "./fs";
 
 ipcRenderer.initialize();
 export {ipcRenderer};
@@ -23,15 +22,9 @@ export const shell = {
             for (const file of inputEl.files) {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    if(fs.VFS_USE_STRINGS)
-                        fs.writeFileSync(`AppData/BetterDiscord/${item.split("/").pop()}/${file.name}`, reader.result);
-                    else
-                        fs.writeFileSync(`AppData/BetterDiscord/${item.split("/").pop()}/${file.name}`, new Uint8Array(reader.result));
+                    fs.writeFileSync(`AppData/BetterDiscord/${item.split("/").pop()}/${file.name}`, new Uint8Array(reader.result));
                 };
-                if(fs.VFS_USE_STRINGS)
-                    reader.readAsText(file);
-                else
-                    reader.readAsArrayBuffer(file);
+                reader.readAsArrayBuffer(file);
             }
         });
         inputEl.click();
