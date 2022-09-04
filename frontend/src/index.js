@@ -6,6 +6,7 @@ import DiscordModules from "./modules/discordmodules";
 import * as DiscordNative from "./modules/discordnative";
 import {default as fetchAPI} from "./modules/fetch";
 import fs from "./modules/fs";
+import VfsBuffer from "./modules/fsBuffer";
 import * as Monaco from "./modules/monaco";
 import process from "./modules/process";
 import require from "./modules/require";
@@ -39,7 +40,18 @@ import "./modules/patches";
 
 // const getConfig = key => new Promise(resolve => chrome.storage.sync.get(key, resolve));
 
-function initialize() {
+async function initialize() {
+    // Database connection
+    const vfsDatabaseConnection = await fs.openDatabase();
+    if(!vfsDatabaseConnection)
+        throw new Error("BdBrowser Error: IndexedDB VFS database connection could not be established!");
+
+    // VFS initialization
+    const vfsInitialize = await fs.initializeVfs();
+    if(!vfsInitialize)
+        throw new Error("BdBrowser Error: IndexedDB VFS could not be initialized!");
+
+    // Initialize BetterDiscord
     Logger.log("Frontend", `Loading, Environment = ${ENV}`);
     DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
     ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, selectBetterDiscordEnvironment);

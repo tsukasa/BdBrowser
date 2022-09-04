@@ -1,9 +1,9 @@
 import * as electron from "./electron";
-import * as fs from "./fs";
 import * as Https from "./https";
 import * as path from "./path";
 import * as vm from "./vm";
 import * as Webpack from "./webpack";
+import fs from "./fs";
 import DiscordModules from "./discordmodules";
 import Events from "./events";
 import mimeTypes from "./mime-types";
