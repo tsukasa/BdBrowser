@@ -1,9 +1,9 @@
 import Events from "./events";
-import * as Path from "./path";
-import {getItem, setItem} from "./localStorage";
-import Logger from "common/logger";
 import VfsBuffer from "./fsBuffer";
 import VfsEntry from "./fsEntry";
+import {getItem, setItem} from "./localStorage";
+import * as Path from "./path";
+import Logger from "common/logger";
 
 // IndexedDB constants
 const DB_NAME = "BdBrowser";
@@ -11,11 +11,6 @@ const DB_VERSION = 1;
 const DB_STORE = "vfs";
 const DB_DURABILITY = "relaxed"; // Possible values: default, relaxed, strict
 const DB_FORCE_COMMIT = false;
-
-// Strencher's return values for fs functions
-// TODO: Get rid of this, replace with proper Node-like handling!
-const NOT_FOUND = "NOT_FOUND";
-const NOT_A_DIR = "NOT_A_DIR";
 
 /**
  * Name of the LocalStorage key that holds BdBrowser's virtual filesystem.
@@ -60,7 +55,15 @@ const FILE_REGEX = /\.(.+)$/;
 
 const emitter = new Events();
 
+/**
+ * Global handle of the IndexedDB database connection.
+ */
 let database;
+
+/**
+ * Global handle of the memory cache.
+ * @type {{data: VfsEntry}}
+ */
 let cache = {
     data: {}
 }
@@ -71,6 +74,7 @@ let cache = {
 
 /**
  * Returns the last portion of a path, similar to the Unix basename command.
+ * Deprecated, use {@link path.basename} instead if you have an already normalized path!
  * @param {string} path - Path to break and parse.
  * @returns {string} Last portion of the given input path.
  * @deprecated
@@ -129,19 +133,19 @@ function getBdBrowserVfsVersion() {
  */
 function getVfsSizeInBytes() {
     let totalSize = 0;
-    let fsizes = [];
+    let fileSizes = [];
 
     for (const [key, value] of Object.entries(cache.data)) {
         if(cache.data[key].nodeType === "file")
         {
             totalSize += cache.data[key].size;
-            fsizes.push({fullName: key, size: cache.data[key].size });
+            fileSizes.push({fullName: key, size: cache.data[key].size });
         }
     }
 
-    fsizes.sort((l, r) => (l.size < r.size ? 1 : -1));
+    fileSizes.sort((l, r) => (l.size < r.size ? 1 : -1));
 
-    console.log(fsizes);
+    console.log(fileSizes);
     return totalSize;
 }
 
@@ -212,7 +216,7 @@ function importFromLocalStorage() {
  */
 function importLocalStorageNode(vfsObject, parentPath = "") {
     for(let vfsObjectKey in vfsObject) {
-        if(!vfsObject[vfsObjectKey].hasOwnProperty("type"))
+        if(!vfsObject[vfsObjectKey].type)
             continue;
 
         switch(vfsObject[vfsObjectKey].type) {
@@ -297,7 +301,6 @@ function setBdBrowserVfsVersion(version) {
  * than the return value of {@link getBdBrowserVfsVersion}.
  */
 function upgradeVfsData() {
-    const textDecoder = new TextDecoder();
     const textEncoder = new TextEncoder();
     const propertiesToRemove = [
         "mimeType", // 2022-09-04, Will be determined dynamically if needed.
@@ -398,7 +401,6 @@ function getVfsCacheEntry(path, prop) {
         if(cache.data[path].hasOwnProperty(prop))
             return cache.data[path][prop];
     }
-    return undefined;
 }
 
 /**
@@ -469,6 +471,17 @@ function inotify(path, event, source) {
 /* fs Functions                                                              */
 /*---------------------------------------------------------------------------*/
 
+/**
+ * Test whether the given path exists by checking with the file system.
+ * Then call the callback argument with either true or false.
+ * @param {string} path - Path to test.
+ * @param {function} callback - Callback function to execute.
+ */
+export function exists(path, callback) {
+    let v = existsSync(path);
+    callback(v);
+}
+
 export function existsSync(path) {
     try {
         path = normalizePath(path);
@@ -479,20 +492,80 @@ export function existsSync(path) {
     }
 }
 
+/**
+ * Returns a new {@link Error} object for a known list of filesystem error codes.
+ * @param {string} path - Path that caused the error to occur.
+ * @param {string} error - Error code to construct the {@link Error} for.
+ * @param {string} caller - Name of the function or operation that caused the error.
+ * @returns {(Error & {syscall: string, path: string, errno: number, code: string})|any}
+ */
+function getVfsErrorObject(path, error, caller) {
+    let errno = undefined;
+    let msg = undefined;
+    let code = undefined;
+
+    switch(error) {
+        case "EACCES":
+            code = "EACCES";
+            errno = -13;
+            msg = `${code}: permission denied, ${caller} '${path}'`;
+            break;
+
+        case "EEXIST":
+            code = "EEXIST";
+            errno = -4075;
+            msg = `${code}: file already exists, ${caller} '${path}'`;
+            break;
+
+        case "EISDIR":
+            code = "EISDIR";
+            errno = -4068;
+            msg = `${code}: illegal operation on a directory, ${caller} '${path}'`
+            break;
+
+        case "ENOENT":
+            code = "ENOENT";
+            errno = -4058;
+            msg = `${code}: no such file or directory, ${caller} '${path}'`;
+            break;
+
+        case "ENOTDIR":
+            code = "ENOTDIR";
+            errno = -4052;
+            msg = `${code}: not a directory, ${caller} '${path}'`;
+            break;
+
+        case "ENOTEMPTY":
+            code = "ENOTEMPTY";
+            errno = -4051;
+            msg = `${code}: directory not empty, ${caller} '${path}'`;
+            break;
+
+        case "EPERM":
+            code = "EPERM";
+            errno = -4048;
+            msg = `${code}: operation not permitted, ${caller} '${path}'`;
+            break;
+
+        default:
+            return Object.assign(new Error(`Unknown getVfsErrorObject error provided: ${error}, ${caller}`));
+    }
+
+    return Object.assign(new Error(msg), {
+        errno: errno,
+        syscall: caller,
+        code: code,
+        path: path
+    });
+}
+
 export function statSync(path) {
     path = normalizePath(path);
 
     let fsEntry = getVfsCacheEntry(path);
 
     if (fsEntry?.nodeType !== "file" && fsEntry?.nodeType !== "dir")
-        throw Object.assign(new Error(`ENOENT, No such file or directory '${path}'`), {
-            stack: undefined,
-            arguments: undefined,
-            errno: 2,
-            type: undefined,
-            code: "ENOENT",
-            path: path
-        });
+        throw getVfsErrorObject(path, "ENOENT", "stat");
 
     return {
         birthtime: new Date(fsEntry.birthtime),
@@ -516,17 +589,56 @@ export function statSync(path) {
     };
 }
 
-export function mkdirSync(path) {
+export function mkdir(path, options, callback) {
+    if (typeof (options) === "function") {
+        callback = options;
+        options = {};
+    }
+
+    try {
+        let v = mkdirSync(path, options);
+        callback(v);
+    } catch {
+        callback();
+    }
+}
+
+export function mkdirSync(path, options) {
     path = normalizePath(path);
-
-    // Inode must not exist yet
-    if(existsSync(path))
-        return false;
-
-    // Parent directory needs to exist
     let parentPath = Path.dirname(path);
-    if(parentPath && !existsSync(parentPath))
-        return false;
+    let firstPathElementCreated;
+
+    if(!options)
+        options = { recursive: false };
+
+    if(existsSync(path))
+        throw getVfsErrorObject(path, "EEXIST", "mkdir");
+
+    if(options.recursive === true) {
+        let pathElements = path.split("/");
+        let pathCrumb = "";
+
+        // Remove last item, will be created by the regular (non-recursive) logic.
+        pathElements.pop();
+
+        pathElements.forEach(element => {
+            pathCrumb = normalizePath(pathCrumb.concat("/", element));
+            try {
+                mkdirSync(pathCrumb, { recursive: false });
+
+                // If mkdirSync was successful and this is the first element
+                // this loop was able to create, remember it for later return.
+                if(!firstPathElementCreated)
+                    firstPathElementCreated = pathCrumb;
+            } catch (e) {
+                // Ignore exceptions here, they are likely EEXIST errors.
+            }
+        });
+    }
+
+    // Parent directory needs to exist, unless it is the root.
+    if(parentPath.length > 0 && !existsSync(parentPath))
+        throw getVfsErrorObject(path, "ENOENT", "mkdir");
 
     // Uniform Date.now() for all fs timestamps
     let dateNow = Date.now();
@@ -545,6 +657,9 @@ export function mkdirSync(path) {
     writeOrUpdateMemoryCache(path, objDir);
     writeOrUpdateIndexedDbKey(path, objDir);
     inotify(path, "rename");
+
+    if(options.recursive === true)
+        return firstPathElementCreated || path;
 }
 
 export function readdirSync(path) {
@@ -553,13 +668,13 @@ export function readdirSync(path) {
 
     // Check if element exists at all
     if(!existsSync(path))
-        return NOT_FOUND;
+        throw getVfsErrorObject(path, "ENOENT", "scandir");
 
     // Check if element is a directory
     let stat = statSync(path);
 
     if(!stat.isDirectory())
-        return NOT_A_DIR;
+        throw getVfsErrorObject(path, "ENOTDIR", "scandir");
 
     // Find other elements that reside within this element.
     for(let dataKey in cache.data) {
@@ -588,34 +703,137 @@ export function readFile(path, options, callback) {
 
 export function readFileSync(path, options) {
     path = normalizePath(path);
-    let useEncoding;
 
-    if(options) {
-        switch(typeof(options))
-        {
-            case "string":
-                useEncoding = options;
-                break;
-            case "object":
-                if(options.hasOwnProperty("encoding"))
-                    useEncoding = options.encoding;
-                break;
-        }
-    }
+    if(!options)
+        options = { encoding: null };
+    else if(typeof(options) === "string")
+        options = { encoding: options };
 
     let fsEntry = getVfsCacheEntry(path);
 
     if(!fsEntry)
-        return NOT_FOUND;
+        throw getVfsErrorObject(path, "ENOENT", "open");
 
-    if(useEncoding) {
-        let textDecoder = new TextDecoder(useEncoding);
-        // Call toString() - it is a DOMString!
+    if(options.encoding) {
+        let textDecoder = new TextDecoder(options.encoding);
+        // Call toString() - otherwise it is a DOMString!
         return textDecoder.decode(fsEntry.contents).toString();
     } else {
         // Always return a VfsBuffer, so .toString() works as expected.
         return new VfsBuffer(fsEntry.contents);
     }
+}
+
+/**
+ * Internal function that removes a node (file or directory) from the VFS.
+ * Used by {@link unlinkSync}, {@link rmSync} and {@link rmdirSync}.
+ * @param {string} path - Path to remove
+ * @param {object} [options] - Options for removal
+ * @returns {undefined}
+ */
+function removeFileOrDirectory(path, options) {
+    path = normalizePath(path);
+
+    if(!options)
+        options = { recursive: false, force: false };
+
+    // The very last fail-safe.
+    if(!existsSync(path))
+        throw getVfsErrorObject(path, "ENOENT", "rm");
+
+    let stat = statSync(path);
+
+    if(stat.isFile())
+    {
+        removeFromVfsCache(path);
+        removeIndexedDbKey(path);
+        inotify(path, "rename");
+    }
+    else
+    {
+        if(options.recursive === true)
+        {
+            for(let vfsObject in cache.data) {
+                let vfsEntry = getVfsCacheEntry(vfsObject);
+
+                if (vfsEntry.pathName.startsWith(path))
+                {
+                    removeFileOrDirectory(vfsEntry.fullName, { recursive: options.recursive, force: options.force });
+                }
+            }
+        }
+        removeFromVfsCache(path);
+        removeIndexedDbKey(path);
+        inotify(path, "rename");
+    }
+}
+
+export function rm(path, options, callback) {
+    if (typeof (options) === "function") {
+        callback = options;
+        options = {};
+    }
+
+    try {
+        rmSync(path, options);
+        callback();
+    } catch (e) {
+        callback(e);
+    }
+}
+
+export function rmSync(path, options) {
+    path = normalizePath(path);
+
+    if(!options)
+        options = { recursive: false, force: false };
+
+    try {
+        if(!existsSync(path)) {
+            // noinspection ExceptionCaughtLocallyJS
+            throw getVfsErrorObject(path, "ENOENT", "rm");
+        }
+
+        let stat = statSync(path);
+        if(stat.isDirectory() && options.recursive !== true && readdirSync(path).length > 0) {
+            // noinspection ExceptionCaughtLocallyJS
+            throw getVfsErrorObject(path, "ENOTEMPTY", "rm");
+        }
+
+        removeFileOrDirectory(path, { recursive: options.recursive, force: options.force });
+    } catch (e) {
+        if(options.force !== true)
+            throw e;
+    }
+}
+
+export function rmdir(path, options, callback) {
+    if (typeof (options) === "function") {
+        callback = options;
+        options = {};
+    }
+
+    try {
+        rmdirSync(path, options);
+        callback();
+    } catch (e) {
+        callback(e);
+    }
+}
+
+export function rmdirSync(path, options) {
+    path = normalizePath(path);
+
+    if(!options)
+        options = { recursive: false };
+
+    if(!existsSync(path) || !statSync(path).isDirectory())
+        throw getVfsErrorObject(path, "ENOENT", "rmdir");
+
+    if(options.recursive !== true && readdirSync(path).length > 0)
+        throw getVfsErrorObject(path, "ENOTEMPTY", "rmdir");
+
+    removeFileOrDirectory(path, { recursive: options.recursive, force: false });
 }
 
 /**
@@ -638,36 +856,17 @@ export function unlink(path, callback) {
  * Synchronous unlink.
  * @see unlink
  * @param {string} path - Path to the file to remove.
- * @returns {string} Strencher's error code, not conforming to node.js.
  */
 export function unlinkSync(path) {
     path = normalizePath(path);
 
     if(!existsSync(path))
-        return NOT_FOUND;
+        throw getVfsErrorObject(path, "ENOENT", "unlink");
 
-    let stat = statSync(path);
+    if(!statSync(path).isFile())
+        throw getVfsErrorObject(path, "EPERM", "unlink");
 
-    if(stat.isFile())
-    {
-        removeFromVfsCache(path);
-        removeIndexedDbKey(path);
-        inotify(path, "rename");
-    }
-    else
-    {
-        for(let vfsObject in cache.data) {
-            let vfsEntry = getVfsCacheEntry(vfsObject);
-
-            if (vfsEntry.pathName.startsWith(path))
-            {
-                unlinkSync(vfsEntry.fullName);
-            }
-        }
-        removeFromVfsCache(path);
-        removeIndexedDbKey(path);
-        inotify(path, "rename");
-    }
+    removeFileOrDirectory(path, { recursive: false, force: false });
 }
 
 export function watch(path, options, listener) {
@@ -687,7 +886,12 @@ export function watch(path, options, listener) {
     };
 }
 
-export function writeFile(path, content, callback) {
+export function writeFile(path, content, options, callback) {
+    if (typeof (options) === "function") {
+        callback = options;
+        options = {};
+    }
+
     try {
         writeFileSync(path, content);
         callback();
@@ -696,16 +900,26 @@ export function writeFile(path, content, callback) {
     }
 }
 
-export function writeFileSync(path, content) {
+export function writeFileSync(path, content, options) {
     path = normalizePath(path);
     let filename = Path.basename(path);
     let encodedContent = new VfsBuffer([]);
 
+    // TODO: No idea how that would work right now...
+    if(!options)
+        options = { encoding: "utf-8" };
+    else if(typeof(options) === "string")
+        options = { encoding: options };
+
+    if(existsSync(path) && statSync(path).isDirectory())
+        throw getVfsErrorObject(path, "EISDIR", "open");
+
+    // TODO: Not a clean solution.
     if (!isFile(filename))
-        return false;
+        throw getVfsErrorObject(path, "ENOENT", "open");
 
     if (!existsSync(Path.dirname(path)))
-        return false;
+        throw getVfsErrorObject(path, "ENOENT", "open");
 
     // In case the file already exists, some metadata can be pulled for re-use.
     let currentBirthtime = getVfsCacheEntry(path, "birthtime");
@@ -741,12 +955,25 @@ export function writeFileSync(path, content) {
 /**
  * Returns an object store for the BdBrowser VFS store with the requested
  * transaction mode.
- * @param {string} [mode="readonly"] - Transaction mode
+ * @param {string} [mode="readwrite"] - Transaction mode
  * @returns {IDBObjectStore} - Object store
  */
-function getObjectStore(mode = "readonly") {
+function getObjectStore(mode = "readwrite") {
     let txOptions = { durability: DB_DURABILITY }
     let transaction = database.transaction(DB_STORE, mode, txOptions);
+
+    transaction.onabort = function() {
+        Logger.error("VFS", "Transaction aborted:", transaction.error);
+    }
+
+    transaction.oncomplete = function() {
+
+    }
+
+    transaction.onerror = function() {
+        Logger.error("VFS", "Transaction error:", transaction.error);
+    }
+
     return transaction.objectStore(DB_STORE);
 }
 
@@ -760,10 +987,15 @@ function openDatabase() {
     return new Promise((resolvePromise, rejectPromise) => {
         let request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        request.onsuccess = function () {
+        request.onsuccess = function (event) {
             Logger.log("VFS", "Database connection established.");
-            database = this.result;
+            database = event.target.result;
             resolvePromise(true);
+        }
+
+        request.onclose = function() {
+            Logger.log("VFS", "Database connection closed.");
+            database = undefined;
         }
 
         request.onerror = function (e) {
@@ -776,7 +1008,7 @@ function openDatabase() {
         }
 
         request.onupgradeneeded = function (event) {
-            event.currentTarget.result.createObjectStore(DB_STORE, {keyPath: "fullName"})
+            event.currentTarget.result.createObjectStore(DB_STORE, { keyPath: "fullName" });
             Logger.log("VFS", "Database upgrade performed.");
         }
     });
@@ -816,6 +1048,7 @@ function fillMemoryCacheFromIndexedDb() {
         }
 
         vfsEntries.onerror = function (e) {
+            Logger.error("VFS", "Error during fillMemoryCacheFromIndexedDb:", vfsEntries.error);
             rejectPromise(e);
         }
     });
@@ -829,12 +1062,16 @@ function removeIndexedDbKey(fullNameKey) {
     if(!database)
         throw new Error("Database not connected!");
 
-    let store = getObjectStore("readwrite");
+    let store = getObjectStore();
     let res = store.delete(fullNameKey);
 
     res.onsuccess = function() {
         if(DB_FORCE_COMMIT)
             store.transaction.commit();
+    }
+
+    res.onerror = function() {
+        Logger.error("VFS", "Error while removeIndexedDbKey:", res.error);
     }
 }
 
@@ -848,12 +1085,16 @@ function writeOrUpdateIndexedDbKey(fullNameKey, vfsEntryObject) {
     if(!database)
         throw new Error("Database not connected!");
 
-    let store = getObjectStore("readwrite");
+    let store = getObjectStore();
     let res = store.put(vfsEntryObject);
 
     res.onsuccess = function() {
         if(DB_FORCE_COMMIT)
             store.transaction.commit();
+    }
+
+    res.onerror = function() {
+        Logger.error("VFS", "Error while writeOrUpdateIndexedDbKey:", res.error);
     }
 }
 
@@ -864,18 +1105,22 @@ const fs = {
     getVfsSizeInBytes,
     initializeVfs,
     openDatabase,
-    upgradeVfsData,
     /* tooling */
     basename,
     normalizePath,
     /* fs */
-    exists: existsSync,
+    exists,
     existsSync,
+    mkdir,
     mkdirSync,
     readFile,
     readFileSync,
     readdirSync,
     realpathSync: normalizePath,
+    rm,
+    rmSync,
+    rmdir,
+    rmdirSync,
     statSync,
     unlink,
     unlinkSync,

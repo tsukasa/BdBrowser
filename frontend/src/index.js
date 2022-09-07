@@ -6,7 +6,6 @@ import DiscordModules from "./modules/discordmodules";
 import * as DiscordNative from "./modules/discordnative";
 import {default as fetchAPI} from "./modules/fetch";
 import fs from "./modules/fs";
-import VfsBuffer from "./modules/fsBuffer";
 import * as Monaco from "./modules/monaco";
 import process from "./modules/process";
 import require from "./modules/require";
