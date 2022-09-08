@@ -34,11 +34,11 @@ export const shell = {
 }
 
 export const clipboard = {
-    writeText: text => navigator.clipboard.writeText(text),
     write: (data, type) => {
         if(typeof(data) != "object")
             return;
         if(data.text)
-            navigator.clipboard.writeText(data.text);
+            clipboard.writeText(data.text);
     },
+    writeText: text => navigator.clipboard.writeText(text),
 }

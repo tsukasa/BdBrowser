@@ -3,6 +3,8 @@ import VfsBuffer from "./fsBuffer";
 import VfsEntry from "./fsEntry";
 import {getItem, setItem} from "./localStorage";
 import * as Path from "./path";
+import Utilities from "./utilities";
+import DOM from "common/dom";
 import Logger from "common/logger";
 
 // IndexedDB constants
@@ -117,6 +119,94 @@ export function normalizePath(path) {
 /*---------------------------------------------------------------------------*/
 /* General VFS Functions                                                     */
 /*---------------------------------------------------------------------------*/
+
+/**
+ * Exports the current contents of the virtual file system as a serialized JSON file.
+ * @see importVfsBackup
+ */
+function exportVfsBackup() {
+    let vfsList = {};
+    let execDate = new Date()
+        .toISOString()
+        .replace("T", "_")
+        .replace(":", "_")
+        .replace(".", "_");
+
+    for (const [fullName] of Object.entries(cache.data)) {
+        // Must be a deep copy, otherwise the source object will take damage!
+        let o = Object.assign(new VfsEntry(fullName, cache.data[fullName].nodeType), cache.data[fullName]);
+
+        // Directories do not have contents.
+        if(o.contents)
+            o.contents = Utilities.arrayBufferToBase64(o.contents);
+
+        vfsList[fullName] = o;
+    }
+
+    let jsonString = JSON.stringify(vfsList);
+
+    let a = DOM.createElement("a");
+    a.href = window.URL.createObjectURL(new Blob([jsonString], {type: "application/json"}));
+    a.download = `bdbrowser_backup_${execDate}.json`;
+    a.click();
+    a.remove();
+}
+
+/**
+ * "Formats" the virtual file system and re-initializes it with the base directory structure.
+ * @param {boolean} userIsSure Signals that the user is sure they want to format the virtual file system.
+ */
+function formatVfs(userIsSure) {
+    if(userIsSure === true) {
+        Logger.log("VFS", "Formatting VFS and initializing base data...");
+
+        for(const [fullName] of Object.entries(cache.data)) {
+            removeFromVfsCache(fullName);
+            removeIndexedDbKey(fullName);
+        }
+
+        initializeBaseData();
+    }
+    else
+    {
+        Logger.info("VFS", "If you are sure you want to format the VFS, please call the function like this: fs.formatVfs(true);")
+    }
+}
+
+/**
+ * Imports a serialized JSON backup of the virtual file system.
+ * Existing files that are not present in the backup will be kept in place.
+ * @see exportVfsBackup
+ */
+function importVfsBackup() {
+    let i = DOM.createElement("input", {type: "file"});
+    i.addEventListener("change", () => {
+        for (const file of i.files) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                Logger.log("VFS", "Import from backup.");
+                let backupData = JSON.parse(reader.result);
+
+                for(const [fullName] of Object.entries(backupData)) {
+                    let o = Object.assign(new VfsEntry(fullName, backupData[fullName].nodeType), backupData[fullName]);
+
+                    // Skip directories, they have no payload!
+                    if(o.contents)
+                        o.contents = Utilities.base64ToArrayBuffer(o.contents);
+
+                    Logger.log("VFS", `Restoring from backup: ${o.fullName}`);
+
+                    writeOrUpdateMemoryCache(o.fullName, o);
+                    writeOrUpdateIndexedDbKey(o.fullName, o);
+                }
+                Logger.log("VFS", "Import finished.");
+            };
+            reader.readAsText(file);
+        }
+    });
+    i.click();
+    i.remove();
+}
 
 /**
  * Returns the version of BdBrowser's VFS according to the LocalStorage.
@@ -1101,8 +1191,11 @@ function writeOrUpdateIndexedDbKey(fullNameKey, vfsEntryObject) {
 const fs = {
     /* vfs-specific */
     dumpVfsCache,
+    exportVfsBackup,
+    formatVfs,
     getVfsCacheEntry,
     getVfsSizeInBytes,
+    importVfsBackup,
     initializeVfs,
     openDatabase,
     /* tooling */
