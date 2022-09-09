@@ -128,11 +128,10 @@ function exportVfsBackup() {
     let vfsList = {};
     let execDate = new Date()
         .toISOString()
-        .replace("T", "_")
-        .replace(":", "_")
-        .replace(".", "_");
+        .replace(":", "-")
+        .replace(".", "-");
 
-    for (const [fullName] of Object.entries(cache.data)) {
+    for (const fullName of Object.keys(cache.data)) {
         // Must be a deep copy, otherwise the source object will take damage!
         let o = Object.assign(new VfsEntry(fullName, cache.data[fullName].nodeType), cache.data[fullName]);
 
@@ -160,7 +159,7 @@ function formatVfs(userIsSure) {
     if(userIsSure === true) {
         Logger.log("VFS", "Formatting VFS and initializing base data...");
 
-        for(const [fullName] of Object.entries(cache.data)) {
+        for(const fullName of Object.keys(cache.data)) {
             removeFromVfsCache(fullName);
             removeIndexedDbKey(fullName);
         }
@@ -187,7 +186,7 @@ function importVfsBackup() {
                 Logger.log("VFS", "Import from backup.");
                 let backupData = JSON.parse(reader.result);
 
-                for(const [fullName] of Object.entries(backupData)) {
+                for(const fullName of Object.keys(backupData)) {
                     let o = Object.assign(new VfsEntry(fullName, backupData[fullName].nodeType), backupData[fullName]);
 
                     // Skip directories, they have no payload!
@@ -225,7 +224,7 @@ function getVfsSizeInBytes() {
     let totalSize = 0;
     let fileSizes = [];
 
-    for (const [key, value] of Object.entries(cache.data)) {
+    for (const key of Object.keys(cache.data)) {
         if(cache.data[key].nodeType === "file")
         {
             totalSize += cache.data[key].size;
@@ -584,68 +583,68 @@ export function existsSync(path) {
 
 /**
  * Returns a new {@link Error} object for a known list of filesystem error codes.
- * @param {string} path - Path that caused the error to occur.
- * @param {string} error - Error code to construct the {@link Error} for.
- * @param {string} caller - Name of the function or operation that caused the error.
+ * @param {object} params - Object containing the parameters for the error message.
  * @returns {(Error & {syscall: string, path: string, errno: number, code: string})|any}
  */
-function getVfsErrorObject(path, error, caller) {
+function getVfsErrorObject(params) {
     let errno = undefined;
     let msg = undefined;
     let code = undefined;
+    let path = (params.dest) ? `'${params.path}' -> '${params.dest}'` : `'${paramObject.path}'`;
 
     switch(error) {
         case "EACCES":
             code = "EACCES";
             errno = -13;
-            msg = `${code}: permission denied, ${caller} '${path}'`;
+            msg = `${code}: permission denied, ${params.syscall} ${path}`;
             break;
 
         case "EEXIST":
             code = "EEXIST";
             errno = -4075;
-            msg = `${code}: file already exists, ${caller} '${path}'`;
+            msg = `${code}: file already exists, ${params.syscall} ${path}`;
             break;
 
         case "EISDIR":
             code = "EISDIR";
             errno = -4068;
-            msg = `${code}: illegal operation on a directory, ${caller} '${path}'`
+            msg = `${code}: illegal operation on a directory, ${params.syscall} ${path}`
             break;
 
         case "ENOENT":
             code = "ENOENT";
             errno = -4058;
-            msg = `${code}: no such file or directory, ${caller} '${path}'`;
+            msg = `${code}: no such file or directory, ${params.syscall} ${path}`;
             break;
 
         case "ENOTDIR":
             code = "ENOTDIR";
             errno = -4052;
-            msg = `${code}: not a directory, ${caller} '${path}'`;
+            msg = `${code}: not a directory, ${params.syscall} ${path}`;
             break;
 
         case "ENOTEMPTY":
             code = "ENOTEMPTY";
             errno = -4051;
-            msg = `${code}: directory not empty, ${caller} '${path}'`;
+            msg = `${code}: directory not empty, ${params.syscall} ${path}`;
             break;
 
         case "EPERM":
             code = "EPERM";
             errno = -4048;
-            msg = `${code}: operation not permitted, ${caller} '${path}'`;
+            msg = `${code}: operation not permitted, ${params.syscall} ${path}`;
             break;
 
         default:
-            return Object.assign(new Error(`Unknown getVfsErrorObject error provided: ${error}, ${caller}`));
+            return Object.assign(new Error(`Unknown getVfsErrorObject error provided: ${params.error}, ${params.syscall}`));
     }
 
     return Object.assign(new Error(msg), {
         errno: errno,
-        syscall: caller,
+        syscall: params.syscall,
         code: code,
-        path: path
+        path: params.path,
+        dest: params.dest,
     });
 }
 
@@ -655,7 +654,7 @@ export function statSync(path) {
     let fsEntry = getVfsCacheEntry(path);
 
     if (fsEntry?.nodeType !== "file" && fsEntry?.nodeType !== "dir")
-        throw getVfsErrorObject(path, "ENOENT", "stat");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "stat" });
 
     return {
         birthtime: new Date(fsEntry.birthtime),
@@ -702,7 +701,7 @@ export function mkdirSync(path, options) {
         options = { recursive: false };
 
     if(existsSync(path))
-        throw getVfsErrorObject(path, "EEXIST", "mkdir");
+        throw getVfsErrorObject({ path: path, error: "EEXIST", syscall: "mkdir" });
 
     if(options.recursive === true) {
         let pathElements = path.split("/");
@@ -728,7 +727,7 @@ export function mkdirSync(path, options) {
 
     // Parent directory needs to exist, unless it is the root.
     if(parentPath.length > 0 && !existsSync(parentPath))
-        throw getVfsErrorObject(path, "ENOENT", "mkdir");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "mkdir" });
 
     // Uniform Date.now() for all fs timestamps
     let dateNow = Date.now();
@@ -758,13 +757,13 @@ export function readdirSync(path) {
 
     // Check if element exists at all
     if(!existsSync(path))
-        throw getVfsErrorObject(path, "ENOENT", "scandir");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "scandir" });
 
     // Check if element is a directory
     let stat = statSync(path);
 
     if(!stat.isDirectory())
-        throw getVfsErrorObject(path, "ENOTDIR", "scandir");
+        throw getVfsErrorObject({ path: path, error: "ENOTDIR", syscall: "scandir" });
 
     // Find other elements that reside within this element.
     for(let dataKey in cache.data) {
@@ -802,7 +801,7 @@ export function readFileSync(path, options) {
     let fsEntry = getVfsCacheEntry(path);
 
     if(!fsEntry)
-        throw getVfsErrorObject(path, "ENOENT", "open");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "open" });
 
     if(options.encoding) {
         let textDecoder = new TextDecoder(options.encoding);
@@ -829,7 +828,7 @@ function removeFileOrDirectory(path, options) {
 
     // The very last fail-safe.
     if(!existsSync(path))
-        throw getVfsErrorObject(path, "ENOENT", "rm");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "rm" });
 
     let stat = statSync(path);
 
@@ -881,13 +880,13 @@ export function rmSync(path, options) {
     try {
         if(!existsSync(path)) {
             // noinspection ExceptionCaughtLocallyJS
-            throw getVfsErrorObject(path, "ENOENT", "rm");
+            throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "rm" });
         }
 
         let stat = statSync(path);
         if(stat.isDirectory() && options.recursive !== true && readdirSync(path).length > 0) {
             // noinspection ExceptionCaughtLocallyJS
-            throw getVfsErrorObject(path, "ENOTEMPTY", "rm");
+            throw getVfsErrorObject({ path: path, error: "ENOTEMPTY", syscall: "rm" });
         }
 
         removeFileOrDirectory(path, { recursive: options.recursive, force: options.force });
@@ -918,10 +917,10 @@ export function rmdirSync(path, options) {
         options = { recursive: false };
 
     if(!existsSync(path) || !statSync(path).isDirectory())
-        throw getVfsErrorObject(path, "ENOENT", "rmdir");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "rmdir" });
 
     if(options.recursive !== true && readdirSync(path).length > 0)
-        throw getVfsErrorObject(path, "ENOTEMPTY", "rmdir");
+        throw getVfsErrorObject({ path: path, error: "ENOTEMPTY", syscall: "rmdir" });
 
     removeFileOrDirectory(path, { recursive: options.recursive, force: false });
 }
@@ -951,10 +950,10 @@ export function unlinkSync(path) {
     path = normalizePath(path);
 
     if(!existsSync(path))
-        throw getVfsErrorObject(path, "ENOENT", "unlink");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "unlink" });
 
     if(!statSync(path).isFile())
-        throw getVfsErrorObject(path, "EPERM", "unlink");
+        throw getVfsErrorObject({ path: path, error: "EPERM", syscall: "unlink" });
 
     removeFileOrDirectory(path, { recursive: false, force: false });
 }
@@ -1002,14 +1001,14 @@ export function writeFileSync(path, content, options) {
         options = { encoding: options };
 
     if(existsSync(path) && statSync(path).isDirectory())
-        throw getVfsErrorObject(path, "EISDIR", "open");
+        throw getVfsErrorObject({ path: path, error: "EISDIR", syscall: "open" });
 
     // TODO: Not a clean solution.
     if (!isFile(filename))
-        throw getVfsErrorObject(path, "ENOENT", "open");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "open" });
 
     if (!existsSync(Path.dirname(path)))
-        throw getVfsErrorObject(path, "ENOENT", "open");
+        throw getVfsErrorObject({ path: path, error: "ENOENT", syscall: "open" });
 
     // In case the file already exists, some metadata can be pulled for re-use.
     let currentBirthtime = getVfsCacheEntry(path, "birthtime");
