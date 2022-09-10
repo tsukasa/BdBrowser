@@ -1,1 +1,232 @@
-(()=>{"use strict";class e{static createElement(e,t={},...r){const n=document.createElement(e);Object.assign(n,t);for(const e of r)n.append(e);return n}static injectTheme(e,t){const[r]=document.getElementsByTagName("bd-themes"),n=this.createElement("style",{id:e,type:"text/css",innerHTML:t});n.setAttribute("data-bd-native",""),r.append(n)}static injectCSS(e,t){const r=this.createElement("style",{id:e,type:"text/css",innerHTML:t});this.headAppend(r)}static removeCSS(e){const t=document.querySelector("style#"+e);t&&t.remove()}static injectJS(e,t,r=!0){const n=this.createElement("script",{id:e,type:"text/javascript",src:t});this.headAppend(n),r&&n.addEventListener("load",(()=>{n.remove()}),{once:!0})}}e.headAppend=document.head.append.bind(document.head);const t="-reply";class r{constructor(e){if(!e)throw new Error("Context is required");this.context=e}createHash(){return Math.random().toString(36).substring(2,10)}reply(e,r){this.send(e.event.concat(t),r,void 0,e.hash)}on(e,t,r=!1){const n=s=>{s.data.event===e&&s.data.context!==this.context&&!0===t(s.data,s.data.data)&&r&&window.removeEventListener("message",n)};window.addEventListener("message",n)}send(e,r,n=null,s){s||(s=this.createHash()),n&&this.on(e.concat(t),(e=>e.hash===s&&(n(e.data),!0)),!0),window.postMessage({source:"betterdiscord-browser".concat("-",this.context),event:e,context:this.context,hash:s,data:r})}}class n{static _parseType(e){switch(e){case"info":case"warn":case"error":return e;default:return"log"}}static _log(e,t,...r){e=this._parseType(e),console[e](`%c[BetterDiscord]%c %c[${t}]%c`,"color: #3E82E5; font-weight: 700;","","color: #396CB8","",...r)}static log(e,...t){this._log("log",e,...t)}static info(e,...t){this._log("info",e,...t)}static warn(e,...t){this._log("warn",e,...t)}static error(e,...t){this._log("error",e,...t)}}!function(){!function(){n.log("Backend","Registering events.");const t=new r("backend");t.on("bdbrowser-inject-css",((t,r)=>{e.injectCSS(r.id,r.css)})),t.on("bdbrowser-inject-theme",((t,r)=>{e.injectTheme(r.id,r.css)})),t.on("bdbrowser-make-requests",((e,r)=>{r.url&&"object"==typeof r.url&&(r.options=JSON.parse(JSON.stringify(r.url)),r.options.url=void 0,r.url.url&&(r.url=r.url.url)),chrome.runtime.sendMessage({operation:"fetch",parameters:{url:r.url,options:r.options}},(function(n){n.error?console.error("BdBrowser Backend MAKE_REQUESTS failed:",r.url,n.error):t.reply(e,n.body)}))})),t.on("bdbrowser-get-extension-resourceurl",((e,r)=>{t.reply(e,chrome.runtime.getURL(r.url))}))}(),n.log("Backend","Initializing modules");var t;t=chrome.runtime.getURL("dist/frontend.js"),n.log("Backend","Loading frontend script from:",t),e.injectJS("BetterDiscordBrowser-frontend",t,!1)}()})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+var __webpack_exports__ = {};
+
+;// CONCATENATED MODULE: ../common/constants.js
+const IPCEvents = {
+  INJECT_CSS: "bdbrowser-inject-css",
+  MAKE_REQUESTS: "bdbrowser-make-requests",
+  INJECT_THEME: "bdbrowser-inject-theme",
+  GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
+};
+;// CONCATENATED MODULE: ../common/dom.js
+class DOM {
+  /**@returns {HTMLElement} */
+  static createElement(type, options = {}, ...children) {
+    const node = document.createElement(type);
+    Object.assign(node, options);
+
+    for (const child of children) {
+      node.append(child);
+    }
+
+    return node;
+  }
+
+  static injectTheme(id, css) {
+    const [bdThemes] = document.getElementsByTagName("bd-themes");
+    const style = this.createElement("style", {
+      id: id,
+      type: "text/css",
+      innerHTML: css
+    });
+    style.setAttribute("data-bd-native", "");
+    bdThemes.append(style);
+  }
+
+  static injectCSS(id, css) {
+    const style = this.createElement("style", {
+      id: id,
+      type: "text/css",
+      innerHTML: css
+    });
+    this.headAppend(style);
+  }
+
+  static removeCSS(id) {
+    const style = document.querySelector("style#" + id);
+
+    if (style) {
+      style.remove();
+    }
+  }
+
+  static injectJS(id, src, silent = true) {
+    const script = this.createElement("script", {
+      id: id,
+      type: "text/javascript",
+      src: src
+    });
+    this.headAppend(script);
+    if (silent) script.addEventListener("load", () => {
+      script.remove();
+    }, {
+      once: true
+    });
+  }
+
+}
+DOM.headAppend = document.head.append.bind(document.head);
+;// CONCATENATED MODULE: ../common/ipc.js
+const IPC_REPLY_SUFFIX = "-reply";
+class IPC {
+  constructor(context) {
+    if (!context) throw new Error("Context is required");
+    this.context = context;
+  }
+
+  createHash() {
+    return Math.random().toString(36).substring(2, 10);
+  }
+
+  reply(message, data) {
+    this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
+  }
+
+  on(event, listener, once = false) {
+    const wrappedListener = message => {
+      if (message.data.event !== event || message.data.context === this.context) return;
+      const returnValue = listener(message.data, message.data.data);
+
+      if (returnValue === true && once) {
+        window.removeEventListener("message", wrappedListener);
+      }
+    };
+
+    window.addEventListener("message", wrappedListener);
+  }
+
+  send(event, data, callback = null, hash) {
+    if (!hash) hash = this.createHash();
+
+    if (callback) {
+      this.on(event.concat(IPC_REPLY_SUFFIX), message => {
+        if (message.hash === hash) {
+          callback(message.data);
+          return true;
+        }
+
+        return false;
+      }, true);
+    }
+
+    window.postMessage({
+      source: "betterdiscord-browser".concat("-", this.context),
+      event: event,
+      context: this.context,
+      hash: hash,
+      data
+    });
+  }
+
+}
+;
+;// CONCATENATED MODULE: ../common/logger.js
+class Logger {
+  static _parseType(type) {
+    switch (type) {
+      case "info":
+      case "warn":
+      case "error":
+        return type;
+
+      default:
+        return "log";
+    }
+  }
+
+  static _log(type, module, ...nessage) {
+    type = this._parseType(type);
+    console[type](`%c[BetterDiscord]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
+  }
+
+  static log(module, ...message) {
+    this._log("log", module, ...message);
+  }
+
+  static info(module, ...message) {
+    this._log("info", module, ...message);
+  }
+
+  static warn(module, ...message) {
+    this._log("warn", module, ...message);
+  }
+
+  static error(module, ...message) {
+    this._log("error", module, ...message);
+  }
+
+}
+;// CONCATENATED MODULE: ./src/index.js
+
+
+
+
+
+function initialize() {
+  registerEvents();
+  Logger.log("Backend", "Initializing modules");
+
+  const SCRIPT_URL = (() => {
+    switch ("production") {
+      case "production":
+        return chrome.runtime.getURL("dist/frontend.js");
+
+      case "development":
+        return "http://127.0.0.1:5500/frontend.js";
+
+      default:
+        throw new Error("Unknown Environment");
+    }
+  })();
+
+  injectFrontend(SCRIPT_URL);
+}
+
+function injectFrontend(scriptUrl) {
+  Logger.log("Backend", "Loading frontend script from:", scriptUrl);
+  DOM.injectJS("BetterDiscordBrowser-frontend", scriptUrl, false);
+}
+
+function registerEvents() {
+  Logger.log("Backend", "Registering events.");
+  const ipcMain = new IPC("backend");
+  ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
+    DOM.injectCSS(data.id, data.css);
+  });
+  ipcMain.on(IPCEvents.INJECT_THEME, (_, data) => {
+    DOM.injectTheme(data.id, data.css);
+  });
+  ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
+    // If the data is an object instead of a string, we probably
+    // deal with a "request"-style request and have to re-order
+    // the options.
+    if (data.url && typeof data.url === "object") {
+      // Deep clone data.url into the options and remove the url
+      data.options = JSON.parse(JSON.stringify(data.url));
+      data.options.url = undefined;
+      if (data.url.url) data.url = data.url.url;
+    }
+
+    chrome.runtime.sendMessage({
+      operation: "fetch",
+      parameters: {
+        url: data.url,
+        options: data.options
+      }
+    }, function (response) {
+      if (response.error) {
+        console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+      } else {
+        ipcMain.reply(event, response.body);
+      }
+    });
+  });
+  ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
+    ipcMain.reply(event, chrome.runtime.getURL(data.url));
+  });
+}
+
+initialize();
+/******/ })()
+;

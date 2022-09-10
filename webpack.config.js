@@ -8,6 +8,9 @@ module.exports = env => {
         mode: mode,
         target: "node",
         entry: "./src/index.js",
+        optimization: {
+            minimize: false
+        },
         devtool: false,
         output: {
             filename: env.type + ".js",

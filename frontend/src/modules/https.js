@@ -1,12 +1,18 @@
 import fetch from "./fetch";
 
-export function request(url, options, callback) {
+export default function request(url, options, callback) {
     if (typeof options === "function") {
         callback = options;
         options = {};
     }
 
-    fetch(url)
+    if(typeof url === "object") {
+        options = JSON.parse(JSON.stringify(url));
+        options.url = undefined;
+        url = url.url;
+    }
+
+    fetch(url, options)
         .then(res => res.text())
         .then(data => {
             callback({

@@ -13,7 +13,7 @@ const _extensions = {
 };
 
 function _require(path, req) {
-    const extension = "." + extname(path);
+    const extension = extname(path);
     const loader = _extensions[extension];
 
     if (!loader)

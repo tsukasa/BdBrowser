@@ -23,7 +23,7 @@ export function basename(filename) {
         });
     }
 
-    return filename.split("/").slice(-1)[0];
+    return filename?.split("/")?.slice(-1)[0];
 }
 
 export function resolve(...paths) {
@@ -31,9 +31,16 @@ export function resolve(...paths) {
 }
 
 export function extname(path) {
-    return path.split(".").slice(-1)[0];
+    let ext = path?.split(".")?.slice(-1)[0];
+    if(ext) ext = ".".concat(ext);
+    return ext;
 }
 
 export function dirname(path) {
-    return path.split("/").slice(0, -1).join("/");
+    return path?.split("/")?.slice(0, -1)?.join("/");
+}
+
+export function isAbsolute(path) {
+    path = normalizePath(path);
+    return path?.startsWith("AppData/");
 }

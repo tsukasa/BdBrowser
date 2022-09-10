@@ -7,6 +7,7 @@ import * as DiscordNative from "./modules/discordnative";
 import {default as fetchAPI} from "./modules/fetch";
 import fs from "./modules/fs";
 import * as Monaco from "./modules/monaco";
+import bdPreload from "./modules/bdpreload";
 import process from "./modules/process";
 import require from "./modules/require";
 
@@ -32,6 +33,14 @@ window.IPC = ipcRenderer;
 window.monaco = Monaco;
 window.process = process;
 window.require = require;
+
+// Electron 17 requirements adapted from the preloader.
+let hasInitialized = false;
+window.BetterDiscordPreload = () => {
+    if(hasInitialized) return null;
+    hasInitialized = true;
+    return bdPreload;
+};
 
 let bdScriptUrl;
 
