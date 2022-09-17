@@ -1,6 +1,6 @@
 import fetch from "./fetch";
 
-export default function request(url, options, callback) {
+export function request(url, options, callback) {
     if (typeof options === "function") {
         callback = options;
         options = {};
@@ -21,7 +21,9 @@ export default function request(url, options, callback) {
                         case "data":
                             return callback(data);
                         case "end":
-                            return callback();
+                            const res = new Response(data);
+                            res.statusCode = res.status;
+                            return res;
                     }
                 }
             });

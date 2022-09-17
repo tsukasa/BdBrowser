@@ -2294,8 +2294,8 @@ var https_namespaceObject = {};
 __webpack_require__.r(https_namespaceObject);
 __webpack_require__.d(https_namespaceObject, {
   "createServer": () => (createServer),
-  "default": () => (request),
-  "get": () => (get)
+  "get": () => (get),
+  "request": () => (request)
 });
 
 // NAMESPACE OBJECT: ./src/modules/vm.js
@@ -2331,7 +2331,9 @@ function request(url, options, callback) {
             return callback(data);
 
           case "end":
-            return callback();
+            const res = new Response(data);
+            res.statusCode = res.status;
+            return res;
         }
       }
     });
