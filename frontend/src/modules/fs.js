@@ -253,7 +253,7 @@ function hasBdBrowserFiles() {
  */
 function hasBeenMigrated() {
     let wasMigrated = getItem(BD_FILES_MIGRATED_KEY);
-    return (wasMigrated === true);
+    return (wasMigrated === "true");
 }
 
 /**

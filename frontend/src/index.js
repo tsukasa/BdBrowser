@@ -74,7 +74,6 @@ async function loadBetterDiscord(scriptBody) {
     const callback = async () => {
         DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
         Logger.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
-
         try {
             eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
         } catch (error) {
