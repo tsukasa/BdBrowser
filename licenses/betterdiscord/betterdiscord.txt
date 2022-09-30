@@ -1,10 +1,9 @@
 BetterDiscord
 Copyright © 2019-2022, BetterDiscord Team
-MIT Licensed
 
 Homepage: https://github.com/BetterDiscord/BetterDiscord
           https://betterdiscord.app
 
-This project uses the following files from the BetterDiscord project:
+This project ships unmodified versions of these files from the BetterDiscord project:
+- dist/betterdiscord.js (renderer.js)
 - frontend/src/modules/webpack.js
-- frontend/src/modules/utilities.js

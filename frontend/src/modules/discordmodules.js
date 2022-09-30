@@ -1,7 +1,6 @@
-import Utilities from "utilities";
-import Webpack   from "webpack";
+import Webpack from "webpack";
 
-export default Utilities.memoizeObject({
+export default {
     /* Current User Info, State and Settings */
     get ThemeStore() { return Webpack.getByProps("addChangeListener", "theme"); },
 
@@ -14,5 +13,8 @@ export default Utilities.memoizeObject({
     get RouterModule() { return Webpack.getByProps("listeners", "rewrites", "flushRoute"); },
 
     /* Other Utils */
-    get StorageModule() { return Webpack.getByProps("get", "set", "stringify"); }
-});
+    get StorageModule() { return Webpack.getByProps("get", "set", "stringify"); },
+
+    /* Stuff for the Preloader */
+    get Buffer() { return Webpack.getByProps("INSPECT_MAX_BYTES"); }
+};

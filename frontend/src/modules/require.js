@@ -16,7 +16,11 @@ export default function require(mod) {
         case "_discordmodules":
             return DiscordModules;
 
+        case "buffer":
+            return DiscordModules.Buffer;
+
         case "fs":
+        case "original-fs":
             return fs;
 
         case "vm":

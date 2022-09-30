@@ -206,7 +206,7 @@ const ipcRenderer = new IPC("frontend");
 /* harmony import */ var _electron__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8);
 /* harmony import */ var _request__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
 /* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(878);
-/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(50);
+/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(432);
 
 
 
@@ -239,11 +239,9 @@ const bdPreloadCatalogue = {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var utilities__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(97);
 /* harmony import */ var webpack__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(343);
 
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (utilities__WEBPACK_IMPORTED_MODULE_1__/* .default.memoizeObject */ .Z.memoizeObject({
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   /* Current User Info, State and Settings */
   get ThemeStore() {
     return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("addChangeListener", "theme");
@@ -270,9 +268,14 @@ const bdPreloadCatalogue = {
   /* Other Utils */
   get StorageModule() {
     return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("get", "set", "stringify");
+  },
+
+  /* Stuff for the Preloader */
+  get Buffer() {
+    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("INSPECT_MAX_BYTES");
   }
 
-}));
+});
 
 /***/ }),
 
@@ -483,16 +486,22 @@ const clipboard = {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Z": () => (/* binding */ Events)
 /* harmony export */ });
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 class Events {
   constructor() {
-    _defineProperty(this, "listeners", {});
+    this.eventListeners = {};
+  }
+
+  static get EventEmitter() {
+    return Events;
+  }
+
+  dispatch(event, ...args) {
+    this.emit(event, ...args);
   }
 
   emit(event, ...args) {
-    if (!this.listeners[event]) return;
-    this.listeners[event].forEach(listener => {
+    if (!this.eventListeners[event]) return;
+    this.eventListeners[event].forEach(listener => {
       try {
         listener(...args);
       } catch (error) {
@@ -501,25 +510,24 @@ class Events {
     });
   }
 
-  get off() {
-    return this.removeListener;
+  on(event, callback) {
+    if (!this.eventListeners[event]) this.eventListeners[event] = new Set();
+    this.eventListeners[event].add(callback);
   }
 
-  on(listener, callback) {
-    if (!this.listeners[listener]) this.listeners[listener] = new Set();
-    this.listeners[listener].add(callback);
+  off(event, callback) {
+    return this.removeListener(event, callback);
   }
 
-  removeListener(listener, callback) {
-    if (!this.listeners[listener]) return;
-    this.listeners[listener].delete(callback);
+  removeListener(event, callback) {
+    if (!this.eventListeners[event]) return;
+    this.eventListeners[event].delete(callback);
   }
 
   setMaxListeners() {}
 
 }
 ;
-Events.EventEmitter = Events;
 
 /***/ }),
 
@@ -547,7 +555,7 @@ function fetch(url) {
 
 /***/ }),
 
-/***/ 50:
+/***/ 432:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 
@@ -635,8 +643,32 @@ function getItem(key) {
 function setItem(key, item) {
   window.restoredLocalStorage.setItem(key, item);
 }
-// EXTERNAL MODULE: ./src/modules/utilities.js
-var utilities = __webpack_require__(97);
+;// CONCATENATED MODULE: ./src/modules/utilities.js
+class Utilities {
+  /**
+   * Converts an {@link ArrayBuffer} to a base64 string.
+   * @param {ArrayBuffer} buffer - The ArrayBuffer to be converted into a base64 string.
+   * @returns {string} The base64 string representation of the ArrayBuffer's data.
+   */
+  static arrayBufferToBase64(buffer) {
+    let binaryString = Array.from(buffer).map(chr => String.fromCharCode(chr)).join('');
+    return btoa(binaryString);
+  }
+  /**
+   * Converts a base64 string to an {@link ArrayBuffer}.
+   * @param {string} b64String - The base64 string that is to be converted.
+   * @returns {Uint8Array} An Uint8Array representation of the data contained within the b64String.
+   */
+
+
+  static base64ToArrayBuffer(b64String) {
+    let binaryString = atob(b64String);
+    let buffer = new Uint8Array(binaryString.length);
+    Array.from(binaryString).forEach((chr, idx) => buffer[idx] = chr.charCodeAt(0));
+    return buffer;
+  }
+
+}
 // EXTERNAL MODULE: ../common/dom.js
 var dom = __webpack_require__(706);
 // EXTERNAL MODULE: ../common/logger.js
@@ -773,7 +805,7 @@ function exportVfsBackup() {
     // Must be a deep copy, otherwise the source object will take damage!
     let o = Object.assign(new VfsEntry(fullName, cache.data[fullName].nodeType), cache.data[fullName]); // Directories do not have contents.
 
-    if (o.contents) o.contents = utilities/* default.arrayBufferToBase64 */.Z.arrayBufferToBase64(o.contents);
+    if (o.contents) o.contents = Utilities.arrayBufferToBase64(o.contents);
     vfsList[fullName] = o;
   }
 
@@ -828,7 +860,7 @@ function importVfsBackup() {
         for (const fullName of Object.keys(backupData)) {
           let o = Object.assign(new VfsEntry(fullName, backupData[fullName].nodeType), backupData[fullName]); // Skip directories, they have no payload!
 
-          if (o.contents) o.contents = utilities/* default.base64ToArrayBuffer */.Z.base64ToArrayBuffer(o.contents);
+          if (o.contents) o.contents = Utilities.base64ToArrayBuffer(o.contents);
           logger/* default.log */.Z.log("VFS", `Restoring from backup: ${o.fullName}`);
           writeOrUpdateMemoryCache(o.fullName, o);
           writeOrUpdateIndexedDbKey(o.fullName, o);
@@ -992,17 +1024,8 @@ function initializeBaseData() {
 function initializeVfs() {
   return new Promise(resolvePromise => {
     if (!hasBeenMigrated()) {
-      if (!hasBdBrowserFiles()) {
-        console.log("importFromLocalStorage");
-        resolvePromise(importFromLocalStorage());
-      } else {
-        console.log("initializeBaseData");
-        resolvePromise(initializeBaseData());
-      }
-    } else {
-      console.log("fillMemoryCacheFromIndexedDb");
-      resolvePromise(fillMemoryCacheFromIndexedDb());
-    }
+      if (hasBdBrowserFiles()) resolvePromise(importFromLocalStorage());else resolvePromise(initializeBaseData());
+    } else resolvePromise(fillMemoryCacheFromIndexedDb());
   });
 }
 /**
@@ -1219,9 +1242,9 @@ function getVfsErrorObject(params) {
   let errno = undefined;
   let msg = undefined;
   let code = undefined;
-  let path = params.dest ? `'${params.path}' -> '${params.dest}'` : `'${paramObject.path}'`;
+  let path = params.dest ? `'${params.path}' -> '${params.dest}'` : `'${params.path}'`;
 
-  switch (error) {
+  switch (params.error) {
     case "EACCES":
       code = "EACCES";
       errno = -13;
@@ -1872,7 +1895,7 @@ const fs = {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(50);
+/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(432);
 /* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(878);
 
 
@@ -2170,7 +2193,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "dirname": () => (/* binding */ dirname),
 /* harmony export */   "isAbsolute": () => (/* binding */ isAbsolute)
 /* harmony export */ });
-/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(50);
+/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(432);
 
 function join(...paths) {
   let final = "";
@@ -2386,8 +2409,8 @@ function compileFunction(code, args = []) {
 }
 // EXTERNAL MODULE: ./src/modules/webpack.js
 var webpack = __webpack_require__(343);
-// EXTERNAL MODULE: ./src/modules/fs.js + 3 modules
-var fs = __webpack_require__(50);
+// EXTERNAL MODULE: ./src/modules/fs.js + 4 modules
+var fs = __webpack_require__(432);
 // EXTERNAL MODULE: ./src/modules/discordmodules.js
 var discordmodules = __webpack_require__(828);
 // EXTERNAL MODULE: ./src/modules/events.js
@@ -2566,7 +2589,11 @@ function require_require(mod) {
     case "_discordmodules":
       return discordmodules/* default */.Z;
 
+    case "buffer":
+      return discordmodules/* default.Buffer */.Z.Buffer;
+
     case "fs":
+    case "original-fs":
       return fs/* default */.ZP;
 
     case "vm":
@@ -2618,76 +2645,6 @@ function require_require(mod) {
 require_require.resolve = () => void 0;
 
 require_require.cache = {};
-
-/***/ }),
-
-/***/ 97:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (/* binding */ Utilities)
-/* harmony export */ });
-/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(602);
-
-class Utilities {
-  /**
-   * Converts an {@link ArrayBuffer} to a base64 string.
-   * @param {ArrayBuffer} buffer - The ArrayBuffer to be converted into a base64 string.
-   * @returns {string} The base64 string representation of the ArrayBuffer's data.
-   */
-  static arrayBufferToBase64(buffer) {
-    let binaryString = Array.from(buffer).map(chr => String.fromCharCode(chr)).join('');
-    return btoa(binaryString);
-  }
-  /**
-   * Converts a base64 string to an {@link ArrayBuffer}.
-   * @param {string} b64String - The base64 string that is to be converted.
-   * @returns {Uint8Array} An Uint8Array representation of the data contained within the b64String.
-   */
-
-
-  static base64ToArrayBuffer(b64String) {
-    let binaryString = atob(b64String);
-    let buffer = new Uint8Array(binaryString.length);
-    Array.from(binaryString).forEach((chr, idx) => buffer[idx] = chr.charCodeAt(0));
-    return buffer;
-  }
-  /**
-   * Generates an automatically memoizing version of an object.
-   * @author Zerebos (https://github.com/BetterDiscord/BetterDiscord)
-   * @param {Object} object - object to memoize
-   * @returns {Proxy} the proxy to the object that memoizes properties
-   */
-
-
-  static memoizeObject(object) {
-    const proxy = new Proxy(object, {
-      get: function (obj, mod) {
-        if (!obj.hasOwnProperty(mod)) return undefined;
-
-        if (Object.getOwnPropertyDescriptor(obj, mod).get) {
-          const value = obj[mod];
-          delete obj[mod];
-          obj[mod] = value;
-        }
-
-        return obj[mod];
-      },
-      set: function (obj, mod, value) {
-        if (obj.hasOwnProperty(mod)) return common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.error */ .Z.error("MemoizedObject", "Trying to overwrite existing property");
-        obj[mod] = value;
-        return obj[mod];
-      }
-    });
-    Object.defineProperty(proxy, "hasOwnProperty", {
-      value: function (prop) {
-        return this[prop] !== undefined;
-      }
-    });
-    return proxy;
-  }
-
-}
 
 /***/ }),
 
@@ -3360,7 +3317,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(828);
 /* harmony import */ var _modules_discordnative__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(735);
 /* harmony import */ var _modules_fetch__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(551);
-/* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(50);
+/* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(432);
 /* harmony import */ var _modules_monaco__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(585);
 /* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(154);
 /* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
@@ -3436,6 +3393,11 @@ async function loadBetterDiscord(scriptBody) {
     common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.log */ .Z.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
 
     try {
+      // TODO: Proper solution to prevent overwrite of window.require without causing exceptions.
+      //       Object.defineProperty cannot be used to prevent changes because the attempted
+      //       overwrite will cause an exception, preventing BD from loading, so we need something
+      //       that does not cause an exception and still retains control or watch over w.r...
+      scriptBody = scriptBody.replace(/=window.require=.*?;/, "=window.require;");
       eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
     } catch (error) {
       common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);

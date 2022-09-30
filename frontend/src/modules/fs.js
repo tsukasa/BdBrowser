@@ -590,9 +590,9 @@ function getVfsErrorObject(params) {
     let errno = undefined;
     let msg = undefined;
     let code = undefined;
-    let path = (params.dest) ? `'${params.path}' -> '${params.dest}'` : `'${paramObject.path}'`;
+    let path = (params.dest) ? `'${params.path}' -> '${params.dest}'` : `'${params.path}'`;
 
-    switch(error) {
+    switch(params.error) {
         case "EACCES":
             code = "EACCES";
             errno = -13;

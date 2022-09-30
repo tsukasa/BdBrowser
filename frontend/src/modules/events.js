@@ -1,11 +1,22 @@
 export default class Events {
-    listeners = {};
+
+    constructor() {
+        this.eventListeners = {};
+    }
+
+    static get EventEmitter() {
+        return Events;
+    }
+
+    dispatch(event, ...args) {
+        this.emit(event, ...args);
+    }
 
     emit(event, ...args) {
-        if (!this.listeners[event])
+        if (!this.eventListeners[event])
             return;
 
-        this.listeners[event].forEach(listener => {
+        this.eventListeners[event].forEach(listener => {
             try {
                 listener(...args);
             } catch (error) {
@@ -14,27 +25,25 @@ export default class Events {
         });
     }
 
-    get off() {
-        return this.removeListener;
+    on(event, callback) {
+        if (!this.eventListeners[event])
+            this.eventListeners[event] = new Set();
+
+        this.eventListeners[event].add(callback);
     }
 
-    on(listener, callback) {
-        if (!this.listeners[listener])
-            this.listeners[listener] = new Set();
-
-        this.listeners[listener].add(callback);
+    off(event, callback) {
+        return this.removeListener(event, callback);
     }
 
-    removeListener(listener, callback) {
-        if (!this.listeners[listener])
+    removeListener(event, callback) {
+        if (!this.eventListeners[event])
             return;
 
-        this.listeners[listener].delete(callback);
+        this.eventListeners[event].delete(callback);
     }
 
     setMaxListeners() {
 
     }
 };
-
-Events.EventEmitter = Events;
