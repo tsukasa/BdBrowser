@@ -137,7 +137,7 @@ class Logger {
 
   static _log(type, module, ...nessage) {
     type = this._parseType(type);
-    console[type](`%c[BetterDiscord]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
+    console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
   }
 
   static log(module, ...message) {

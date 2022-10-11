@@ -104,7 +104,7 @@ class Logger {
 
   static _log(type, module, ...nessage) {
     type = this._parseType(type);
-    console[type](`%c[BetterDiscord]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
+    console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
   }
 
   static log(module, ...message) {
@@ -2589,21 +2589,14 @@ function require_require(mod) {
     case "_discordmodules":
       return discordmodules/* default */.Z;
 
+    case "_webpack":
+      return webpack;
+
     case "buffer":
       return discordmodules/* default.Buffer */.Z.Buffer;
 
-    case "fs":
-    case "original-fs":
-      return fs/* default */.ZP;
-
-    case "vm":
-      return vm_namespaceObject;
-
-    case "path":
-      return modules_path;
-
-    case "module":
-      return modules_module/* default */.Z;
+    case "child_process":
+      return;
 
     case "electron":
       return electron;
@@ -2611,17 +2604,28 @@ function require_require(mod) {
     case "events":
       return events/* default */.Z;
 
-    case "request":
-      return modules_request.default;
+    case "fs":
+    case "original-fs":
+      return fs/* default */.ZP;
 
-    case "_webpack":
-      return webpack;
+    case "http":
+    case "https":
+      return https_namespaceObject;
+
+    case "mime-types":
+      return mime_types;
+
+    case "module":
+      return modules_module/* default */.Z;
+
+    case "path":
+      return modules_path;
 
     case "process":
       return process/* default */.Z;
 
-    case "mime-types":
-      return mime_types;
+    case "request":
+      return modules_request.default;
 
     case "url":
       return {
@@ -2630,21 +2634,20 @@ function require_require(mod) {
         }
       };
 
-    case "child_process":
-      return;
-
-    case "http":
-    case "https":
-      return https_namespaceObject;
+    case "vm":
+      return vm_namespaceObject;
 
     default:
       return modules_module/* default._require */.Z._require(mod, require_require);
   }
 }
-
-require_require.resolve = () => void 0;
-
 require_require.cache = {};
+
+require_require.resolve = path => {
+  for (const key of Object.keys(require_require.cache)) {
+    if (key.startsWith(path)) return require_require.cache[key];
+  }
+};
 
 /***/ }),
 
@@ -3397,7 +3400,9 @@ async function loadBetterDiscord(scriptBody) {
       //       Object.defineProperty cannot be used to prevent changes because the attempted
       //       overwrite will cause an exception, preventing BD from loading, so we need something
       //       that does not cause an exception and still retains control or watch over w.r...
-      scriptBody = scriptBody.replace(/=window.require=.*?;/, "=window.require;");
+      scriptBody = scriptBody.replace(/=window.require=.*?;/, "=window.require;"); // TODO: Proper solution for the path import in addonupdater.js.
+
+      scriptBody = scriptBody.replace(/this\.cache\[.*?\.basename/, "this.cache[require(\"path\").basename");
       eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
     } catch (error) {
       common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);

@@ -1,6 +1,6 @@
 {
     "name": "BetterDiscord",
-    "version": "1.7.0.20220930",
+    "version": "1.7.0.20221012",
     "description": "Allows you to use BetterDiscord on web. Some plugins might not be working correctly.",
     "icons": {
         "16": "assets/logo.png",
