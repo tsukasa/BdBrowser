@@ -1,5 +1,5 @@
 import * as electron from "./electron";
-import * as RequestModule from "./request";
+import * as Https from "./https";
 import * as path from "./path";
 import fs from "./fs";
 
@@ -17,7 +17,7 @@ const bdPreloadCatalogue = {
         watch: fs.watch,
         getStats: fs.statSync
     },
-    https: RequestModule, // Not https, despite what you might think!
+    https: Https,
     path: path
 }
 

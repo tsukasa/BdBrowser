@@ -1,28 +1,43 @@
 import {IPCEvents} from "common/constants";
 import ipcRenderer from "../ipc";
 
-class RequestResponse extends Response {
-    constructor(res) {
-        super(res);
-        this.res = res;
+const methods = ["get", "put", "post", "delete", "head"];
+const aliases = {del: "delete"};
+
+function parseArguments() {
+    let url, options, callback;
+
+    for (const arg of arguments) {
+        switch (typeof arg) {
+            case (arg !== null && "object"):
+                options = arg;
+                if ("url" in options) {
+                    url = options.url;
+                }
+                break;
+
+            case (!url && "string"):
+                url = arg;
+                break;
+
+            case (!callback && "function"):
+                callback = arg;
+                break;
+        }
     }
 
-    get headers() {
-        return Object.fromEntries(Array.from(this.res.headers));
-    }
-};
+    return {url, options, callback};
+}
 
-export default function request(url, options, callback) {
-    if (typeof options === "function") {
-        callback = options
-        options = {};
-    }
+function validOptions(url, callback) {
+    return typeof url === "string" && typeof callback === "function";
+}
 
-    if(typeof url === "object") {
-        options = JSON.parse(JSON.stringify(url));
-        options.url = undefined;
-        url = url.url;
-    }
+export default function request() {
+    const {url, options = {}, callback} = parseArguments.apply(this, arguments);
+
+    if (!validOptions(url, callback))
+        return null;
 
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         url: url, options: options
@@ -33,21 +48,15 @@ export default function request(url, options, callback) {
     });
 }
 
-export function head(url, options, callback) {
-    if (typeof options === "function") {
-        callback = options
-        options = {};
-    }
+Object.assign(request, Object.fromEntries(
+    methods.concat(Object.keys(aliases)).map(method => [method, function () {
+        const {url, options = {}, callback} = parseArguments.apply(this, arguments);
 
-    fetch(url).then(res => {
-        callback(null, new RequestResponse(res));
-    }, err => callback(err));
-}
+        if (!validOptions(url, callback))
+            return null;
 
-Object.assign(
-    request,
-    {
-        get: request,
-        head: head
-    }
-);
+        options.method = method;
+
+        request(url, options, callback);
+    }])
+));

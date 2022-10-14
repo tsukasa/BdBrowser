@@ -48,3 +48,5 @@ export function createServer() {
 }
 
 export const get = request;
+
+export default { get };

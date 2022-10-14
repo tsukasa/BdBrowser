@@ -204,7 +204,7 @@ const ipcRenderer = new IPC("frontend");
 /* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _electron__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8);
-/* harmony import */ var _request__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
+/* harmony import */ var _https__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(183);
 /* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(878);
 /* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(432);
 
@@ -225,8 +225,7 @@ const bdPreloadCatalogue = {
     watch: _fs__WEBPACK_IMPORTED_MODULE_3__/* .default.watch */ .ZP.watch,
     getStats: _fs__WEBPACK_IMPORTED_MODULE_3__/* .default.statSync */ .ZP.statSync
   },
-  https: _request__WEBPACK_IMPORTED_MODULE_1__,
-  // Not https, despite what you might think!
+  https: _https__WEBPACK_IMPORTED_MODULE_1__,
   path: _path__WEBPACK_IMPORTED_MODULE_2__
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (bdPreloadCatalogue);
@@ -1889,6 +1888,64 @@ const fs = {
 
 /***/ }),
 
+/***/ 183:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "request": () => (/* binding */ request),
+/* harmony export */   "createServer": () => (/* binding */ createServer),
+/* harmony export */   "get": () => (/* binding */ get),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(551);
+
+function request(url, options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+
+  if (typeof url === "object") {
+    options = JSON.parse(JSON.stringify(url));
+    options.url = undefined;
+    url = url.url;
+  }
+
+  (0,_fetch__WEBPACK_IMPORTED_MODULE_0__/* .default */ .Z)(url, options).then(res => res.text()).then(data => {
+    callback({
+      on: (event, callback) => {
+        switch (event) {
+          case "data":
+            return callback(data);
+
+          case "end":
+            const res = new Response(data);
+            res.statusCode = res.status;
+            return res;
+        }
+      }
+    });
+  });
+  return {
+    statusCode: 200,
+    on: () => {},
+    end: () => {}
+  };
+}
+function createServer() {
+  return {
+    listen: () => {},
+    close: () => {}
+  };
+}
+const get = request;
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  get
+});
+
+/***/ }),
+
 /***/ 301:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -2260,86 +2317,13 @@ function isAbsolute(path) {
 
 /***/ }),
 
-/***/ 335:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ request),
-/* harmony export */   "head": () => (/* binding */ head)
-/* harmony export */ });
-/* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(65);
-/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(229);
-
-
-
-class RequestResponse extends Response {
-  constructor(res) {
-    super(res);
-    this.res = res;
-  }
-
-  get headers() {
-    return Object.fromEntries(Array.from(this.res.headers));
-  }
-
-}
-
-;
-function request(url, options, callback) {
-  if (typeof options === "function") {
-    callback = options;
-    options = {};
-  }
-
-  if (typeof url === "object") {
-    options = JSON.parse(JSON.stringify(url));
-    options.url = undefined;
-    url = url.url;
-  }
-
-  _ipc__WEBPACK_IMPORTED_MODULE_1__/* .default.send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
-    url: url,
-    options: options
-  }, data => {
-    const res = new Response(data);
-    res.statusCode = res.status;
-    callback(null, res, data);
-  });
-}
-function head(url, options, callback) {
-  if (typeof options === "function") {
-    callback = options;
-    options = {};
-  }
-
-  fetch(url).then(res => {
-    callback(null, new RequestResponse(res));
-  }, err => callback(err));
-}
-Object.assign(request, {
-  get: request,
-  head: head
-});
-
-/***/ }),
-
-/***/ 201:
+/***/ 164:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
   "Z": () => (/* binding */ require_require)
-});
-
-// NAMESPACE OBJECT: ./src/modules/https.js
-var https_namespaceObject = {};
-__webpack_require__.r(https_namespaceObject);
-__webpack_require__.d(https_namespaceObject, {
-  "createServer": () => (createServer),
-  "get": () => (get),
-  "request": () => (request)
 });
 
 // NAMESPACE OBJECT: ./src/modules/vm.js
@@ -2351,50 +2335,8 @@ __webpack_require__.d(vm_namespaceObject, {
 
 // EXTERNAL MODULE: ./src/modules/electron.js + 1 modules
 var electron = __webpack_require__(8);
-// EXTERNAL MODULE: ./src/modules/fetch.js
-var fetch = __webpack_require__(551);
-;// CONCATENATED MODULE: ./src/modules/https.js
-
-function request(url, options, callback) {
-  if (typeof options === "function") {
-    callback = options;
-    options = {};
-  }
-
-  if (typeof url === "object") {
-    options = JSON.parse(JSON.stringify(url));
-    options.url = undefined;
-    url = url.url;
-  }
-
-  (0,fetch/* default */.Z)(url, options).then(res => res.text()).then(data => {
-    callback({
-      on: (event, callback) => {
-        switch (event) {
-          case "data":
-            return callback(data);
-
-          case "end":
-            const res = new Response(data);
-            res.statusCode = res.status;
-            return res;
-        }
-      }
-    });
-  });
-  return {
-    statusCode: 200,
-    on: () => {},
-    end: () => {}
-  };
-}
-function createServer() {
-  return {
-    listen: () => {},
-    close: () => {}
-  };
-}
-const get = request;
+// EXTERNAL MODULE: ./src/modules/https.js
+var https = __webpack_require__(183);
 // EXTERNAL MODULE: ./src/modules/path.js
 var modules_path = __webpack_require__(878);
 ;// CONCATENATED MODULE: ./src/modules/vm.js
@@ -2569,8 +2511,79 @@ function populateMaps(extensionMap, typeMap) {
 var modules_module = __webpack_require__(301);
 // EXTERNAL MODULE: ./src/modules/process.js
 var process = __webpack_require__(323);
-// EXTERNAL MODULE: ./src/modules/request.js
-var modules_request = __webpack_require__(335);
+// EXTERNAL MODULE: ../common/constants.js
+var constants = __webpack_require__(65);
+// EXTERNAL MODULE: ./src/ipc.js + 1 modules
+var ipc = __webpack_require__(229);
+;// CONCATENATED MODULE: ./src/modules/request.js
+
+
+const methods = ["get", "put", "post", "delete", "head"];
+const aliases = {
+  del: "delete"
+};
+
+function parseArguments() {
+  let url, options, callback;
+
+  for (const arg of arguments) {
+    switch (typeof arg) {
+      case arg !== null && "object":
+        options = arg;
+
+        if ("url" in options) {
+          url = options.url;
+        }
+
+        break;
+
+      case !url && "string":
+        url = arg;
+        break;
+
+      case !callback && "function":
+        callback = arg;
+        break;
+    }
+  }
+
+  return {
+    url,
+    options,
+    callback
+  };
+}
+
+function validOptions(url, callback) {
+  return typeof url === "string" && typeof callback === "function";
+}
+
+function request() {
+  const {
+    url,
+    options = {},
+    callback
+  } = parseArguments.apply(this, arguments);
+  if (!validOptions(url, callback)) return null;
+  ipc/* default.send */.Z.send(constants/* IPCEvents.MAKE_REQUESTS */.A.MAKE_REQUESTS, {
+    url: url,
+    options: options
+  }, data => {
+    const res = new Response(data);
+    res.statusCode = res.status;
+    callback(null, res, data);
+  });
+}
+Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).map(method => [method, function () {
+  const {
+    url,
+    options = {},
+    callback
+  } = parseArguments.apply(this, arguments);
+  if (!validOptions(url, callback)) return null;
+  options.method = method;
+  request(url, options, callback);
+}])));
 ;// CONCATENATED MODULE: ./src/modules/require.js
 
 
@@ -2610,7 +2623,7 @@ function require_require(mod) {
 
     case "http":
     case "https":
-      return https_namespaceObject;
+      return https;
 
     case "mime-types":
       return mime_types;
@@ -2625,7 +2638,7 @@ function require_require(mod) {
       return process/* default */.Z;
 
     case "request":
-      return modules_request.default;
+      return request;
 
     case "url":
       return {
@@ -3324,7 +3337,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _modules_monaco__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(585);
 /* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(154);
 /* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
-/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(201);
+/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(164);
 /* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(580);
 
 
