@@ -10,6 +10,7 @@ import * as Monaco from "./modules/monaco";
 import bdPreload from "./modules/bdpreload";
 import process from "./modules/process";
 import require from "./modules/require";
+import {fixUpdaterPathRequire, fixWindowRequire} from "./modules/scriptPatches";
 
 Object.defineProperty(
     DiscordModules.ElectronModule,
@@ -75,15 +76,9 @@ async function loadBetterDiscord(scriptBody) {
         DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
         Logger.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
         try {
-            // TODO: Proper solution to prevent overwrite of window.require without causing exceptions.
-            //       Object.defineProperty cannot be used to prevent changes because the attempted
-            //       overwrite will cause an exception, preventing BD from loading, so we need something
-            //       that does not cause an exception and still retains control or watch over w.r...
-            scriptBody = scriptBody.replace(/=window.require=.*?;/, "=window.require;");
-
-            // TODO: Proper solution for the path import in addonupdater.js.
-            scriptBody = scriptBody.replace(/this\.cache\[.*?\.basename/, "this.cache[require(\"path\").basename");
-
+            Logger.log("Frontend", "Patching script body...");
+            scriptBody = fixUpdaterPathRequire(scriptBody);
+            scriptBody = fixWindowRequire(scriptBody);
             eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
         } catch (error) {
             Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);

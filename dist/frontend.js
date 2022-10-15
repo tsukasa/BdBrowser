@@ -2664,6 +2664,53 @@ require_require.resolve = path => {
 
 /***/ }),
 
+/***/ 93:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "x": () => (/* binding */ fixWindowRequire),
+/* harmony export */   "h": () => (/* binding */ fixUpdaterPathRequire)
+/* harmony export */ });
+/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(602);
+
+/**
+ * Patches the `window.require` override done in BetterDiscord's
+ * `renderer/src/polyfill/index.js` so a custom `require()` logic
+ * provided by BdBrowser can be used.
+ * @param {string} scriptBody - A string containing the script body of the renderer to patch.
+ * @returns {string} - The patched script body of the renderer.
+ */
+
+function fixWindowRequire(scriptBody) {
+  return scriptBody.replace(/=window.require=.*?;/, "=window.require;");
+}
+/**
+ * Patches the wonky import of BetterDiscord's `renderer/src/modules/updater.js`
+ * to use BdBrowser's implementation of the "path" module.
+ * If not patched, the updater will be dysfunctional in BdBrowser due to missing imports.
+ * @param {string} scriptBody - A string containing the script body of the renderer to patch.
+ * @returns {string} - The patched script body of the renderer.
+ */
+
+function fixUpdaterPathRequire(scriptBody) {
+  try {
+    // First, identify the call we use to work our way backwards...
+    const identifyFunctionNameCall = scriptBody.match(/this\.cache\[(.*?)\.basename/).at(-1); // Remove the parenthesis from the function name match
+
+    const pathFunctionName = identifyFunctionNameCall.replace("()", ""); // Now build the regular expression to replace the group content
+
+    const pathImportRegex = new RegExp(`${pathFunctionName}=(.*?);`);
+    const pathImport = scriptBody.match(pathImportRegex).at(-1); // Finally, replace the group content with an anonymous function for require("path")
+
+    return scriptBody.replace(pathImport, '() => require("path")');
+  } catch (error) {
+    common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.error */ .Z.error("ScriptPatcher", "Failed to patch the \"path\" import in the updater:\n", error);
+    return scriptBody;
+  }
+}
+
+/***/ }),
+
 /***/ 343:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -3338,7 +3385,9 @@ var __webpack_exports__ = {};
 /* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(154);
 /* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
 /* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(164);
+/* harmony import */ var _modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(93);
 /* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(580);
+
 
 
 
@@ -3409,13 +3458,9 @@ async function loadBetterDiscord(scriptBody) {
     common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.log */ .Z.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
 
     try {
-      // TODO: Proper solution to prevent overwrite of window.require without causing exceptions.
-      //       Object.defineProperty cannot be used to prevent changes because the attempted
-      //       overwrite will cause an exception, preventing BD from loading, so we need something
-      //       that does not cause an exception and still retains control or watch over w.r...
-      scriptBody = scriptBody.replace(/=window.require=.*?;/, "=window.require;"); // TODO: Proper solution for the path import in addonupdater.js.
-
-      scriptBody = scriptBody.replace(/this\.cache\[.*?\.basename/, "this.cache[require(\"path\").basename");
+      common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.log */ .Z.log("Frontend", "Patching script body...");
+      scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixUpdaterPathRequire */ .h)(scriptBody);
+      scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixWindowRequire */ .x)(scriptBody);
       eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
     } catch (error) {
       common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
