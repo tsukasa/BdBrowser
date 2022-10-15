@@ -13,7 +13,11 @@
     "build-backend-dev": "cd ./backend && webpack --env=type=backend --env=mode=development --config=../webpack.config.js",
     "build-service": "cd ./service && webpack --env=type=service --env=mode=production --config=../webpack.config.js",
     "build-service-dev": "cd ./service && webpack --env=type=service --env=mode=development --config=../webpack.config.js",
-    "prod": "npm run build-frontend && npm run build-backend && npm run build-service && echo Finished Build",
+    "build-preload": "cd ./preload && webpack --env=type=preload --env=mode=production --config=../webpack.config.js",
+    "build-preload-dev": "cd ./preload && webpack --env=type=preload --env=mode=development --config=../webpack.config.js",
+    "build-preload_inject": "cd ./preload_inject && webpack --env=type=preload_inject --env=mode=production --config=../webpack.config.js",
+    "build-preload_inject-dev": "cd ./preload_inject && webpack --env=type=preload_inject --env=mode=development --config=../webpack.config.js",
+    "prod": "npm run build-preload && npm run build-preload_inject && npm run build-frontend && npm run build-backend && npm run build-service && echo Finished Build",
     "host": "node ./scripts/host.js"
   },
   "author": "Strencher",
