@@ -61,7 +61,7 @@ function defineObjectProperty (obj, prop, child) {
             try {
                 child(newValue);
             } catch (error) {
-                Logger.error("Preload", `Error while preparing ${WEBPACK_CHUNK_NAME}:\n`, error)
+                Logger.error("Preload", `Error while preparing ${WEBPACK_CHUNK_NAME}:\n`, error);
             }
 
             return newValue;

@@ -916,7 +916,7 @@ function getVfsSizeInBytes() {
 
 function hasBdBrowserFiles() {
   let bdFilesItem = getItem(BD_FILES_KEY);
-  return bdFilesItem !== undefined;
+  return bdFilesItem !== null;
 }
 /**
  * Checks whether the LocalStorage key for the migration is present and set to `true`.

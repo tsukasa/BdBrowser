@@ -244,7 +244,7 @@ function getVfsSizeInBytes() {
  */
 function hasBdBrowserFiles() {
     let bdFilesItem = getItem(BD_FILES_KEY);
-    return (bdFilesItem !== undefined);
+    return (bdFilesItem !== null);
 }
 
 /**
