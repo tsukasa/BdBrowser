@@ -157,10 +157,10 @@ async function processFetchMessage(request) {
   try {
     let fetchOptions = request.parameters.options || {};
     let fetchResponse = await fetch(request.parameters.url, fetchOptions);
-    let fetchBody = await fetchResponse.text();
+    let fetchBody = await fetchResponse.arrayBuffer();
     returnValue = {
-      body: fetchBody,
-      headers: [],
+      body: Array.from(new Uint8Array(fetchBody)),
+      headers: Object.fromEntries(fetchResponse.headers),
       ok: fetchResponse.ok,
       redirected: fetchResponse.redirected,
       status: fetchResponse.status,
@@ -168,14 +168,12 @@ async function processFetchMessage(request) {
       type: fetchResponse.type,
       url: fetchResponse.url
     };
-    fetchResponse.headers.forEach((value, key) => {
-      returnValue.headers.push([key, value]);
-    });
   } catch (err) {
     returnValue = {
       error: err.toString()
     };
   } finally {
+    // noinspection ReturnInsideFinallyBlockJS
     return returnValue;
   }
 }

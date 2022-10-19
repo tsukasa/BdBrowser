@@ -134,8 +134,6 @@ export default class WebpackModules {
         const {first = true, defaultExport = true} = options;
         const wrappedFilter = (exports, module, moduleId) => {
             try {
-                if (exports?.default?.remove && exports?.default?.set && exports?.default?.clear && exports?.default?.get && !exports?.default?.sort) return false;
-                if (exports.remove && exports.set && exports.clear && exports.get && !exports.sort) return false;
                 if (exports?.default?.getToken || exports?.default?.getEmail || exports?.default?.showToken) return false;
                 if (exports.getToken || exports.getEmail || exports.showToken) return false;
                 return filter(exports, module, moduleId);

@@ -53,21 +53,26 @@ function registerEvents() {
                 data.url = data.url.url;
         }
 
-        chrome.runtime.sendMessage({
-            operation: "fetch",
-            parameters: {
-                url: data.url,
-                options: data.options
-            }
-        }, function(response) {
-            if(response.error) {
-                console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
-            }
-            else
+        chrome.runtime.sendMessage(
             {
-                ipcMain.reply(event, response.body);
+                operation: "fetch",
+                parameters: {
+                    url: data.url,
+                    options: data.options
+                }
+            }, (response) => {
+                if(response.error) {
+                    console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+                }
+                else
+                {
+                    // Response body comes in as a normal array, so requires
+                    // another round of casting into Uint8Array for the buffer.
+                    response.body = new Uint8Array(response.body).buffer;
+                    ipcMain.reply(event, response);
+                }
             }
-        });
+        );
     });
 
     ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {

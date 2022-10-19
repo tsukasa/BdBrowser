@@ -244,7 +244,7 @@ function getVfsSizeInBytes() {
  */
 function hasBdBrowserFiles() {
     let bdFilesItem = getItem(BD_FILES_KEY);
-    return (bdFilesItem !== null);
+    return (bdFilesItem !== undefined);
 }
 
 /**
@@ -253,7 +253,7 @@ function hasBdBrowserFiles() {
  */
 function hasBeenMigrated() {
     let wasMigrated = getItem(BD_FILES_MIGRATED_KEY);
-    return (wasMigrated === "true");
+    return (wasMigrated === true);
 }
 
 /**

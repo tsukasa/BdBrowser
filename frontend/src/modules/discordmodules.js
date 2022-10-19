@@ -13,7 +13,7 @@ export default {
     get RouterModule() { return Webpack.getByProps("listeners", "rewrites", "flushRoute"); },
 
     /* Other Utils */
-    get StorageModule() { return Webpack.getByProps("get", "set", "stringify"); },
+    get StorageModule() { return Webpack.getByProps("get", "set", "clear", "stringify"); },
 
     /* Stuff for the Preloader */
     get Buffer() { return Webpack.getByProps("INSPECT_MAX_BYTES"); }

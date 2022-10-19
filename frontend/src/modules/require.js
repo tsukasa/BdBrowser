@@ -13,12 +13,6 @@ import RequestModule from "./request";
 
 export default function require(mod) {
     switch (mod) {
-        case "_discordmodules":
-            return DiscordModules;
-
-        case "_webpack":
-            return Webpack;
-
         case "buffer":
             return DiscordModules.Buffer;
 

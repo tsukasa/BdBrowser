@@ -27,6 +27,7 @@ window.firstArray = [];
 window.user = "";
 window.global = window;
 
+window.Buffer = DiscordModules.Buffer;
 window.DiscordNative = DiscordNative;
 window.fetchWithoutCSP = fetchAPI;
 window.fs = fs;
@@ -71,14 +72,17 @@ async function selectBetterDiscordEnvironment(localScriptUrl) {
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: bdScriptUrl }, loadBetterDiscord);
 }
 
-async function loadBetterDiscord(scriptBody) {
+async function loadBetterDiscord(scriptResponse) {
     const callback = async () => {
         DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
         Logger.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
         try {
             Logger.log("Frontend", "Patching script body...");
+
+            let scriptBody = new TextDecoder().decode(scriptResponse.body);
             scriptBody = fixUpdaterPathRequire(scriptBody);
             scriptBody = fixWindowRequire(scriptBody);
+
             eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
         } catch (error) {
             Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);

@@ -243,35 +243,35 @@ const bdPreloadCatalogue = {
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   /* Current User Info, State and Settings */
   get ThemeStore() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("addChangeListener", "theme");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("addChangeListener", "theme");
   },
 
   /* User Stores and Utils */
   get UserStore() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("getCurrentUser", "getUser");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("getCurrentUser", "getUser");
   },
 
   /* Electron & Other Internals with Utils */
   get ElectronModule() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("setBadge");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("setBadge");
   },
 
   get Dispatcher() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("dispatch", "subscribe", "wait", "unsubscribe", "register");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("dispatch", "subscribe", "wait", "unsubscribe", "register");
   },
 
   get RouterModule() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("listeners", "rewrites", "flushRoute");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("listeners", "rewrites", "flushRoute");
   },
 
   /* Other Utils */
   get StorageModule() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("get", "set", "stringify");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("get", "set", "clear", "stringify");
   },
 
   /* Stuff for the Preloader */
   get Buffer() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__.default.getByProps("INSPECT_MAX_BYTES");
+    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("INSPECT_MAX_BYTES");
   }
 
 });
@@ -540,14 +540,40 @@ class Events {
 /* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(229);
 
 
-function fetch(url) {
+function fetch(url, options) {
   return new Promise(resolve => {
     _ipc__WEBPACK_IMPORTED_MODULE_1__/* .default.send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
-      url
+      url: url,
+      options: options
     }, data => {
-      resolve(new Response(data, {
-        url
-      }));
+      if (options && options._wrapInResponse === false) resolve(data);else {
+        const res = new Response(data.body);
+        Object.defineProperty(res, "headers", {
+          value: data.headers
+        });
+        Object.defineProperty(res, "ok", {
+          value: data.ok
+        });
+        Object.defineProperty(res, "redirected", {
+          value: data.redirected
+        });
+        Object.defineProperty(res, "status", {
+          value: data.status
+        });
+        Object.defineProperty(res, "statusCode", {
+          value: data.status
+        });
+        Object.defineProperty(res, "statusText", {
+          value: data.statusText
+        });
+        Object.defineProperty(res, "type", {
+          value: data.type
+        });
+        Object.defineProperty(res, "url", {
+          value: data.url
+        });
+        resolve(res);
+      }
     });
   });
 }
@@ -620,27 +646,15 @@ class VfsEntry {
   }
 
 }
+// EXTERNAL MODULE: ./src/modules/discordmodules.js
+var discordmodules = __webpack_require__(828);
 ;// CONCATENATED MODULE: ./src/modules/localStorage.js
-/**
- * Discord and BetterDiscord are purposefully hiding access to the localStorage.
- * This function serves as a workaround until StorageManager works again...
- * Taken from https://stackoverflow.com/a/53773662
- * @returns {PropertyDescriptor}
- */
-function getLocalStoragePropertyDescriptor() {
-  const frame = document.createElement('frame');
-  document.body.appendChild(frame);
-  const p = Object.getOwnPropertyDescriptor(frame.contentWindow, 'localStorage');
-  frame.remove();
-  return p;
-}
 
-Object.defineProperty(window, 'restoredLocalStorage', getLocalStoragePropertyDescriptor());
 function getItem(key) {
-  return window.restoredLocalStorage.getItem(key);
+  return discordmodules/* default.StorageModule.get */.Z.StorageModule.get(key);
 }
 function setItem(key, item) {
-  window.restoredLocalStorage.setItem(key, item);
+  discordmodules/* default.StorageModule.set */.Z.StorageModule.set(key, item);
 }
 ;// CONCATENATED MODULE: ./src/modules/utilities.js
 class Utilities {
@@ -916,7 +930,7 @@ function getVfsSizeInBytes() {
 
 function hasBdBrowserFiles() {
   let bdFilesItem = getItem(BD_FILES_KEY);
-  return bdFilesItem !== null;
+  return bdFilesItem !== undefined;
 }
 /**
  * Checks whether the LocalStorage key for the migration is present and set to `true`.
@@ -926,7 +940,7 @@ function hasBdBrowserFiles() {
 
 function hasBeenMigrated() {
   let wasMigrated = getItem(BD_FILES_MIGRATED_KEY);
-  return wasMigrated === "true";
+  return wasMigrated === true;
 }
 /**
  * This function starts the migration of an existing BdBrowser virtual filesystem
@@ -1910,18 +1924,44 @@ function request(url, options, callback) {
     options = JSON.parse(JSON.stringify(url));
     options.url = undefined;
     url = url.url;
-  }
+  } // TODO: Refactor `fetch()` into a more generic function
+  //       that does not require these hacks...
 
-  (0,_fetch__WEBPACK_IMPORTED_MODULE_0__/* .default */ .Z)(url, options).then(res => res.text()).then(data => {
+
+  options._wrapInResponse = false;
+  (0,_fetch__WEBPACK_IMPORTED_MODULE_0__/* .default */ .Z)(url, options).then(data => {
     callback({
       on: (event, callback) => {
         switch (event) {
           case "data":
-            return callback(data);
+            return callback(data.body);
 
           case "end":
-            const res = new Response(data);
-            res.statusCode = res.status;
+            const res = new Response(data.body);
+            Object.defineProperty(res, "headers", {
+              value: data.headers
+            });
+            Object.defineProperty(res, "ok", {
+              value: data.ok
+            });
+            Object.defineProperty(res, "redirected", {
+              value: data.redirected
+            });
+            Object.defineProperty(res, "status", {
+              value: data.status
+            });
+            Object.defineProperty(res, "statusCode", {
+              value: data.status
+            });
+            Object.defineProperty(res, "statusText", {
+              value: data.statusText
+            });
+            Object.defineProperty(res, "type", {
+              value: data.type
+            });
+            Object.defineProperty(res, "url", {
+              value: data.url
+            });
             return res;
         }
       }
@@ -2124,7 +2164,8 @@ document.head.insertBefore = function (node) {
     _ipc__WEBPACK_IMPORTED_MODULE_2__/* .default.send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
       url: node.href
     }, data => {
-      common_dom__WEBPACK_IMPORTED_MODULE_0__/* .default.injectCSS */ .Z.injectCSS(node.id || "monaco-styles", data);
+      const dataBody = new TextDecoder().decode(data.body);
+      common_dom__WEBPACK_IMPORTED_MODULE_0__/* .default.injectCSS */ .Z.injectCSS(node.id || "monaco-styles", dataBody);
       if (typeof node.onload === "function") node.onload();
       common_logger__WEBPACK_IMPORTED_MODULE_3__/* .default.log */ .Z.log("CSP:Bypass", "Loaded monaco stylesheet.");
     });
@@ -2171,7 +2212,8 @@ const unpatchHead = patchMethods(document.head, data => {
     _ipc__WEBPACK_IMPORTED_MODULE_2__/* .default.send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
       url: node.href
     }, data => {
-      common_dom__WEBPACK_IMPORTED_MODULE_0__/* .default.injectCSS */ .Z.injectCSS(node.id, data);
+      const dataBody = new TextDecoder().decode(data.body);
+      common_dom__WEBPACK_IMPORTED_MODULE_0__/* .default.injectCSS */ .Z.injectCSS(node.id, dataBody);
       if (typeof node.onload === "function") node.onload();
       common_logger__WEBPACK_IMPORTED_MODULE_3__/* .default.log */ .Z.log("CSP:Bypass", "Loaded monaco stylesheet.");
     });
@@ -2184,10 +2226,10 @@ const unpatchHead = patchMethods(document.head, data => {
         patchMethods(node, data => {
           const [node] = data.args;
           _ipc__WEBPACK_IMPORTED_MODULE_2__/* .default.send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
-            url: node.src,
-            type: "script"
+            url: node.src
           }, data => {
-            eval(data);
+            const dataBody = new TextDecoder().decode(data.body);
+            eval(dataBody);
             if (typeof node.onload === "function") node.onload();
             common_logger__WEBPACK_IMPORTED_MODULE_3__/* .default.log */ .Z.log("CSP:Bypass", `Loaded script with url ${node.src}`);
           });
@@ -2206,10 +2248,10 @@ const unpatchHead = patchMethods(document.head, data => {
     });
   } else if (node !== null && node !== void 0 && (_node$src = node.src) !== null && _node$src !== void 0 && _node$src.includes("monaco-editor")) {
     _ipc__WEBPACK_IMPORTED_MODULE_2__/* .default.send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
-      url: node.src,
-      type: "script"
+      url: node.src
     }, data => {
-      eval(data);
+      const dataBody = new TextDecoder().decode(data.body);
+      eval(dataBody);
       if (typeof node.onload === "function") node.onload();
       common_logger__WEBPACK_IMPORTED_MODULE_3__/* .default.log */ .Z.log("CSP:Bypass", `Loaded script with url ${node.src}`);
     });
@@ -2518,6 +2560,7 @@ var ipc = __webpack_require__(229);
 ;// CONCATENATED MODULE: ./src/modules/request.js
 
 
+
 const methods = ["get", "put", "post", "delete", "head"];
 const aliases = {
   del: "delete"
@@ -2569,9 +2612,42 @@ function request() {
     url: url,
     options: options
   }, data => {
-    const res = new Response(data);
-    res.statusCode = res.status;
-    callback(null, res, data);
+    let bodyData; // Try to evaluate whether the result is text or binary...
+
+    if (data.headers["content-type"]) {
+      const enc = mime_types.charset(data.headers["content-type"]); // If the "encoding" parameter is present in the original options and it is
+      // set to null, the return value should be an ArrayBuffer. Otherwise check
+      // the Mime database for the type to determine whether it is text or not...
+
+      if ("encoding" in options && options.encoding === null) bodyData = data.body;else bodyData = new TextDecoder(enc).decode(data.body);
+    }
+
+    const res = new Response(bodyData);
+    Object.defineProperty(res, "headers", {
+      value: data.headers
+    });
+    Object.defineProperty(res, "ok", {
+      value: data.ok
+    });
+    Object.defineProperty(res, "redirected", {
+      value: data.redirected
+    });
+    Object.defineProperty(res, "status", {
+      value: data.status
+    });
+    Object.defineProperty(res, "statusCode", {
+      value: data.status
+    });
+    Object.defineProperty(res, "statusText", {
+      value: data.statusText
+    });
+    Object.defineProperty(res, "type", {
+      value: data.type
+    });
+    Object.defineProperty(res, "url", {
+      value: data.url
+    });
+    callback(null, res, bodyData);
   });
 }
 Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).map(method => [method, function () {
@@ -2599,12 +2675,6 @@ Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).m
 
 function require_require(mod) {
   switch (mod) {
-    case "_discordmodules":
-      return discordmodules/* default */.Z;
-
-    case "_webpack":
-      return webpack;
-
     case "buffer":
       return discordmodules/* default.Buffer */.Z.Buffer;
 
@@ -2714,11 +2784,10 @@ function fixUpdaterPathRequire(scriptBody) {
 /***/ 343:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Filters": () => (/* binding */ Filters),
-/* harmony export */   "default": () => (/* binding */ WebpackModules)
+/* harmony export */   "Z": () => (/* binding */ WebpackModules)
 /* harmony export */ });
+/* unused harmony export Filters */
 /* harmony import */ var _common_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(602);
 /**
  * Allows for grabbing and searching through Discord's webpacked modules.
@@ -2894,11 +2963,9 @@ class WebpackModules {
 
     const wrappedFilter = (exports, module, moduleId) => {
       try {
-        var _exports$default, _exports$default2, _exports$default3, _exports$default4, _exports$default5, _exports$default6, _exports$default7, _exports$default8;
+        var _exports$default, _exports$default2, _exports$default3;
 
-        if (exports !== null && exports !== void 0 && (_exports$default = exports.default) !== null && _exports$default !== void 0 && _exports$default.remove && exports !== null && exports !== void 0 && (_exports$default2 = exports.default) !== null && _exports$default2 !== void 0 && _exports$default2.set && exports !== null && exports !== void 0 && (_exports$default3 = exports.default) !== null && _exports$default3 !== void 0 && _exports$default3.clear && exports !== null && exports !== void 0 && (_exports$default4 = exports.default) !== null && _exports$default4 !== void 0 && _exports$default4.get && !(exports !== null && exports !== void 0 && (_exports$default5 = exports.default) !== null && _exports$default5 !== void 0 && _exports$default5.sort)) return false;
-        if (exports.remove && exports.set && exports.clear && exports.get && !exports.sort) return false;
-        if (exports !== null && exports !== void 0 && (_exports$default6 = exports.default) !== null && _exports$default6 !== void 0 && _exports$default6.getToken || exports !== null && exports !== void 0 && (_exports$default7 = exports.default) !== null && _exports$default7 !== void 0 && _exports$default7.getEmail || exports !== null && exports !== void 0 && (_exports$default8 = exports.default) !== null && _exports$default8 !== void 0 && _exports$default8.showToken) return false;
+        if (exports !== null && exports !== void 0 && (_exports$default = exports.default) !== null && _exports$default !== void 0 && _exports$default.getToken || exports !== null && exports !== void 0 && (_exports$default2 = exports.default) !== null && _exports$default2 !== void 0 && _exports$default2.getEmail || exports !== null && exports !== void 0 && (_exports$default3 = exports.default) !== null && _exports$default3 !== void 0 && _exports$default3.showToken) return false;
         if (exports.getToken || exports.getEmail || exports.showToken) return false;
         return filter(exports, module, moduleId);
       } catch (err) {
@@ -3409,6 +3476,7 @@ window.value = null;
 window.firstArray = [];
 window.user = "";
 window.global = window;
+window.Buffer = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* .default.Buffer */ .Z.Buffer;
 window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_4__;
 window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_5__/* .default */ .Z;
 window.fs = _modules_fs__WEBPACK_IMPORTED_MODULE_6__/* .default */ .ZP;
@@ -3450,7 +3518,7 @@ async function selectBetterDiscordEnvironment(localScriptUrl) {
   }, loadBetterDiscord);
 }
 
-async function loadBetterDiscord(scriptBody) {
+async function loadBetterDiscord(scriptResponse) {
   var _DiscordModules$UserS;
 
   const callback = async () => {
@@ -3459,6 +3527,7 @@ async function loadBetterDiscord(scriptBody) {
 
     try {
       common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.log */ .Z.log("Frontend", "Patching script body...");
+      let scriptBody = new TextDecoder().decode(scriptResponse.body);
       scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixUpdaterPathRequire */ .h)(scriptBody);
       scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixWindowRequire */ .x)(scriptBody);
       eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);

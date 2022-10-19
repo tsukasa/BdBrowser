@@ -15,10 +15,9 @@ const originalInsertBefore = document.head.insertBefore;
 
 document.head.insertBefore = function (node) {
     if (node?.href?.includes("monaco-editor")) {
-        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-            url: node.href
-        }, data => {
-            DOM.injectCSS(node.id || "monaco-styles", data);
+        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: node.href }, data => {
+            const dataBody = new TextDecoder().decode(data.body);
+            DOM.injectCSS(node.id || "monaco-styles", dataBody);
 
             if (typeof node.onload === "function")
                 node.onload();
@@ -62,10 +61,9 @@ const unpatchHead = patchMethods(document.head, data => {
     const [node] = data.args;
 
     if (node?.id === "monaco-style") {
-        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-            url: node.href
-        }, data => {
-            DOM.injectCSS(node.id, data);
+        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: node.href }, data => {
+            const dataBody = new TextDecoder().decode(data.body);
+            DOM.injectCSS(node.id, dataBody);
             if (typeof node.onload === "function") node.onload();
             Logger.log("CSP:Bypass", "Loaded monaco stylesheet.");
         });
@@ -78,11 +76,9 @@ const unpatchHead = patchMethods(document.head, data => {
             if (node.localName === "bd-scripts") {
                 patchMethods(node, data => {
                     const [node] = data.args;
-                    ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-                        url: node.src,
-                        type: "script"
-                    }, data => {
-                        eval(data);
+                    ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: node.src }, data => {
+                        const dataBody = new TextDecoder().decode(data.body);
+                        eval(dataBody);
 
                         if (typeof node.onload === "function")
                             node.onload();
@@ -109,11 +105,9 @@ const unpatchHead = patchMethods(document.head, data => {
             data.callOriginalMethod();
         });
     } else if (node?.src?.includes("monaco-editor")) {
-        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
-            url: node.src,
-            type: "script"
-        }, data => {
-            eval(data);
+        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: node.src }, data => {
+            const dataBody = new TextDecoder().decode(data.body);
+            eval(dataBody);
 
             if (typeof node.onload === "function")
                 node.onload();

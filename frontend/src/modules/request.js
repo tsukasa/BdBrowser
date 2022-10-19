@@ -1,5 +1,6 @@
 import {IPCEvents} from "common/constants";
 import ipcRenderer from "../ipc";
+import MimeTypes from "./mime-types";
 
 const methods = ["get", "put", "post", "delete", "head"];
 const aliases = {del: "delete"};
@@ -42,9 +43,31 @@ export default function request() {
     ipcRenderer.send(IPCEvents.MAKE_REQUESTS, {
         url: url, options: options
     }, data => {
-        const res = new Response(data);
-        res.statusCode = res.status;
-        callback(null, res, data);
+        let bodyData;
+
+        // Try to evaluate whether the result is text or binary...
+        if(data.headers["content-type"]) {
+            const enc = MimeTypes.charset(data.headers["content-type"]);
+
+            // If the "encoding" parameter is present in the original options and it is
+            // set to null, the return value should be an ArrayBuffer. Otherwise check
+            // the Mime database for the type to determine whether it is text or not...
+            if("encoding" in options && options.encoding === null)
+                bodyData = data.body;
+            else
+                bodyData = new TextDecoder(enc).decode(data.body);
+        }
+
+        const res = new Response(bodyData);
+        Object.defineProperty(res, "headers", { value: data.headers });
+        Object.defineProperty(res, "ok", { value: data.ok });
+        Object.defineProperty(res, "redirected", { value: data.redirected });
+        Object.defineProperty(res, "status", { value: data.status });
+        Object.defineProperty(res, "statusCode", { value: data.status });
+        Object.defineProperty(res, "statusText", { value: data.statusText });
+        Object.defineProperty(res, "type", { value: data.type });
+        Object.defineProperty(res, "url", { value: data.url });
+        callback(null, res, bodyData);
     });
 }
 
