@@ -212,7 +212,7 @@ const ipcRenderer = new IPC("frontend");
 
 
 const bdPreloadCatalogue = {
-  electron: _electron__WEBPACK_IMPORTED_MODULE_0__,
+  electron: _electron__WEBPACK_IMPORTED_MODULE_0__/* .default */ .ZP,
   filesystem: {
     readFile: _fs__WEBPACK_IMPORTED_MODULE_3__/* .default.readFileSync */ .ZP.readFileSync,
     writeFile: _fs__WEBPACK_IMPORTED_MODULE_3__/* .default.writeFileSync */ .ZP.writeFileSync,
@@ -225,53 +225,648 @@ const bdPreloadCatalogue = {
     watch: _fs__WEBPACK_IMPORTED_MODULE_3__/* .default.watch */ .ZP.watch,
     getStats: _fs__WEBPACK_IMPORTED_MODULE_3__/* .default.statSync */ .ZP.statSync
   },
-  https: _https__WEBPACK_IMPORTED_MODULE_1__,
-  path: _path__WEBPACK_IMPORTED_MODULE_2__
+  https: _https__WEBPACK_IMPORTED_MODULE_1__/* .default */ .ZP,
+  path: _path__WEBPACK_IMPORTED_MODULE_2__/* .default */ .ZP
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (bdPreloadCatalogue);
 
 /***/ }),
 
-/***/ 828:
+/***/ 100:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var webpack__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(343);
 
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  "Z": () => (/* binding */ discordmodules)
+});
+
+// EXTERNAL MODULE: ../common/logger.js
+var logger = __webpack_require__(602);
+;// CONCATENATED MODULE: ./src/modules/webpack.js
+/**
+ * Allows for grabbing and searching through Discord's webpacked modules.
+ * @module WebpackModules
+ * @version 0.0.2
+ */
+
+/**
+ * Checks if a given module matches a set of parameters.
+ * @callback module:WebpackModules.Filters~filter
+ * @param {*} module - module to check
+ * @returns {boolean} - True if the module matches the filter, false otherwise
+ */
+
+/**
+ * Filters for use with {@link module:WebpackModules} but may prove useful elsewhere.
+ */
+
+class Filters {
+  /**
+   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a set of properties.
+   * @param {Array<string>} props - Array of property names
+   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
+   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties
+   */
+  static byProps(props, filter = m => m) {
+    return module => {
+      if (!module) return false;
+      if (typeof module !== "object" && typeof module !== "function") return false;
+      const component = filter(module);
+      if (!component) return false;
+
+      for (let p = 0; p < props.length; p++) {
+        if (!(props[p] in component)) return false;
+      }
+
+      return true;
+    };
+  }
+  /**
+   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a set of properties on the object's prototype.
+   * @param {Array<string>} fields - Array of property names
+   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
+   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties on the object's prototype
+   */
+
+
+  static byPrototypeFields(fields, filter = m => m) {
+    return module => {
+      if (!module) return false;
+      if (typeof module !== "object" && typeof module !== "function") return false;
+      const component = filter(module);
+      if (!component) return false;
+      if (!component.prototype) return false;
+
+      for (let f = 0; f < fields.length; f++) {
+        if (!(fields[f] in component.prototype)) return false;
+      }
+
+      return true;
+    };
+  }
+  /**
+   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a regex.
+   * @param {RegExp} search - A RegExp to check on the module
+   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
+   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties
+   */
+
+
+  static byRegex(search, filter = m => m) {
+    return module => {
+      const method = filter(module);
+      if (!method) return false;
+      let methodString = "";
+
+      try {
+        methodString = method.toString([]);
+      } catch (err) {
+        methodString = method.toString();
+      }
+
+      return methodString.search(search) !== -1;
+    };
+  }
+  /**
+   * Generates a {@link module:WebpackModules.Filters~filter} that filters by strings.
+   * @param {...String} search - A RegExp to check on the module
+   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of strings
+   */
+
+
+  static byStrings(...strings) {
+    return module => {
+      let moduleString = "";
+
+      try {
+        moduleString = module.toString([]);
+      } catch (err) {
+        moduleString = module.toString();
+      }
+
+      for (const s of strings) {
+        if (!moduleString.includes(s)) return false;
+      }
+
+      return true;
+    };
+  }
+  /**
+   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a set of properties.
+   * @param {string} name - Name the module should have
+   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
+   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties
+   */
+
+
+  static byDisplayName(name) {
+    return module => {
+      return module && module.displayName === name;
+    };
+  }
+  /**
+   * Generates a combined {@link module:WebpackModules.Filters~filter} from a list of filters.
+   * @param {...module:WebpackModules.Filters~filter} filters - A list of filters
+   * @returns {module:WebpackModules.Filters~filter} - Combinatory filter of all arguments
+   */
+
+
+  static combine(...filters) {
+    return module => {
+      return filters.every(filter => filter(module));
+    };
+  }
+
+}
+const hasThrown = new WeakSet();
+class WebpackModules {
+  static find(filter, first = true) {
+    return this.getModule(filter, {
+      first
+    });
+  }
+
+  static findAll(filter) {
+    return this.getModule(filter, {
+      first: false
+    });
+  }
+
+  static findByUniqueProperties(props, first = true) {
+    return first ? this.getByProps(...props) : this.getAllByProps(...props);
+  }
+
+  static findByDisplayName(name) {
+    return this.getByDisplayName(name);
+  }
+  /**
+   * Finds a module using a filter function.
+   * @param {function} filter A function to use to filter modules
+   * @param {object} [options] Set of options to customize the search
+   * @param {Boolean} [options.first=true] Whether to return only the first matching module
+   * @param {Boolean} [options.defaultExport=true] Whether to return default export when matching the default export
+   * @return {Any}
+   */
+
+
+  static getModule(filter, options = {}) {
+    const {
+      first = true,
+      defaultExport = true
+    } = options;
+
+    const wrappedFilter = (exports, module, moduleId) => {
+      try {
+        var _exports$default, _exports$default2, _exports$default3;
+
+        if (exports !== null && exports !== void 0 && (_exports$default = exports.default) !== null && _exports$default !== void 0 && _exports$default.getToken || exports !== null && exports !== void 0 && (_exports$default2 = exports.default) !== null && _exports$default2 !== void 0 && _exports$default2.getEmail || exports !== null && exports !== void 0 && (_exports$default3 = exports.default) !== null && _exports$default3 !== void 0 && _exports$default3.showToken) return false;
+        if (exports.getToken || exports.getEmail || exports.showToken) return false;
+        return filter(exports, module, moduleId);
+      } catch (err) {
+        if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
+        hasThrown.add(filter);
+        return false;
+      }
+    };
+
+    const modules = this.getAllModules();
+    const rm = [];
+    const indices = Object.keys(modules);
+
+    for (let i = 0; i < indices.length; i++) {
+      const index = indices[i];
+      if (!modules.hasOwnProperty(index)) continue;
+      const module = modules[index];
+      const {
+        exports
+      } = module;
+      if (exports === window) continue;
+      let foundModule = null;
+
+      if (typeof exports === "object") {
+        const wrappers = Object.getOwnPropertyDescriptors(exports);
+        const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
+
+        if (getters.length) {
+          for (const getter of getters) {
+            const wrappedExport = exports[getter];
+            if (!wrappedExport) continue;
+            if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default, module, index)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
+            if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
+            if (!foundModule) continue;
+            if (first) return foundModule;
+            rm.push(foundModule);
+          }
+        } else {
+          if (!exports) continue;
+          if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
+          if (wrappedFilter(exports, module, index)) foundModule = exports;
+          if (!foundModule) continue;
+          if (first) return foundModule;
+          rm.push(foundModule);
+        }
+      } else {
+        if (!exports) continue;
+        if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
+        if (wrappedFilter(exports, module, index)) foundModule = exports;
+        if (!foundModule) continue;
+        if (first) return foundModule;
+        rm.push(foundModule);
+      }
+    }
+
+    return first || rm.length == 0 ? undefined : rm;
+  }
+  /**
+   * Finds multiple modules using multiple filters.
+   *
+   * @param {...object} queries Whether to return only the first matching module
+   * @param {Function} queries.filter A function to use to filter modules
+   * @param {Boolean} [queries.first=true] Whether to return only the first matching module
+   * @param {Boolean} [queries.defaultExport=true] Whether to return default export when matching the default export
+   * @return {Any}
+   */
+
+
+  static getBulk(...queries) {
+    const modules = this.getAllModules();
+    const returnedModules = Array(queries.length);
+    const indices = Object.keys(modules);
+
+    for (let i = 0; i < indices.length; i++) {
+      const index = indices[i];
+      if (!modules.hasOwnProperty(index)) continue;
+      const module = modules[index];
+      const {
+        exports
+      } = module;
+      if (!exports) continue;
+
+      for (let q = 0; q < queries.length; q++) {
+        const query = queries[q];
+        const {
+          filter,
+          first = true,
+          defaultExport = true
+        } = query;
+        if (first && returnedModules[q]) continue; // If they only want the first, and we already found it, move on
+
+        if (!first && !returnedModules[q]) returnedModules[q] = []; // If they want multiple and we haven't setup the subarry, do it now
+
+        const wrappedFilter = (ex, mod, moduleId) => {
+          try {
+            return filter(ex, mod, moduleId);
+          } catch (err) {
+            if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getBulk", "Module filter threw an exception.", filter, err);
+            hasThrown.add(filter);
+            return false;
+          }
+        };
+
+        let foundModule = null;
+
+        if (typeof exports === "object") {
+          const wrappers = Object.getOwnPropertyDescriptors(exports);
+          const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
+
+          if (getters.length) {
+            for (const getter of getters) {
+              const wrappedExport = exports[getter];
+              if (!wrappedExport) continue;
+              if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default, module, index)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
+              if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
+              if (!foundModule) continue;
+              if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
+            }
+          } else {
+            if (!exports) continue;
+            if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
+            if (wrappedFilter(exports, module, index)) foundModule = exports;
+            if (!foundModule) continue;
+            if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
+          }
+        } else {
+          if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
+          if (wrappedFilter(exports, module, index)) foundModule = exports;
+          if (!foundModule) continue;
+          if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
+        }
+      }
+    }
+
+    return returnedModules;
+  }
+  /**
+   * Finds all modules matching a filter function.
+   * @param {Function} filter A function to use to filter modules
+   */
+
+
+  static getModules(filter) {
+    return this.getModule(filter, {
+      first: false
+    });
+  }
+  /**
+   * Finds a module by its display name.
+   * @param {String} name The display name of the module
+   * @return {Any}
+   */
+
+
+  static getByDisplayName(name) {
+    return this.getModule(Filters.byDisplayName(name));
+  }
+  /**
+   * Finds a module using its code.
+   * @param {RegEx} regex A regular expression to use to filter modules
+   * @param {Boolean} first Whether to return the only the first matching module
+   * @return {Any}
+   */
+
+
+  static getByRegex(regex, first = true) {
+    return this.getModule(Filters.byRegex(regex), {
+      first
+    });
+  }
+  /**
+   * Finds a single module using properties on its prototype.
+   * @param {...string} prototypes Properties to use to filter modules
+   * @return {Any}
+   */
+
+
+  static getByPrototypes(...prototypes) {
+    return this.getModule(Filters.byPrototypeFields(prototypes));
+  }
+  /**
+   * Finds all modules with a set of properties of its prototype.
+   * @param {...string} prototypes Properties to use to filter modules
+   * @return {Any}
+   */
+
+
+  static getAllByPrototypes(...prototypes) {
+    return this.getModule(Filters.byPrototypeFields(prototypes), {
+      first: false
+    });
+  }
+  /**
+   * Finds a single module using its own properties.
+   * @param {...string} props Properties to use to filter modules
+   * @return {Any}
+   */
+
+
+  static getByProps(...props) {
+    return this.getModule(Filters.byProps(props));
+  }
+  /**
+   * Finds all modules with a set of properties.
+   * @param {...string} props Properties to use to filter modules
+   * @return {Any}
+   */
+
+
+  static getAllByProps(...props) {
+    return this.getModule(Filters.byProps(props), {
+      first: false
+    });
+  }
+  /**
+   * Finds a single module using a set of strings.
+   * @param {...String} props Strings to use to filter modules
+   * @return {Any}
+   */
+
+
+  static getByString(...strings) {
+    return this.getModule(Filters.byStrings(...strings));
+  }
+  /**
+   * Finds all modules with a set of strings.
+   * @param {...String} strings Strings to use to filter modules
+   * @return {Any}
+   */
+
+
+  static getAllByString(...strings) {
+    return this.getModule(Filters.byStrings(...strings), {
+      first: false
+    });
+  }
+  /**
+   * Finds a module that lazily loaded.
+   * @param {(m) => boolean} filter A function to use to filter modules.
+   * @param {object} [options] Set of options to customize the search
+   * @param {AbortSignal} [options.signal] AbortSignal of an AbortController to cancel the promise
+   * @param {Boolean} [options.defaultExport=true] Whether to return default export when matching the default export
+   * @returns {Promise<any>}
+   */
+
+
+  static getLazy(filter, options = {}) {
+    /** @type {AbortSignal} */
+    const abortSignal = options.signal;
+    const defaultExport = options.defaultExport ?? true;
+    const fromCache = this.getModule(filter);
+    if (fromCache) return Promise.resolve(fromCache);
+
+    const wrappedFilter = exports => {
+      try {
+        return filter(exports);
+      } catch (err) {
+        if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
+        hasThrown.add(filter);
+        return false;
+      }
+    };
+
+    return new Promise(resolve => {
+      const cancel = () => this.removeListener(listener);
+
+      const listener = function (exports) {
+        if (!exports) return;
+        let foundModule = null;
+
+        if (typeof exports === "object") {
+          const wrappers = Object.getOwnPropertyDescriptors(exports);
+          const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
+
+          if (getters.length) {
+            for (const getter of getters) {
+              const wrappedExport = exports[getter];
+              if (!wrappedExport) continue;
+              if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
+              if (wrappedFilter(wrappedExport)) foundModule = wrappedExport;
+            }
+          } else {
+            if (exports.__esModule && exports.default && wrappedFilter(exports.default)) foundModule = defaultExport ? exports.default : exports;
+            if (wrappedFilter(exports)) foundModule = exports;
+          }
+        } else {
+          if (exports.__esModule && exports.default && wrappedFilter(exports.default)) foundModule = defaultExport ? exports.default : exports;
+          if (wrappedFilter(exports)) foundModule = exports;
+        }
+
+        if (!foundModule) return;
+        cancel();
+        resolve(foundModule);
+      };
+
+      this.addListener(listener);
+      abortSignal === null || abortSignal === void 0 ? void 0 : abortSignal.addEventListener("abort", () => {
+        cancel();
+        resolve();
+      });
+    });
+  }
+  /**
+   * Discord's __webpack_require__ function.
+   */
+
+
+  static get require() {
+    if (this._require) return this._require;
+    const id = "bdbrowser" + Math.random().toString().slice(2, 3);
+
+    let __discord_webpack_require__;
+
+    if (typeof webpackJsonp !== "undefined") {
+      __discord_webpack_require__ = window.webpackJsonp.push([[], {
+        [id]: (module, exports, __internal_require__) => module.exports = __internal_require__
+      }, [[id]]]);
+    } else if (typeof window[this.chunkName] !== "undefined") {
+      window[this.chunkName].push([[id], {}, __internal_require__ => __discord_webpack_require__ = __internal_require__]);
+    }
+
+    delete __discord_webpack_require__.m[id];
+    delete __discord_webpack_require__.c[id];
+    return this._require = __discord_webpack_require__;
+  }
+  /**
+   * Returns all loaded modules.
+   * @return {Array}
+   */
+
+
+  static getAllModules() {
+    return this.require.c;
+  } // Webpack Chunk Observing
+
+
+  static get chunkName() {
+    return "webpackChunkdiscord_app";
+  }
+
+  static initialize() {
+    this.handlePush = this.handlePush.bind(this);
+    this.listeners = new Set();
+    this.__ORIGINAL_PUSH__ = window[this.chunkName].push;
+    Object.defineProperty(window[this.chunkName], "push", {
+      configurable: true,
+      get: () => this.handlePush,
+      set: newPush => {
+        this.__ORIGINAL_PUSH__ = newPush;
+        Object.defineProperty(window[this.chunkName], "push", {
+          value: this.handlePush,
+          configurable: true,
+          writable: true
+        });
+      }
+    });
+  }
+  /**
+   * Adds a listener for when discord loaded a chunk. Useful for subscribing to lazy loaded modules.
+   * @param {Function} listener - Function to subscribe for chunks
+   * @returns {Function} A cancelling function
+   */
+
+
+  static addListener(listener) {
+    this.listeners.add(listener);
+    return this.removeListener.bind(this, listener);
+  }
+  /**
+   * Removes a listener for when discord loaded a chunk.
+   * @param {Function} listener
+   * @returns {boolean}
+   */
+
+
+  static removeListener(listener) {
+    return this.listeners.delete(listener);
+  }
+
+  static handlePush(chunk) {
+    const [, modules] = chunk;
+
+    for (const moduleId in modules) {
+      const originalModule = modules[moduleId];
+
+      modules[moduleId] = (module, exports, require) => {
+        try {
+          Reflect.apply(originalModule, null, [module, exports, require]);
+          const listeners = [...this.listeners];
+
+          for (let i = 0; i < listeners.length; i++) {
+            try {
+              listeners[i](exports);
+            } catch (error) {
+              logger/* default.stacktrace */.Z.stacktrace("WebpackModules", "Could not fire callback listener:", error);
+            }
+          }
+        } catch (error) {
+          logger/* default.stacktrace */.Z.stacktrace("WebpackModules", "Could not patch pushed module", error);
+        }
+      };
+
+      Object.assign(modules[moduleId], originalModule, {
+        toString: () => originalModule.toString()
+      });
+    }
+
+    return Reflect.apply(this.__ORIGINAL_PUSH__, window[this.chunkName], [chunk]);
+  }
+
+}
+WebpackModules.initialize();
+;// CONCATENATED MODULE: ./src/modules/discordmodules.js
+
+/* harmony default export */ const discordmodules = ({
   /* Current User Info, State and Settings */
   get ThemeStore() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("addChangeListener", "theme");
+    return WebpackModules.getByProps("addChangeListener", "theme");
   },
 
   /* User Stores and Utils */
   get UserStore() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("getCurrentUser", "getUser");
+    return WebpackModules.getByProps("getCurrentUser", "getUser");
   },
 
   /* Electron & Other Internals with Utils */
   get ElectronModule() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("setBadge");
+    return WebpackModules.getByProps("setBadge");
   },
 
   get Dispatcher() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("dispatch", "subscribe", "wait", "unsubscribe", "register");
+    return WebpackModules.getByProps("dispatch", "subscribe", "wait", "unsubscribe", "register");
   },
 
   get RouterModule() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("listeners", "rewrites", "flushRoute");
+    return WebpackModules.getByProps("listeners", "rewrites", "flushRoute");
   },
 
   /* Other Utils */
   get StorageModule() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("get", "set", "clear", "stringify");
+    return WebpackModules.getByProps("get", "set", "clear", "stringify");
   },
 
   /* Stuff for the Preloader */
   get Buffer() {
-    return webpack__WEBPACK_IMPORTED_MODULE_0__/* .default.getByProps */ .Z.getByProps("INSPECT_MAX_BYTES");
+    return WebpackModules.getByProps("INSPECT_MAX_BYTES");
   }
 
 });
@@ -326,21 +921,18 @@ const globals = {
 /***/ 8:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-// ESM COMPAT FLAG
-__webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  "clipboard": () => (/* binding */ clipboard),
-  "ipcRenderer": () => (/* reexport */ IPCRenderer),
-  "remote": () => (/* binding */ remote),
-  "shell": () => (/* binding */ shell)
+  "ZP": () => (/* binding */ modules_electron)
 });
+
+// UNUSED EXPORTS: clipboard, ipcRenderer, remote, shell
 
 // EXTERNAL MODULE: ../common/dom.js
 var dom = __webpack_require__(706);
-// EXTERNAL MODULE: ./src/modules/discordmodules.js
-var discordmodules = __webpack_require__(828);
+// EXTERNAL MODULE: ./src/modules/discordmodules.js + 1 modules
+var discordmodules = __webpack_require__(100);
 ;// CONCATENATED MODULE: ./src/modules/ipcRenderer.js
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -476,6 +1068,13 @@ const clipboard = {
   },
   writeText: text => navigator.clipboard.writeText(text)
 };
+const electron = {
+  clipboard,
+  ipcRenderer: IPCRenderer,
+  remote,
+  shell
+};
+/* harmony default export */ const modules_electron = (electron);
 
 /***/ }),
 
@@ -641,13 +1240,13 @@ class VfsEntry {
     fsEntry_defineProperty(this, "size", 0);
 
     this.fullName = fullName;
-    this.pathName = modules_path.dirname(this.fullName);
+    this.pathName = modules_path/* default.dirname */.ZP.dirname(this.fullName);
     this.nodeType = nodeType;
   }
 
 }
-// EXTERNAL MODULE: ./src/modules/discordmodules.js
-var discordmodules = __webpack_require__(828);
+// EXTERNAL MODULE: ./src/modules/discordmodules.js + 1 modules
+var discordmodules = __webpack_require__(100);
 ;// CONCATENATED MODULE: ./src/modules/localStorage.js
 
 function getItem(key) {
@@ -1199,12 +1798,12 @@ function writeOrUpdateMemoryCache(path, vfsEntryObject) {
 
 
 function inotify(path, event, source) {
-  let parent = modules_path.dirname(path);
-  let newSource = modules_path.basename(path); // Initially, the {source} parameter should not be supplied when
+  let parent = modules_path/* default.dirname */.ZP.dirname(path);
+  let newSource = modules_path/* default.basename */.ZP.basename(path); // Initially, the {source} parameter should not be supplied when
   // calling inotify. It is intended for recursive calls made from
   // within the function.
 
-  if (!source) source = modules_path.basename(path); // The structure for the calls looks like this for creating a new file:
+  if (!source) source = modules_path/* default.basename */.ZP.basename(path); // The structure for the calls looks like this for creating a new file:
   // (Assuming we work with AppData/BetterDiscord/data/MyFile.txt)
   // 0: Path: MyFile.txt,    Source: MyFile.txt,    Event: rename
   // 1: Path: data,          Source: MyFile.txt,    Event: rename
@@ -1214,7 +1813,7 @@ function inotify(path, event, source) {
   // we change the "rename" to a "change" to signal metadata change because
   // rename has a different use for directories (creating/deleting).
 
-  if (!isFile(source) && modules_path.basename(path) !== source) event = "change";
+  if (!isFile(source) && modules_path/* default.basename */.ZP.basename(path) !== source) event = "change";
   emitter.emit(path, source, event);
   if (parent.length > 0) inotify(parent, event, newSource);
 }
@@ -1357,7 +1956,7 @@ function mkdir(path, options, callback) {
 }
 function mkdirSync(path, options) {
   path = normalizePath(path);
-  let parentPath = modules_path.dirname(path);
+  let parentPath = modules_path/* default.dirname */.ZP.dirname(path);
   let firstPathElementCreated;
   if (!options) options = {
     recursive: false
@@ -1433,7 +2032,7 @@ function readdirSync(path) {
     let fsEntry = getVfsCacheEntry(dataKey);
 
     if (fsEntry.pathName === path) {
-      found.push(modules_path.basename(fsEntry.fullName));
+      found.push(modules_path/* default.basename */.ZP.basename(fsEntry.fullName));
     }
   }
 
@@ -1672,7 +2271,7 @@ function writeFile(path, content, options, callback) {
 }
 function writeFileSync(path, content, options) {
   path = normalizePath(path);
-  let filename = modules_path.basename(path);
+  let filename = modules_path/* default.basename */.ZP.basename(path);
   let encodedContent = new VfsBuffer([]); // TODO: No idea how that would work right now...
 
   if (!options) options = {
@@ -1691,7 +2290,7 @@ function writeFileSync(path, content, options) {
     error: "ENOENT",
     syscall: "open"
   });
-  if (!existsSync(modules_path.dirname(path))) throw getVfsErrorObject({
+  if (!existsSync(modules_path/* default.dirname */.ZP.dirname(path))) throw getVfsErrorObject({
     path: path,
     error: "ENOENT",
     syscall: "open"
@@ -1905,13 +2504,10 @@ const fs = {
 /***/ 183:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "request": () => (/* binding */ request),
-/* harmony export */   "createServer": () => (/* binding */ createServer),
-/* harmony export */   "get": () => (/* binding */ get),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */   "ZP": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* unused harmony exports request, createServer, get */
 /* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(551);
 
 function request(url, options, callback) {
@@ -1960,7 +2556,7 @@ function request(url, options, callback) {
               value: data.type
             });
             Object.defineProperty(res, "url", {
-              value: data.url
+              value: ""
             });
             return res;
         }
@@ -1979,10 +2575,15 @@ function createServer() {
     close: () => {}
   };
 }
-const get = request;
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  get
-});
+function get() {
+  console.log("https.get:", arguments);
+  request.apply(this, arguments);
+}
+const https = request;
+https.get = request;
+https.createServer = createServer;
+https.request = request;
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (https);
 
 /***/ }),
 
@@ -2008,7 +2609,7 @@ const _extensions = {
 };
 
 function _require(path, req) {
-  const extension = (0,_path__WEBPACK_IMPORTED_MODULE_1__.extname)(path);
+  const extension = (0,_path__WEBPACK_IMPORTED_MODULE_1__/* .extname */ .DZ)(path);
   const loader = _extensions[extension];
   if (!loader) throw new Error("Unkown File extension " + path);
   const existsFile = _fs__WEBPACK_IMPORTED_MODULE_0__/* .default.existsSync */ .ZP.existsSync(path);
@@ -2056,7 +2657,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var common_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(706);
 /* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(65);
 /* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(229);
-/* harmony import */ var _discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(828);
+/* harmony import */ var _discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(100);
 /* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(551);
 
 
@@ -2283,15 +2884,11 @@ function injectTheme(node) {
 /***/ 878:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "join": () => (/* binding */ join),
-/* harmony export */   "basename": () => (/* binding */ basename),
-/* harmony export */   "resolve": () => (/* binding */ resolve),
-/* harmony export */   "extname": () => (/* binding */ extname),
-/* harmony export */   "dirname": () => (/* binding */ dirname),
-/* harmony export */   "isAbsolute": () => (/* binding */ isAbsolute)
+/* harmony export */   "DZ": () => (/* binding */ extname),
+/* harmony export */   "ZP": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* unused harmony exports join, basename, resolve, dirname, isAbsolute */
 /* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(432);
 
 function join(...paths) {
@@ -2338,6 +2935,15 @@ function isAbsolute(path) {
   path = (0,_fs__WEBPACK_IMPORTED_MODULE_0__/* .normalizePath */ .AH)(path);
   return (_path = path) === null || _path === void 0 ? void 0 : _path.startsWith("AppData/");
 }
+const path = {
+  basename,
+  dirname,
+  extname,
+  isAbsolute,
+  join,
+  resolve
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (path);
 
 /***/ }),
 
@@ -2375,12 +2981,8 @@ __webpack_require__.d(vm_namespaceObject, {
   "compileFunction": () => (compileFunction)
 });
 
-// EXTERNAL MODULE: ./src/modules/electron.js + 1 modules
-var electron = __webpack_require__(8);
 // EXTERNAL MODULE: ./src/modules/https.js
 var https = __webpack_require__(183);
-// EXTERNAL MODULE: ./src/modules/path.js
-var modules_path = __webpack_require__(878);
 ;// CONCATENATED MODULE: ./src/modules/vm.js
 function compileFunction(code, args = []) {
   return `((${args.join(", ")}) => {
@@ -2391,12 +2993,14 @@ function compileFunction(code, args = []) {
         }
     })`;
 }
-// EXTERNAL MODULE: ./src/modules/webpack.js
-var webpack = __webpack_require__(343);
+// EXTERNAL MODULE: ./src/modules/electron.js + 1 modules
+var electron = __webpack_require__(8);
 // EXTERNAL MODULE: ./src/modules/fs.js + 4 modules
 var fs = __webpack_require__(432);
-// EXTERNAL MODULE: ./src/modules/discordmodules.js
-var discordmodules = __webpack_require__(828);
+// EXTERNAL MODULE: ./src/modules/path.js
+var modules_path = __webpack_require__(878);
+// EXTERNAL MODULE: ./src/modules/discordmodules.js + 1 modules
+var discordmodules = __webpack_require__(100);
 // EXTERNAL MODULE: ./src/modules/events.js
 var events = __webpack_require__(287);
 ;// CONCATENATED MODULE: ../assets/mime-db.json
@@ -2509,7 +3113,7 @@ function getExtension(inputContentType) {
 
 function lookupMimeType(path) {
   if (!path || typeof path !== 'string') return false;
-  let extension = (0,modules_path.extname)('x.' + path).toLowerCase();
+  let extension = (0,modules_path/* extname */.DZ)('x.' + path).toLowerCase();
   if (!extension) return false;
   return typeMapList[extension] || false;
 }
@@ -2622,31 +3226,15 @@ function request() {
       if ("encoding" in options && options.encoding === null) bodyData = data.body;else bodyData = new TextDecoder(enc).decode(data.body);
     }
 
-    const res = new Response(bodyData);
-    Object.defineProperty(res, "headers", {
-      value: data.headers
-    });
-    Object.defineProperty(res, "ok", {
-      value: data.ok
-    });
-    Object.defineProperty(res, "redirected", {
-      value: data.redirected
-    });
-    Object.defineProperty(res, "status", {
-      value: data.status
-    });
-    Object.defineProperty(res, "statusCode", {
-      value: data.status
-    });
-    Object.defineProperty(res, "statusText", {
-      value: data.statusText
-    });
-    Object.defineProperty(res, "type", {
-      value: data.type
-    });
-    Object.defineProperty(res, "url", {
-      value: data.url
-    });
+    const res = {
+      headers: data.headers,
+      aborted: !data.ok,
+      complete: true,
+      end: undefined,
+      statusCode: data.status,
+      statusMessage: data.statusText,
+      url: ""
+    };
     callback(null, res, bodyData);
   });
 }
@@ -2672,7 +3260,6 @@ Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).m
 
 
 
-
 function require_require(mod) {
   switch (mod) {
     case "buffer":
@@ -2682,7 +3269,7 @@ function require_require(mod) {
       return;
 
     case "electron":
-      return electron;
+      return electron/* default */.ZP;
 
     case "events":
       return events/* default */.Z;
@@ -2693,7 +3280,7 @@ function require_require(mod) {
 
     case "http":
     case "https":
-      return https;
+      return https/* default */.ZP;
 
     case "mime-types":
       return mime_types;
@@ -2702,7 +3289,7 @@ function require_require(mod) {
       return modules_module/* default */.Z;
 
     case "path":
-      return modules_path;
+      return modules_path/* default */.ZP;
 
     case "process":
       return process/* default */.Z;
@@ -2738,10 +3325,8 @@ require_require.resolve = path => {
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "x": () => (/* binding */ fixWindowRequire),
-/* harmony export */   "h": () => (/* binding */ fixUpdaterPathRequire)
+/* harmony export */   "x": () => (/* binding */ fixWindowRequire)
 /* harmony export */ });
-/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(602);
 
 /**
  * Patches the `window.require` override done in BetterDiscord's
@@ -2754,630 +3339,6 @@ require_require.resolve = path => {
 function fixWindowRequire(scriptBody) {
   return scriptBody.replace(/=window.require=.*?;/, "=window.require;");
 }
-/**
- * Patches the wonky import of BetterDiscord's `renderer/src/modules/updater.js`
- * to use BdBrowser's implementation of the "path" module.
- * If not patched, the updater will be dysfunctional in BdBrowser due to missing imports.
- * @param {string} scriptBody - A string containing the script body of the renderer to patch.
- * @returns {string} - The patched script body of the renderer.
- */
-
-function fixUpdaterPathRequire(scriptBody) {
-  try {
-    // First, identify the call we use to work our way backwards...
-    const identifyFunctionNameCall = scriptBody.match(/this\.cache\[(.*?)\.basename/).at(-1); // Remove the parenthesis from the function name match
-
-    const pathFunctionName = identifyFunctionNameCall.replace("()", ""); // Now build the regular expression to replace the group content
-
-    const pathImportRegex = new RegExp(`${pathFunctionName}=(.*?);`);
-    const pathImport = scriptBody.match(pathImportRegex).at(-1); // Finally, replace the group content with an anonymous function for require("path")
-
-    return scriptBody.replace(pathImport, '() => require("path")');
-  } catch (error) {
-    common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.error */ .Z.error("ScriptPatcher", "Failed to patch the \"path\" import in the updater:\n", error);
-    return scriptBody;
-  }
-}
-
-/***/ }),
-
-/***/ 343:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (/* binding */ WebpackModules)
-/* harmony export */ });
-/* unused harmony export Filters */
-/* harmony import */ var _common_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(602);
-/**
- * Allows for grabbing and searching through Discord's webpacked modules.
- * @module WebpackModules
- * @version 0.0.2
- */
-
-/**
- * Checks if a given module matches a set of parameters.
- * @callback module:WebpackModules.Filters~filter
- * @param {*} module - module to check
- * @returns {boolean} - True if the module matches the filter, false otherwise
- */
-
-/**
- * Filters for use with {@link module:WebpackModules} but may prove useful elsewhere.
- */
-
-class Filters {
-  /**
-   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a set of properties.
-   * @param {Array<string>} props - Array of property names
-   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
-   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties
-   */
-  static byProps(props, filter = m => m) {
-    return module => {
-      if (!module) return false;
-      if (typeof module !== "object" && typeof module !== "function") return false;
-      const component = filter(module);
-      if (!component) return false;
-
-      for (let p = 0; p < props.length; p++) {
-        if (!(props[p] in component)) return false;
-      }
-
-      return true;
-    };
-  }
-  /**
-   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a set of properties on the object's prototype.
-   * @param {Array<string>} fields - Array of property names
-   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
-   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties on the object's prototype
-   */
-
-
-  static byPrototypeFields(fields, filter = m => m) {
-    return module => {
-      if (!module) return false;
-      if (typeof module !== "object" && typeof module !== "function") return false;
-      const component = filter(module);
-      if (!component) return false;
-      if (!component.prototype) return false;
-
-      for (let f = 0; f < fields.length; f++) {
-        if (!(fields[f] in component.prototype)) return false;
-      }
-
-      return true;
-    };
-  }
-  /**
-   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a regex.
-   * @param {RegExp} search - A RegExp to check on the module
-   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
-   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties
-   */
-
-
-  static byRegex(search, filter = m => m) {
-    return module => {
-      const method = filter(module);
-      if (!method) return false;
-      let methodString = "";
-
-      try {
-        methodString = method.toString([]);
-      } catch (err) {
-        methodString = method.toString();
-      }
-
-      return methodString.search(search) !== -1;
-    };
-  }
-  /**
-   * Generates a {@link module:WebpackModules.Filters~filter} that filters by strings.
-   * @param {...String} search - A RegExp to check on the module
-   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of strings
-   */
-
-
-  static byStrings(...strings) {
-    return module => {
-      let moduleString = "";
-
-      try {
-        moduleString = module.toString([]);
-      } catch (err) {
-        moduleString = module.toString();
-      }
-
-      for (const s of strings) {
-        if (!moduleString.includes(s)) return false;
-      }
-
-      return true;
-    };
-  }
-  /**
-   * Generates a {@link module:WebpackModules.Filters~filter} that filters by a set of properties.
-   * @param {string} name - Name the module should have
-   * @param {module:WebpackModules.Filters~filter} filter - Additional filter
-   * @returns {module:WebpackModules.Filters~filter} - A filter that checks for a set of properties
-   */
-
-
-  static byDisplayName(name) {
-    return module => {
-      return module && module.displayName === name;
-    };
-  }
-  /**
-   * Generates a combined {@link module:WebpackModules.Filters~filter} from a list of filters.
-   * @param {...module:WebpackModules.Filters~filter} filters - A list of filters
-   * @returns {module:WebpackModules.Filters~filter} - Combinatory filter of all arguments
-   */
-
-
-  static combine(...filters) {
-    return module => {
-      return filters.every(filter => filter(module));
-    };
-  }
-
-}
-const hasThrown = new WeakSet();
-class WebpackModules {
-  static find(filter, first = true) {
-    return this.getModule(filter, {
-      first
-    });
-  }
-
-  static findAll(filter) {
-    return this.getModule(filter, {
-      first: false
-    });
-  }
-
-  static findByUniqueProperties(props, first = true) {
-    return first ? this.getByProps(...props) : this.getAllByProps(...props);
-  }
-
-  static findByDisplayName(name) {
-    return this.getByDisplayName(name);
-  }
-  /**
-   * Finds a module using a filter function.
-   * @param {function} filter A function to use to filter modules
-   * @param {object} [options] Set of options to customize the search
-   * @param {Boolean} [options.first=true] Whether to return only the first matching module
-   * @param {Boolean} [options.defaultExport=true] Whether to return default export when matching the default export
-   * @return {Any}
-   */
-
-
-  static getModule(filter, options = {}) {
-    const {
-      first = true,
-      defaultExport = true
-    } = options;
-
-    const wrappedFilter = (exports, module, moduleId) => {
-      try {
-        var _exports$default, _exports$default2, _exports$default3;
-
-        if (exports !== null && exports !== void 0 && (_exports$default = exports.default) !== null && _exports$default !== void 0 && _exports$default.getToken || exports !== null && exports !== void 0 && (_exports$default2 = exports.default) !== null && _exports$default2 !== void 0 && _exports$default2.getEmail || exports !== null && exports !== void 0 && (_exports$default3 = exports.default) !== null && _exports$default3 !== void 0 && _exports$default3.showToken) return false;
-        if (exports.getToken || exports.getEmail || exports.showToken) return false;
-        return filter(exports, module, moduleId);
-      } catch (err) {
-        if (!hasThrown.has(filter)) _common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.warn */ .Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
-        hasThrown.add(filter);
-        return false;
-      }
-    };
-
-    const modules = this.getAllModules();
-    const rm = [];
-    const indices = Object.keys(modules);
-
-    for (let i = 0; i < indices.length; i++) {
-      const index = indices[i];
-      if (!modules.hasOwnProperty(index)) continue;
-      const module = modules[index];
-      const {
-        exports
-      } = module;
-      if (exports === window) continue;
-      let foundModule = null;
-
-      if (typeof exports === "object") {
-        const wrappers = Object.getOwnPropertyDescriptors(exports);
-        const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
-
-        if (getters.length) {
-          for (const getter of getters) {
-            const wrappedExport = exports[getter];
-            if (!wrappedExport) continue;
-            if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default, module, index)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
-            if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
-            if (!foundModule) continue;
-            if (first) return foundModule;
-            rm.push(foundModule);
-          }
-        } else {
-          if (!exports) continue;
-          if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
-          if (wrappedFilter(exports, module, index)) foundModule = exports;
-          if (!foundModule) continue;
-          if (first) return foundModule;
-          rm.push(foundModule);
-        }
-      } else {
-        if (!exports) continue;
-        if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
-        if (wrappedFilter(exports, module, index)) foundModule = exports;
-        if (!foundModule) continue;
-        if (first) return foundModule;
-        rm.push(foundModule);
-      }
-    }
-
-    return first || rm.length == 0 ? undefined : rm;
-  }
-  /**
-   * Finds multiple modules using multiple filters.
-   *
-   * @param {...object} queries Whether to return only the first matching module
-   * @param {Function} queries.filter A function to use to filter modules
-   * @param {Boolean} [queries.first=true] Whether to return only the first matching module
-   * @param {Boolean} [queries.defaultExport=true] Whether to return default export when matching the default export
-   * @return {Any}
-   */
-
-
-  static getBulk(...queries) {
-    const modules = this.getAllModules();
-    const returnedModules = Array(queries.length);
-    const indices = Object.keys(modules);
-
-    for (let i = 0; i < indices.length; i++) {
-      const index = indices[i];
-      if (!modules.hasOwnProperty(index)) continue;
-      const module = modules[index];
-      const {
-        exports
-      } = module;
-      if (!exports) continue;
-
-      for (let q = 0; q < queries.length; q++) {
-        const query = queries[q];
-        const {
-          filter,
-          first = true,
-          defaultExport = true
-        } = query;
-        if (first && returnedModules[q]) continue; // If they only want the first, and we already found it, move on
-
-        if (!first && !returnedModules[q]) returnedModules[q] = []; // If they want multiple and we haven't setup the subarry, do it now
-
-        const wrappedFilter = (ex, mod, moduleId) => {
-          try {
-            return filter(ex, mod, moduleId);
-          } catch (err) {
-            if (!hasThrown.has(filter)) _common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.warn */ .Z.warn("WebpackModules~getBulk", "Module filter threw an exception.", filter, err);
-            hasThrown.add(filter);
-            return false;
-          }
-        };
-
-        let foundModule = null;
-
-        if (typeof exports === "object") {
-          const wrappers = Object.getOwnPropertyDescriptors(exports);
-          const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
-
-          if (getters.length) {
-            for (const getter of getters) {
-              const wrappedExport = exports[getter];
-              if (!wrappedExport) continue;
-              if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default, module, index)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
-              if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
-              if (!foundModule) continue;
-              if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
-            }
-          } else {
-            if (!exports) continue;
-            if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
-            if (wrappedFilter(exports, module, index)) foundModule = exports;
-            if (!foundModule) continue;
-            if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
-          }
-        } else {
-          if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
-          if (wrappedFilter(exports, module, index)) foundModule = exports;
-          if (!foundModule) continue;
-          if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
-        }
-      }
-    }
-
-    return returnedModules;
-  }
-  /**
-   * Finds all modules matching a filter function.
-   * @param {Function} filter A function to use to filter modules
-   */
-
-
-  static getModules(filter) {
-    return this.getModule(filter, {
-      first: false
-    });
-  }
-  /**
-   * Finds a module by its display name.
-   * @param {String} name The display name of the module
-   * @return {Any}
-   */
-
-
-  static getByDisplayName(name) {
-    return this.getModule(Filters.byDisplayName(name));
-  }
-  /**
-   * Finds a module using its code.
-   * @param {RegEx} regex A regular expression to use to filter modules
-   * @param {Boolean} first Whether to return the only the first matching module
-   * @return {Any}
-   */
-
-
-  static getByRegex(regex, first = true) {
-    return this.getModule(Filters.byRegex(regex), {
-      first
-    });
-  }
-  /**
-   * Finds a single module using properties on its prototype.
-   * @param {...string} prototypes Properties to use to filter modules
-   * @return {Any}
-   */
-
-
-  static getByPrototypes(...prototypes) {
-    return this.getModule(Filters.byPrototypeFields(prototypes));
-  }
-  /**
-   * Finds all modules with a set of properties of its prototype.
-   * @param {...string} prototypes Properties to use to filter modules
-   * @return {Any}
-   */
-
-
-  static getAllByPrototypes(...prototypes) {
-    return this.getModule(Filters.byPrototypeFields(prototypes), {
-      first: false
-    });
-  }
-  /**
-   * Finds a single module using its own properties.
-   * @param {...string} props Properties to use to filter modules
-   * @return {Any}
-   */
-
-
-  static getByProps(...props) {
-    return this.getModule(Filters.byProps(props));
-  }
-  /**
-   * Finds all modules with a set of properties.
-   * @param {...string} props Properties to use to filter modules
-   * @return {Any}
-   */
-
-
-  static getAllByProps(...props) {
-    return this.getModule(Filters.byProps(props), {
-      first: false
-    });
-  }
-  /**
-   * Finds a single module using a set of strings.
-   * @param {...String} props Strings to use to filter modules
-   * @return {Any}
-   */
-
-
-  static getByString(...strings) {
-    return this.getModule(Filters.byStrings(...strings));
-  }
-  /**
-   * Finds all modules with a set of strings.
-   * @param {...String} strings Strings to use to filter modules
-   * @return {Any}
-   */
-
-
-  static getAllByString(...strings) {
-    return this.getModule(Filters.byStrings(...strings), {
-      first: false
-    });
-  }
-  /**
-   * Finds a module that lazily loaded.
-   * @param {(m) => boolean} filter A function to use to filter modules.
-   * @param {object} [options] Set of options to customize the search
-   * @param {AbortSignal} [options.signal] AbortSignal of an AbortController to cancel the promise
-   * @param {Boolean} [options.defaultExport=true] Whether to return default export when matching the default export
-   * @returns {Promise<any>}
-   */
-
-
-  static getLazy(filter, options = {}) {
-    /** @type {AbortSignal} */
-    const abortSignal = options.signal;
-    const defaultExport = options.defaultExport ?? true;
-    const fromCache = this.getModule(filter);
-    if (fromCache) return Promise.resolve(fromCache);
-
-    const wrappedFilter = exports => {
-      try {
-        return filter(exports);
-      } catch (err) {
-        if (!hasThrown.has(filter)) _common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.warn */ .Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
-        hasThrown.add(filter);
-        return false;
-      }
-    };
-
-    return new Promise(resolve => {
-      const cancel = () => this.removeListener(listener);
-
-      const listener = function (exports) {
-        if (!exports) return;
-        let foundModule = null;
-
-        if (typeof exports === "object") {
-          const wrappers = Object.getOwnPropertyDescriptors(exports);
-          const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
-
-          if (getters.length) {
-            for (const getter of getters) {
-              const wrappedExport = exports[getter];
-              if (!wrappedExport) continue;
-              if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
-              if (wrappedFilter(wrappedExport)) foundModule = wrappedExport;
-            }
-          } else {
-            if (exports.__esModule && exports.default && wrappedFilter(exports.default)) foundModule = defaultExport ? exports.default : exports;
-            if (wrappedFilter(exports)) foundModule = exports;
-          }
-        } else {
-          if (exports.__esModule && exports.default && wrappedFilter(exports.default)) foundModule = defaultExport ? exports.default : exports;
-          if (wrappedFilter(exports)) foundModule = exports;
-        }
-
-        if (!foundModule) return;
-        cancel();
-        resolve(foundModule);
-      };
-
-      this.addListener(listener);
-      abortSignal === null || abortSignal === void 0 ? void 0 : abortSignal.addEventListener("abort", () => {
-        cancel();
-        resolve();
-      });
-    });
-  }
-  /**
-   * Discord's __webpack_require__ function.
-   */
-
-
-  static get require() {
-    if (this._require) return this._require;
-    const id = "bdbrowser" + Math.random().toString().slice(2, 3);
-
-    let __discord_webpack_require__;
-
-    if (typeof webpackJsonp !== "undefined") {
-      __discord_webpack_require__ = window.webpackJsonp.push([[], {
-        [id]: (module, exports, __internal_require__) => module.exports = __internal_require__
-      }, [[id]]]);
-    } else if (typeof window[this.chunkName] !== "undefined") {
-      window[this.chunkName].push([[id], {}, __internal_require__ => __discord_webpack_require__ = __internal_require__]);
-    }
-
-    delete __discord_webpack_require__.m[id];
-    delete __discord_webpack_require__.c[id];
-    return this._require = __discord_webpack_require__;
-  }
-  /**
-   * Returns all loaded modules.
-   * @return {Array}
-   */
-
-
-  static getAllModules() {
-    return this.require.c;
-  } // Webpack Chunk Observing
-
-
-  static get chunkName() {
-    return "webpackChunkdiscord_app";
-  }
-
-  static initialize() {
-    this.handlePush = this.handlePush.bind(this);
-    this.listeners = new Set();
-    this.__ORIGINAL_PUSH__ = window[this.chunkName].push;
-    Object.defineProperty(window[this.chunkName], "push", {
-      configurable: true,
-      get: () => this.handlePush,
-      set: newPush => {
-        this.__ORIGINAL_PUSH__ = newPush;
-        Object.defineProperty(window[this.chunkName], "push", {
-          value: this.handlePush,
-          configurable: true,
-          writable: true
-        });
-      }
-    });
-  }
-  /**
-   * Adds a listener for when discord loaded a chunk. Useful for subscribing to lazy loaded modules.
-   * @param {Function} listener - Function to subscribe for chunks
-   * @returns {Function} A cancelling function
-   */
-
-
-  static addListener(listener) {
-    this.listeners.add(listener);
-    return this.removeListener.bind(this, listener);
-  }
-  /**
-   * Removes a listener for when discord loaded a chunk.
-   * @param {Function} listener
-   * @returns {boolean}
-   */
-
-
-  static removeListener(listener) {
-    return this.listeners.delete(listener);
-  }
-
-  static handlePush(chunk) {
-    const [, modules] = chunk;
-
-    for (const moduleId in modules) {
-      const originalModule = modules[moduleId];
-
-      modules[moduleId] = (module, exports, require) => {
-        try {
-          Reflect.apply(originalModule, null, [module, exports, require]);
-          const listeners = [...this.listeners];
-
-          for (let i = 0; i < listeners.length; i++) {
-            try {
-              listeners[i](exports);
-            } catch (error) {
-              _common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.stacktrace */ .Z.stacktrace("WebpackModules", "Could not fire callback listener:", error);
-            }
-          }
-        } catch (error) {
-          _common_logger__WEBPACK_IMPORTED_MODULE_0__/* .default.stacktrace */ .Z.stacktrace("WebpackModules", "Could not patch pushed module", error);
-        }
-      };
-
-      Object.assign(modules[moduleId], originalModule, {
-        toString: () => originalModule.toString()
-      });
-    }
-
-    return Reflect.apply(this.__ORIGINAL_PUSH__, window[this.chunkName], [chunk]);
-  }
-
-}
-WebpackModules.initialize();
 
 /***/ })
 
@@ -3444,7 +3405,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(602);
 /* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(65);
 /* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(229);
-/* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(828);
+/* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(100);
 /* harmony import */ var _modules_discordnative__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(735);
 /* harmony import */ var _modules_fetch__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(551);
 /* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(432);
@@ -3528,7 +3489,6 @@ async function loadBetterDiscord(scriptResponse) {
     try {
       common_logger__WEBPACK_IMPORTED_MODULE_12__/* .default.log */ .Z.log("Frontend", "Patching script body...");
       let scriptBody = new TextDecoder().decode(scriptResponse.body);
-      scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixUpdaterPathRequire */ .h)(scriptBody);
       scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixWindowRequire */ .x)(scriptBody);
       eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
     } catch (error) {

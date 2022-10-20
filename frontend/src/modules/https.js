@@ -32,7 +32,7 @@ export function request(url, options, callback) {
                             Object.defineProperty(res, "statusCode", { value: data.status });
                             Object.defineProperty(res, "statusText", { value: data.statusText });
                             Object.defineProperty(res, "type", { value: data.type });
-                            Object.defineProperty(res, "url", { value: data.url });
+                            Object.defineProperty(res, "url", { value: "" });
                             return res;
                     }
                 }
@@ -57,6 +57,14 @@ export function createServer() {
     };
 }
 
-export const get = request;
+export function get() {
+    console.log("https.get:", arguments);
+    request.apply(this, arguments);
+}
 
-export default { get };
+const https = request;
+https.get = request;
+https.createServer = createServer;
+https.request = request;
+
+export default https;

@@ -58,15 +58,16 @@ export default function request() {
                 bodyData = new TextDecoder(enc).decode(data.body);
         }
 
-        const res = new Response(bodyData);
-        Object.defineProperty(res, "headers", { value: data.headers });
-        Object.defineProperty(res, "ok", { value: data.ok });
-        Object.defineProperty(res, "redirected", { value: data.redirected });
-        Object.defineProperty(res, "status", { value: data.status });
-        Object.defineProperty(res, "statusCode", { value: data.status });
-        Object.defineProperty(res, "statusText", { value: data.statusText });
-        Object.defineProperty(res, "type", { value: data.type });
-        Object.defineProperty(res, "url", { value: data.url });
+        const res = {
+            headers: data.headers,
+            aborted: !data.ok,
+            complete: true,
+            end: undefined,
+            statusCode: data.status,
+            statusMessage: data.statusText,
+            url: ""
+        }
+
         callback(null, res, bodyData);
     });
 }

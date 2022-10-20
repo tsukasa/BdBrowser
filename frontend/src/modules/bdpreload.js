@@ -1,6 +1,6 @@
-import * as electron from "./electron";
-import * as https from "./https";
-import * as path from "./path";
+import electron from "./electron";
+import https from "./https";
+import path from "./path";
 import fs from "./fs";
 
 const bdPreloadCatalogue = {

@@ -44,3 +44,14 @@ export function isAbsolute(path) {
     path = normalizePath(path);
     return path?.startsWith("AppData/");
 }
+
+const path = {
+    basename,
+    dirname,
+    extname,
+    isAbsolute,
+    join,
+    resolve
+};
+
+export default path;

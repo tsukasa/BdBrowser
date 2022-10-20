@@ -80,7 +80,6 @@ async function loadBetterDiscord(scriptResponse) {
             Logger.log("Frontend", "Patching script body...");
 
             let scriptBody = new TextDecoder().decode(scriptResponse.body);
-            scriptBody = fixUpdaterPathRequire(scriptBody);
             scriptBody = fixWindowRequire(scriptBody);
 
             eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);

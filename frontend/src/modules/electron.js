@@ -42,3 +42,12 @@ export const clipboard = {
     },
     writeText: text => navigator.clipboard.writeText(text),
 }
+
+const electron = {
+    clipboard,
+    ipcRenderer,
+    remote,
+    shell
+}
+
+export default electron;

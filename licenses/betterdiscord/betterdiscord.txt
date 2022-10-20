@@ -1,9 +1,14 @@
 BetterDiscord
 Copyright © 2019-2022, BetterDiscord Team
+Apache License 2.0
 
 Homepage: https://github.com/BetterDiscord/BetterDiscord
           https://betterdiscord.app
 
 This project ships unmodified versions of these files from the BetterDiscord project:
-- dist/betterdiscord.js (renderer.js)
-- frontend/src/modules/webpack.js
+- dist/betterdiscord.js (BetterDiscord: dist/renderer.js)
+
+The following files are used in a modified state from their upstream counterparts:
+- frontend/src/modules/webpack.js (BetterDiscord: renderer/src/modules/webpackmodules.js)
+- frontend/src/modules/request.js (BetterDiscord: renderer/src/polyfill/request.js)
+- preload/src/index.js (BetterDiscord: preload/src/patcher.js)

@@ -2,7 +2,7 @@ import Events from "./events";
 import VfsBuffer from "./fsBuffer";
 import VfsEntry from "./fsEntry";
 import {getItem, setItem} from "./localStorage";
-import * as Path from "./path";
+import Path from "./path";
 import Utilities from "./utilities";
 import DOM from "common/dom";
 import Logger from "common/logger";

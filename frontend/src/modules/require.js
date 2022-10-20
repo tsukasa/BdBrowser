@@ -1,9 +1,8 @@
-import * as electron from "./electron";
-import * as Https from "./https";
-import * as Path from "./path";
+import Https from "./https";
 import * as vm from "./vm";
-import * as Webpack from "./webpack";
+import electron from "./electron";
 import fs from "./fs";
+import path from "./path";
 import DiscordModules from "./discordmodules";
 import Events from "./events";
 import mimeTypes from "./mime-types";
@@ -40,7 +39,7 @@ export default function require(mod) {
             return Module;
 
         case "path":
-            return Path;
+            return path;
 
         case "process":
             return process;
