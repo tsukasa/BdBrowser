@@ -127,7 +127,9 @@ function lookupMimeType (path) {
     if (!path || typeof path !== 'string')
         return false;
 
-    let extension = extname('x.' + path).toLowerCase();
+    let extension = extname('x.' + path)
+        .toLowerCase()
+        .substring(1);
 
     if (!extension)
         return false;

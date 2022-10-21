@@ -3113,7 +3113,7 @@ function getExtension(inputContentType) {
 
 function lookupMimeType(path) {
   if (!path || typeof path !== 'string') return false;
-  let extension = (0,modules_path/* extname */.DZ)('x.' + path).toLowerCase();
+  let extension = (0,modules_path/* extname */.DZ)('x.' + path).toLowerCase().substring(1);
   if (!extension) return false;
   return typeMapList[extension] || false;
 }
