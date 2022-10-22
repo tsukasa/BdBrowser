@@ -1,4 +1,5 @@
 import DOM from "common/dom";
+import fs from "./fs";
 import ipcRenderer from "ipcRenderer";
 
 ipcRenderer.initialize();

@@ -832,6 +832,8 @@ __webpack_require__.d(__webpack_exports__, {
 
 // EXTERNAL MODULE: ../common/dom.js
 var dom = __webpack_require__(706);
+// EXTERNAL MODULE: ./src/modules/fs.js + 4 modules
+var fs = __webpack_require__(432);
 // EXTERNAL MODULE: ./src/modules/discordmodules.js + 1 modules
 var discordmodules = __webpack_require__(100);
 ;// CONCATENATED MODULE: ./src/modules/ipcRenderer.js
@@ -916,6 +918,7 @@ _defineProperty(IPCRenderer, "listeners", {});
 ;// CONCATENATED MODULE: ./src/modules/electron.js
 
 
+
 IPCRenderer.initialize();
 
 const remote = {
@@ -937,7 +940,7 @@ const shell = {
       for (const file of inputEl.files) {
         const reader = new FileReader();
         reader.onload = () => {
-          fs.writeFileSync(`AppData/BetterDiscord/${item.split("/").pop()}/${file.name}`, new Uint8Array(reader.result));
+          fs/* default.writeFileSync */.ZP.writeFileSync(`AppData/BetterDiscord/${item.split("/").pop()}/${file.name}`, new Uint8Array(reader.result));
         };
         reader.readAsArrayBuffer(file);
       }
