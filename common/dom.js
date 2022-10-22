@@ -59,4 +59,15 @@ export default class DOM {
     }
 }
 
-DOM.headAppend = document.head.append.bind(document.head);
+const callback = () => {
+    if (document.readyState !== "complete")
+        return;
+
+    document.removeEventListener("readystatechange", callback);
+    DOM.headAppend = document.head.append.bind(document.head);
+}
+
+if (document.readyState === "complete")
+    DOM.headAppend = document.head.append.bind(document.head);
+else
+    document.addEventListener("readystatechange", callback);

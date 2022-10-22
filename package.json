@@ -5,36 +5,23 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch-backend": "cd ./backend && webpack --env=type=backend --watch --color --progress --config=../webpack.config.js",
-    "watch-frontend": "cd ./frontend && webpack --env=type=frontend --watch --color --progress --config=../webpack.config.js",
     "build-frontend": "cd ./frontend && webpack --env=type=frontend --env=mode=production --config=../webpack.config.js",
-    "build-frontend-dev": "cd ./frontend && webpack --env=type=frontend --env=mode=development --config=../webpack.config.js",
     "build-backend": "cd ./backend && webpack --env=type=backend --env=mode=production --config=../webpack.config.js",
-    "build-backend-dev": "cd ./backend && webpack --env=type=backend --env=mode=development --config=../webpack.config.js",
     "build-service": "cd ./service && webpack --env=type=service --env=mode=production --config=../webpack.config.js",
-    "build-service-dev": "cd ./service && webpack --env=type=service --env=mode=development --config=../webpack.config.js",
     "build-preload": "cd ./preload && webpack --env=type=preload --env=mode=production --config=../webpack.config.js",
-    "build-preload-dev": "cd ./preload && webpack --env=type=preload --env=mode=development --config=../webpack.config.js",
-    "build-preload_inject": "cd ./preload_inject && webpack --env=type=preload_inject --env=mode=production --config=../webpack.config.js",
-    "build-preload_inject-dev": "cd ./preload_inject && webpack --env=type=preload_inject --env=mode=development --config=../webpack.config.js",
-    "prod": "npm run build-preload && npm run build-preload_inject && npm run build-frontend && npm run build-backend && npm run build-service && echo Finished Build",
-    "host": "node ./scripts/host.js"
+    "prod": "npm run build-preload && npm run build-frontend && npm run build-backend && npm run build-service && echo Finished Build"
   },
   "author": "Strencher",
   "license": "MIT",
   "dependencies": {
-    "@babel/core": "^7.12.13",
-    "@babel/plugin-proposal-class-properties": "^7.12.13",
-    "@babel/plugin-proposal-optional-chaining": "^7.13.12",
-    "babel": "^6.23.0",
-    "babel-loader": "^8.2.2",
-    "css-loader": "^5.0.1",
-    "monaco-editor": "^0.26.1",
+    "@babel/core": "^7.19.6",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-optional-chaining": "^7.18.9",
+    "babel-loader": "^8.2.5",
+    "css-loader": "^6.7.1",
     "raw-loader": "^4.0.2",
-    "style-loader": "^3.2.1",
-    "sucrase": "^3.17.1",
-    "webpack": "^5.45.1",
-    "webpack-cli": "^4.7.2",
-    "webpack-merge": "^5.0.9"
+    "style-loader": "^3.3.1",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
   }
 }

@@ -10,91 +10,70 @@ import * as Monaco from "./modules/monaco";
 import bdPreload from "./modules/bdpreload";
 import process from "./modules/process";
 import require from "./modules/require";
-import {fixUpdaterPathRequire, fixWindowRequire} from "./modules/scriptPatches";
-
-Object.defineProperty(
-    DiscordModules.ElectronModule,
-    "canBootstrapNewUpdater",
-    {
-        value: false,
-        configurable: true
-    }
-);
-
-window.fallbackClassName = "bdfdb_fallbackClass";
-window.value = null;
-window.firstArray = [];
-window.user = "";
-window.global = window;
-
-window.Buffer = DiscordModules.Buffer;
-window.DiscordNative = DiscordNative;
-window.fetchWithoutCSP = fetchAPI;
-window.fs = fs;
-window.IPC = ipcRenderer;
-window.monaco = Monaco;
-window.process = process;
-window.require = require;
-
-// Electron 17 requirements adapted from the preloader.
-let hasInitialized = false;
-window.BetterDiscordPreload = () => {
-    if(hasInitialized) return null;
-    hasInitialized = true;
-    return bdPreload;
-};
-
-let bdScriptUrl;
+import {fixWindowRequire} from "./modules/scriptPatches";
 
 import "./modules/patches";
 
-// const getConfig = key => new Promise(resolve => chrome.storage.sync.get(key, resolve));
+let bdPreloadHasInitialized = false;
 
-async function initialize() {
+const initialize = async () => {
+    // Expose `require` early, so we have some tools
+    // available in case of a failure...
+    window.require = require;
+
     // Database connection
     const vfsDatabaseConnection = await fs.openDatabase();
-    if(!vfsDatabaseConnection)
+    if (!vfsDatabaseConnection)
         throw new Error("BdBrowser Error: IndexedDB VFS database connection could not be established!");
 
     // VFS initialization
     const vfsInitialize = await fs.initializeVfs();
-    if(!vfsInitialize)
+    if (!vfsInitialize)
         throw new Error("BdBrowser Error: IndexedDB VFS could not be initialized!");
 
-    // Initialize BetterDiscord
-    Logger.log("Frontend", `Loading, Environment = ${ENV}`);
-    DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
-    ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"}, selectBetterDiscordEnvironment);
-}
+    const loadBetterDiscord = async (scriptRequestResponse) => {
+        const callback = async () => {
+            DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
+            Logger.log("Frontend", "Preparing to load BetterDiscord...");
+            try {
+                Logger.log("Frontend", "Patching script body...");
+                let scriptBody = new TextDecoder().decode(scriptRequestResponse.body);
+                scriptBody = fixWindowRequire(scriptBody);
 
-async function selectBetterDiscordEnvironment(localScriptUrl) {
-    bdScriptUrl = (ENV === "development") ? "http://127.0.0.1:5500/betterdiscord.js" : localScriptUrl;
-    ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: bdScriptUrl }, loadBetterDiscord);
-}
+                Logger.log("Frontend", "Loading BetterDiscord renderer...");
+                eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
+            } catch (error) {
+                Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
+            }
+        };
 
-async function loadBetterDiscord(scriptResponse) {
-    const callback = async () => {
-        DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
-        Logger.log("Frontend", `Loading BetterDiscord from ${bdScriptUrl}...`);
-        try {
-            Logger.log("Frontend", "Patching script body...");
-
-            let scriptBody = new TextDecoder().decode(scriptResponse.body);
-            scriptBody = fixWindowRequire(scriptBody);
-
-            eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
-        } catch (error) {
-            Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
+        if (!DiscordModules.UserStore?.getCurrentUser()) {
+            Logger.log("Frontend", "getCurrentUser failed, registering callback.");
+            DiscordModules.Dispatcher.subscribe("CONNECTION_OPEN", callback);
+        } else {
+            Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+            setImmediate(callback);
         }
     };
 
-    if (!DiscordModules.UserStore?.getCurrentUser()) {
-        Logger.log("Frontend", "getCurrentUser failed, registering callback.");
-        DiscordModules.Dispatcher.subscribe("CONNECTION_OPEN", callback);
-    } else {
-        Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
-        setImmediate(callback);
-    }
+    // Initialize BetterDiscord
+    ipcRenderer.send(IPCEvents.GET_RESOURCE_URL, { url: "dist/betterdiscord.js" }, (localScriptUrl) => {
+        window.Buffer = DiscordModules.Buffer;
+        window.DiscordNative = DiscordNative;
+        window.fetchWithoutCSP = fetchAPI;
+        window.global = window;
+        window.monaco = Monaco;
+        window.process = process;
+
+        window.BetterDiscordPreload = () => {
+            if (bdPreloadHasInitialized) return null;
+            bdPreloadHasInitialized = true;
+            return bdPreload;
+        };
+
+        DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
+        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: localScriptUrl }, loadBetterDiscord);
+    });
 }
 
-initialize();
+initialize().then(() => Logger.log("Frontend", "Initialization complete."));

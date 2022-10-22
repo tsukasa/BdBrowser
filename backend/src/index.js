@@ -1,31 +1,61 @@
-import {IPCEvents} from "common/constants";
 import DOM from "common/dom";
 import IPC from "common/ipc";
 import Logger from "common/logger";
+import {IPCEvents} from "common/constants";
 
+/**
+ * Initializes the "backend" side of BdBrowser.
+ * Some parts need to fire early (document_start) in order to patch
+ * objects in Discord's DOM while other parts are to be fired later
+ * (document_idle) after the page has loaded.
+ */
 function initialize() {
-    registerEvents();
+    const doOnDocumentComplete = () => {
+        registerEvents();
 
-    Logger.log("Backend", "Initializing modules");
-    const SCRIPT_URL = (() => {
-        switch (ENV) {
-            case "production":
-                return chrome.runtime.getURL("dist/frontend.js");
+        Logger.log("Backend", "Initializing modules.");
+        injectFrontend(chrome.runtime.getURL("dist/frontend.js"));
+    }
 
-            case "development":
-                return "http://127.0.0.1:5500/frontend.js";
+    const documentCompleteCallback = () => {
+        if (document.readyState !== "complete")
+            return;
 
-            default:
-                throw new Error("Unknown Environment");
-        }
-    })();
+        document.removeEventListener("readystatechange", documentCompleteCallback);
+        doOnDocumentComplete();
+    }
 
-    injectFrontend(SCRIPT_URL);
+    // Preload should fire as early as possible and is the reason for
+    // running the backend during `document_start`.
+    injectPreload();
+
+    if (document.readyState === "complete")
+        doOnDocumentComplete()
+    else
+        document.addEventListener("readystatechange", documentCompleteCallback);
 }
 
+/**
+ * Injects the Frontend script into the page.
+ * Should fire when the page is complete (document_idle).
+ * @param {string} scriptUrl - Internal URL to the script
+ */
 function injectFrontend(scriptUrl) {
     Logger.log("Backend", "Loading frontend script from:", scriptUrl);
     DOM.injectJS("BetterDiscordBrowser-frontend", scriptUrl, false);
+}
+
+/**
+ * Injects the Preload script into the page.
+ * Should fire as soon as possible (document_start).
+ */
+function injectPreload() {
+    Logger.log("Backend", "Injecting preload.js into document to prepare environment...");
+
+    const scriptElement = document.createElement("script");
+    scriptElement.src = chrome.runtime.getURL("dist/preload.js");
+
+    (document.head || document.documentElement).appendChild(scriptElement);
 }
 
 function registerEvents() {
@@ -61,7 +91,7 @@ function registerEvents() {
                     options: data.options
                 }
             }, (response) => {
-                if(response.error) {
+                if (response.error) {
                     console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
                 }
                 else

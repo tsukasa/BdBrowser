@@ -1,12 +1,20 @@
 import process from "./process";
 
+const VERSION = "1.0.9007";
+
 export const app = {
     getReleaseChannel() {
-        return globals.releaseChannel;
+        if (location.href.includes("canary"))
+            return "canary";
+
+        if (location.href.includes("ptb"))
+            return "ptb";
+
+        return "stable";
     },
 
     getVersion() {
-        return "1.0.9006"
+        return VERSION;
     },
 
     async getPath(path) {
@@ -24,14 +32,8 @@ export const app = {
     }
 }
 
-export const globals = {
-    get releaseChannel() {
-        if (location.href.includes("canary"))
-            return "canary";
+const discordNative = {
+    app
+};
 
-        if (location.href.includes("ptb"))
-            return "ptb";
-
-        return "stable";
-    }
-}
+export default discordNative;
