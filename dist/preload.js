@@ -33,7 +33,7 @@ class Logger {
 }
 ;// CONCATENATED MODULE: ./src/index.js
 /**
- * This script is injected by `preload_inject.js` into Discord's webpage during
+ * This script is injected by `backend.js` into Discord's webpage during
  * document_start to execute early in Discord's (not BetterDiscord's!) loading sequence.
  */
 

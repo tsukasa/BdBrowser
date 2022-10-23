@@ -3048,27 +3048,6 @@ require_require.resolve = path => {
   }
 };
 
-/***/ }),
-
-/***/ 93:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "x": () => (/* binding */ fixWindowRequire)
-/* harmony export */ });
-
-
-/**
- * Patches the `window.require` override done in BetterDiscord's
- * `renderer/src/polyfill/index.js` so a custom `require()` logic
- * provided by BdBrowser can be used.
- * @param {string} scriptBody - A string containing the script body of the renderer to patch.
- * @returns {string} - The patched script body of the renderer.
- */
-function fixWindowRequire(scriptBody) {
-  return scriptBody.replace(/=window.require=.*?;/, "=window.require;");
-}
-
 /***/ })
 
 /******/ 	});
@@ -3142,7 +3121,6 @@ var __webpack_exports__ = {};
 /* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(154);
 /* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
 /* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(820);
-/* harmony import */ var _modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(93);
 /* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(580);
 
 
@@ -3157,12 +3135,13 @@ var __webpack_exports__ = {};
 
 
 
-
+let allowRequireOverride = false;
 let bdPreloadHasInitialized = false;
 const initialize = async () => {
-  // Expose `require` early, so we have some tools
+  // Expose `window.require` early, so we have some tools
   // available in case of a failure...
-  window.require = _modules_require__WEBPACK_IMPORTED_MODULE_10__/* ["default"] */ .Z;
+  let requireFunc = _modules_require__WEBPACK_IMPORTED_MODULE_10__/* ["default"].bind */ .Z.bind({});
+  window.require = requireFunc;
 
   // Database connection
   const vfsDatabaseConnection = await _modules_fs__WEBPACK_IMPORTED_MODULE_6__/* ["default"].openDatabase */ .ZP.openDatabase();
@@ -3177,9 +3156,7 @@ const initialize = async () => {
       _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
       common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Preparing to load BetterDiscord...");
       try {
-        common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Patching script body...");
         let scriptBody = new TextDecoder().decode(scriptRequestResponse.body);
-        scriptBody = (0,_modules_scriptPatches__WEBPACK_IMPORTED_MODULE_13__/* .fixWindowRequire */ .x)(scriptBody);
         common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
         eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
       } catch (error) {
@@ -3210,6 +3187,19 @@ const initialize = async () => {
       bdPreloadHasInitialized = true;
       return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__/* ["default"] */ .Z;
     };
+
+    // Prevent the _very first_ override of window.require by BetterDiscord
+    // to keep BdBrowser's own version intact.
+    // However, allow later changes to it (i.e. for Monaco).
+    Object.defineProperty(window, "require", {
+      get() {
+        return requireFunc;
+      },
+      set(newValue) {
+        if (!allowRequireOverride) return allowRequireOverride = true;
+        requireFunc = newValue;
+      }
+    });
     common_dom__WEBPACK_IMPORTED_MODULE_0__/* ["default"].injectCSS */ .Z.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
     _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
       url: localScriptUrl

@@ -10,16 +10,17 @@ import * as Monaco from "./modules/monaco";
 import bdPreload from "./modules/bdpreload";
 import process from "./modules/process";
 import require from "./modules/require";
-import {fixWindowRequire} from "./modules/scriptPatches";
 
 import "./modules/patches";
 
+let allowRequireOverride = false;
 let bdPreloadHasInitialized = false;
 
 const initialize = async () => {
-    // Expose `require` early, so we have some tools
+    // Expose `window.require` early, so we have some tools
     // available in case of a failure...
-    window.require = require;
+    let requireFunc = require.bind({});
+    window.require = requireFunc;
 
     // Database connection
     const vfsDatabaseConnection = await fs.openDatabase();
@@ -36,9 +37,7 @@ const initialize = async () => {
             DiscordModules.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
             Logger.log("Frontend", "Preparing to load BetterDiscord...");
             try {
-                Logger.log("Frontend", "Patching script body...");
                 let scriptBody = new TextDecoder().decode(scriptRequestResponse.body);
-                scriptBody = fixWindowRequire(scriptBody);
 
                 Logger.log("Frontend", "Loading BetterDiscord renderer...");
                 eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
@@ -70,6 +69,19 @@ const initialize = async () => {
             bdPreloadHasInitialized = true;
             return bdPreload;
         };
+
+        // Prevent the _very first_ override of window.require by BetterDiscord
+        // to keep BdBrowser's own version intact.
+        // However, allow later changes to it (i.e. for Monaco).
+        Object.defineProperty(window, "require", {
+            get() {
+                return requireFunc;
+            },
+            set(newValue) {
+                if (!allowRequireOverride) return (allowRequireOverride = true);
+                requireFunc = newValue;
+            }
+        });
 
         DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
         ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: localScriptUrl }, loadBetterDiscord);
