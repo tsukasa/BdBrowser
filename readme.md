@@ -58,7 +58,7 @@ Installation is done by downloading this repository as a zip archive, extracting
    
    Now select the `BdBrowser-master` folder from step 2.
 6. Congratulations, you should see the extension loaded and working!
-   [Discord](https://discord.com/channels/@me) tab. BetterDiscord should load and show the changelog.
+   Once you reload your [Discord](https://discord.com/channels/@me) tab, BetterDiscord should load and show the changelog.
 
 &nbsp;
 
@@ -69,6 +69,8 @@ Building BdBrowser yourself comes with a few prerequisites:
 - [Git](https://git-scm.com)
 - [Node.js](https://nodejs.org) with npm (included with Node.js, required for BdBrowser) and [pnpm](https://pnpm.io) (required for BetterDiscord)
 - A terminal or command prompt
+
+&nbsp;
 
 **Step 1: Clone the BdBrowser repository**
 
@@ -101,7 +103,7 @@ pnpm recursive install
 
 **Step 6: Build BetterDiscord**
 ```sh
-pnpm run build
+pnpm run build-prod
 ```
 
 **Step 7: Copy the BetterDiscord renderer to BdBrowser's `dist` directory**
@@ -145,7 +147,7 @@ file if it already exists.
 BetterDiscord or BdBrowser got updated? Then it might be time to update your local
 BdBrowser installation.
 
-Updating the extension is pretty much a repeat of [installing it](#installation) with a few
+Updating the extension is pretty much a repeat of [installing it](#-installation) with a few
 notable differences:
 
 * Use the same folder as you did for the installation.
