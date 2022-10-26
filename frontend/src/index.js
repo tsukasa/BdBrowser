@@ -70,6 +70,12 @@ const initialize = async () => {
             return bdPreload;
         };
 
+        // Prevent warnings for non-existing properties during Webpack search in "nativeModules".
+        Object.defineProperty(DiscordModules.ElectronModule, "canBootstrapNewUpdater", {
+            value: false,
+            configurable: true
+        });
+
         // Prevent the _very first_ override of window.require by BetterDiscord
         // to keep BdBrowser's own version intact.
         // However, allow later changes to it (i.e. for Monaco).
