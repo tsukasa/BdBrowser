@@ -1,3 +1,5 @@
+import DiscordModules from "./discordmodules";
+
 export default class Utilities {
     /**
      * Converts an {@link ArrayBuffer} to a base64 string.
@@ -5,8 +7,9 @@ export default class Utilities {
      * @returns {string} The base64 string representation of the ArrayBuffer's data.
      */
     static arrayBufferToBase64(buffer) {
-        let binaryString = Array.from(buffer).map((chr) => String.fromCharCode(chr)).join('');
-        return btoa(binaryString);
+        const dmBuffer = DiscordModules.Buffer.Buffer;
+        let buf = dmBuffer.from(buffer);
+        return buf.toString("base64");
     }
 
     /**
@@ -15,9 +18,8 @@ export default class Utilities {
      * @returns {Uint8Array} An Uint8Array representation of the data contained within the b64String.
      */
     static base64ToArrayBuffer(b64String) {
-        let binaryString = atob(b64String);
-        let buffer = new Uint8Array(binaryString.length);
-        Array.from(binaryString).forEach((chr, idx) => buffer[idx] = chr.charCodeAt(0));
-        return buffer;
+        const dmBuffer = DiscordModules.Buffer.Buffer;
+        let buf = dmBuffer.from(b64String, "base64");
+        return new Uint8Array(buf);
     }
 }

@@ -1122,6 +1122,7 @@ function setItem(key, item) {
   discordmodules/* default.StorageModule.set */.Z.StorageModule.set(key, item);
 }
 ;// CONCATENATED MODULE: ./src/modules/utilities.js
+
 class Utilities {
   /**
    * Converts an {@link ArrayBuffer} to a base64 string.
@@ -1129,8 +1130,9 @@ class Utilities {
    * @returns {string} The base64 string representation of the ArrayBuffer's data.
    */
   static arrayBufferToBase64(buffer) {
-    let binaryString = Array.from(buffer).map(chr => String.fromCharCode(chr)).join('');
-    return btoa(binaryString);
+    const dmBuffer = discordmodules/* default.Buffer.Buffer */.Z.Buffer.Buffer;
+    let buf = dmBuffer.from(buffer);
+    return buf.toString("base64");
   }
 
   /**
@@ -1139,10 +1141,9 @@ class Utilities {
    * @returns {Uint8Array} An Uint8Array representation of the data contained within the b64String.
    */
   static base64ToArrayBuffer(b64String) {
-    let binaryString = atob(b64String);
-    let buffer = new Uint8Array(binaryString.length);
-    Array.from(binaryString).forEach((chr, idx) => buffer[idx] = chr.charCodeAt(0));
-    return buffer;
+    const dmBuffer = discordmodules/* default.Buffer.Buffer */.Z.Buffer.Buffer;
+    let buf = dmBuffer.from(b64String, "base64");
+    return new Uint8Array(buf);
   }
 }
 // EXTERNAL MODULE: ../common/dom.js
@@ -1273,7 +1274,7 @@ function exportVfsBackup() {
     let o = Object.assign(new VfsEntry(fullName, cache.data[fullName].nodeType), cache.data[fullName]);
 
     // Directories do not have contents.
-    if (o.contents) o.contents = Utilities.arrayBufferToBase64(o.contents);
+    if (o.nodeType === "file") o.contents = Utilities.arrayBufferToBase64(cache.data[fullName].contents);
     vfsList[fullName] = o;
   }
   let jsonString = JSON.stringify(vfsList);

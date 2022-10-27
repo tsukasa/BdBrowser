@@ -136,8 +136,8 @@ function exportVfsBackup() {
         let o = Object.assign(new VfsEntry(fullName, cache.data[fullName].nodeType), cache.data[fullName]);
 
         // Directories do not have contents.
-        if(o.contents)
-            o.contents = Utilities.arrayBufferToBase64(o.contents);
+        if(o.nodeType === "file")
+            o.contents = Utilities.arrayBufferToBase64(cache.data[fullName].contents);
 
         vfsList[fullName] = o;
     }
