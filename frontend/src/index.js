@@ -1,4 +1,3 @@
-import DOM from "common/dom";
 import Logger from "common/logger";
 import {IPCEvents} from "common/constants";
 import ipcRenderer from "./ipc";
@@ -87,7 +86,6 @@ const initialize = async () => {
             }
         });
 
-        DOM.injectCSS("BetterDiscordWebStyles", `.CodeMirror {height: 100% !important;}`);
         ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: localScriptUrl }, loadBetterDiscord);
     });
 }

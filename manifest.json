@@ -1,6 +1,6 @@
 {
     "name": "BetterDiscord",
-    "version": "1.8.2.20221028",
+    "version": "1.8.2.20221029",
     "description": "Allows you to use BetterDiscord on the web client. Some plugins might not be working correctly.",
     "icons": {
         "16": "assets/logo.png",
