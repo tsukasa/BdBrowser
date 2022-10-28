@@ -2431,89 +2431,6 @@ function _require(path, req) {
 
 /***/ }),
 
-/***/ 585:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "editor": () => (/* binding */ editor)
-/* harmony export */ });
-/* harmony import */ var common_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(706);
-/* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(65);
-/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(229);
-/* harmony import */ var _discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(100);
-/* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(551);
-
-
-
-
-
-const version = "6.65.7";
-const links = [`https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/codemirror.min.js`, `https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/mode/css/css.js`, `https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/mode/javascript/javascript.js`, `https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/addon/search/search.js`, `https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/addon/search/searchcursor.js`, `https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/addon/search/jump-to-line.js`];
-const cssCodes = ["/*  Name:       material  Author:     Mattia Astorino (http://github.com/equinusocio)  Website:    https://material-theme.site/*/.cm-s-material-darker.CodeMirror {  background-color: #212121;  color: #EEFFFF;}.cm-s-material-darker .CodeMirror-gutters {  background: #212121;  color: #545454;  border: none;}.cm-s-material-darker .CodeMirror-guttermarker,.cm-s-material-darker .CodeMirror-guttermarker-subtle,.cm-s-material-darker .CodeMirror-linenumber {  color: #545454;}.cm-s-material-darker .CodeMirror-cursor {  border-left: 1px solid #FFCC00;}.cm-s-material-darker div.CodeMirror-selected {  background: rgba(97, 97, 97, 0.2);}.cm-s-material-darker.CodeMirror-focused div.CodeMirror-selected {  background: rgba(97, 97, 97, 0.2);}.cm-s-material-darker .CodeMirror-line::selection,.cm-s-material-darker .CodeMirror-line>span::selection,.cm-s-material-darker .CodeMirror-line>span>span::selection {  background: rgba(128, 203, 196, 0.2);}.cm-s-material-darker .CodeMirror-line::-moz-selection,.cm-s-material-darker .CodeMirror-line>span::-moz-selection,.cm-s-material-darker .CodeMirror-line>span>span::-moz-selection {  background: rgba(128, 203, 196, 0.2);}.cm-s-material-darker .CodeMirror-activeline-background {  background: rgba(0, 0, 0, 0.5);}.cm-s-material-darker .cm-keyword {  color: #C792EA;}.cm-s-material-darker .cm-operator {  color: #89DDFF;}.cm-s-material-darker .cm-variable-2 {  color: #EEFFFF;}.cm-s-material-darker .cm-variable-3,.cm-s-material-darker .cm-type {  color: #f07178;}.cm-s-material-darker .cm-builtin {  color: #FFCB6B;}.cm-s-material-darker .cm-atom {  color: #F78C6C;}.cm-s-material-darker .cm-number {  color: #FF5370;}.cm-s-material-darker .cm-def {  color: #82AAFF;}.cm-s-material-darker .cm-string {  color: #C3E88D;}.cm-s-material-darker .cm-string-2 {  color: #f07178;}.cm-s-material-darker .cm-comment {  color: #545454;}.cm-s-material-darker .cm-variable {  color: #f07178;}.cm-s-material-darker .cm-tag {  color: #FF5370;}.cm-s-material-darker .cm-meta {  color: #FFCB6B;}.cm-s-material-darker .cm-attribute {  color: #C792EA;}.cm-s-material-darker .cm-property {  color: #C792EA;}.cm-s-material-darker .cm-qualifier {  color: #DECB6B;}.cm-s-material-darker .cm-variable-3,.cm-s-material-darker .cm-type {  color: #DECB6B;}.cm-s-material-darker .cm-error {  color: rgba(255, 255, 255, 1.0);  background-color: #FF5370;}.cm-s-material-darker .CodeMirror-matchingbracket {  text-decoration: underline;  color: white !important;}", "/*Copyright (C) 2011 by MarkLogic CorporationAuthor: Mike Brevoort <mike@brevoort.com>Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the \"Software\"), to dealin the Software without restriction, including without limitation the rightsto use, copy, modify, merge, publish, distribute, sublicense, and/or sellcopies of the Software, and to permit persons to whom the Software isfurnished to do so, subject to the following conditions:The above copyright notice and this permission notice shall be included inall copies or substantial portions of the Software.THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS ORIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THEAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHERLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS INTHE SOFTWARE.*/.cm-s-xq-light span.cm-keyword { line-height: 1em; font-weight: bold; color: #5A5CAD; }.cm-s-xq-light span.cm-atom { color: #6C8CD5; }.cm-s-xq-light span.cm-number { color: #164; }.cm-s-xq-light span.cm-def { text-decoration:underline; }.cm-s-xq-light span.cm-variable { color: black; }.cm-s-xq-light span.cm-variable-2 { color:black; }.cm-s-xq-light span.cm-variable-3, .cm-s-xq-light span.cm-type { color: black; }.cm-s-xq-light span.cm-property {}.cm-s-xq-light span.cm-operator {}.cm-s-xq-light span.cm-comment { color: #0080FF; font-style: italic; }.cm-s-xq-light span.cm-string { color: red; }.cm-s-xq-light span.cm-meta { color: yellow; }.cm-s-xq-light span.cm-qualifier { color: grey; }.cm-s-xq-light span.cm-builtin { color: #7EA656; }.cm-s-xq-light span.cm-bracket { color: #cc7; }.cm-s-xq-light span.cm-tag { color: #3F7F7F; }.cm-s-xq-light span.cm-attribute { color: #7F007F; }.cm-s-xq-light span.cm-error { color: #f00; }.cm-s-xq-light .CodeMirror-activeline-background { background: #e8f2ff; }.cm-s-xq-light .CodeMirror-matchingbracket { outline:1px solid grey;color:black !important;background:yellow; }"];
-Promise.all(links.map((link, i) => {
-  return (0,_fetch__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z)(link).then(res => res.text()).then(async code => {
-    if (i > 0 && !window.CodeMirror) {
-      while (!window.CodeMirror) {
-        await new Promise(res => setTimeout(res, 200));
-      }
-    }
-    eval(code);
-  });
-}));
-(0,_fetch__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z)(`https://cdnjs.cloudflare.com/ajax/libs/codemirror/${version}/codemirror.min.css`).then(res => res.text()).then(code => {
-  _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.INJECT_CSS */ .A.INJECT_CSS, {
-    css: code,
-    id: "code-mirror-style"
-  });
-});
-for (const css of cssCodes) {
-  _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.INJECT_CSS */ .A.INJECT_CSS, {
-    css: css,
-    id: "code-mirror-theme-" + cssCodes.indexOf(css)
-  });
-}
-const editor = {
-  _active: [],
-  setTheme: theme => {
-    editor._active.forEach(e => e.setOption("theme", theme));
-  },
-  create: (element, props) => {
-    const textarea = common_dom__WEBPACK_IMPORTED_MODULE_0__/* ["default"].createElement */ .Z.createElement("textarea", {});
-    element.appendChild(textarea);
-    const Editor = CodeMirror.fromTextArea(textarea, {
-      mode: props.language,
-      lineNumbers: props.lineNumbers,
-      theme: _discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].ThemeStore.theme */ .Z.ThemeStore.theme === "light" ? "xq-light" : "material-darker"
-    });
-    Editor.setValue(props.value);
-    editor._active.push(Editor);
-    return {
-      dispose: () => {
-        editor._active.splice(editor._active.indexOf(Editor), 1);
-      },
-      onDidChangeModelContent: callback => {
-        Editor.on("change", () => callback());
-        return {
-          dispose: () => Editor.off("change", callback)
-        };
-      },
-      getValue: () => Editor.getValue(),
-      setValue: value => Editor.setValue(value),
-      layout: () => {},
-      $defaultHandler: {
-        commands: {
-          showSettingsMenu: {
-            exec: () => {}
-          }
-        }
-      }
-    };
-  }
-};
-
-/***/ }),
-
 /***/ 580:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
@@ -2534,19 +2451,6 @@ for (const method of Object.keys(console)) {
 const appendMethods = ["append", "appendChild", "prepend"];
 const originalInsertBefore = document.head.insertBefore;
 document.head.insertBefore = function (node) {
-  var _node$href;
-  if (node !== null && node !== void 0 && (_node$href = node.href) !== null && _node$href !== void 0 && _node$href.includes("monaco-editor")) {
-    _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
-      url: node.href
-    }, data => {
-      const dataBody = new TextDecoder().decode(data.body);
-      common_dom__WEBPACK_IMPORTED_MODULE_0__/* ["default"].injectCSS */ .Z.injectCSS(node.id || "monaco-styles", dataBody);
-      if (typeof node.onload === "function") node.onload();
-      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].log */ .Z.log("CSP:Bypass", "Loaded monaco stylesheet.");
-    });
-    document.head.insertBefore = originalInsertBefore;
-    return;
-  }
   return originalInsertBefore.apply(this, arguments);
 };
 function patchMethods(node, callback) {
@@ -2570,7 +2474,6 @@ function patchMethods(node, callback) {
     }
   };
 }
-;
 const unpatchHead = patchMethods(document.head, data => {
   var _node$src, _node$id;
   const [node] = data.args;
@@ -3111,19 +3014,17 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 /* harmony import */ var common_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(706);
-/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(602);
+/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(602);
 /* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(65);
 /* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(229);
 /* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(100);
 /* harmony import */ var _modules_discordnative__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(735);
 /* harmony import */ var _modules_fetch__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(551);
 /* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(432);
-/* harmony import */ var _modules_monaco__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(585);
-/* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(154);
-/* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
-/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(820);
-/* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(580);
-
+/* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(154);
+/* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(323);
+/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(820);
+/* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(580);
 
 
 
@@ -3141,7 +3042,7 @@ let bdPreloadHasInitialized = false;
 const initialize = async () => {
   // Expose `window.require` early, so we have some tools
   // available in case of a failure...
-  let requireFunc = _modules_require__WEBPACK_IMPORTED_MODULE_10__/* ["default"].bind */ .Z.bind({});
+  let requireFunc = _modules_require__WEBPACK_IMPORTED_MODULE_9__/* ["default"].bind */ .Z.bind({});
   window.require = requireFunc;
 
   // Database connection
@@ -3155,20 +3056,20 @@ const initialize = async () => {
     var _DiscordModules$UserS;
     const callback = async () => {
       _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
-      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Preparing to load BetterDiscord...");
+      common_logger__WEBPACK_IMPORTED_MODULE_11__/* ["default"].log */ .Z.log("Frontend", "Preparing to load BetterDiscord...");
       try {
         let scriptBody = new TextDecoder().decode(scriptRequestResponse.body);
-        common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
+        common_logger__WEBPACK_IMPORTED_MODULE_11__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
         eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
       } catch (error) {
-        common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
+        common_logger__WEBPACK_IMPORTED_MODULE_11__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
       }
     };
     if (!((_DiscordModules$UserS = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].UserStore */ .Z.UserStore) !== null && _DiscordModules$UserS !== void 0 && _DiscordModules$UserS.getCurrentUser())) {
-      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
+      common_logger__WEBPACK_IMPORTED_MODULE_11__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
       _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Dispatcher.subscribe */ .Z.Dispatcher.subscribe("CONNECTION_OPEN", callback);
     } else {
-      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+      common_logger__WEBPACK_IMPORTED_MODULE_11__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
       setImmediate(callback);
     }
   };
@@ -3181,12 +3082,11 @@ const initialize = async () => {
     window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_4__;
     window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_5__/* ["default"] */ .Z;
     window.global = window;
-    window.monaco = _modules_monaco__WEBPACK_IMPORTED_MODULE_7__;
-    window.process = _modules_process__WEBPACK_IMPORTED_MODULE_9__/* ["default"] */ .Z;
+    window.process = _modules_process__WEBPACK_IMPORTED_MODULE_8__/* ["default"] */ .Z;
     window.BetterDiscordPreload = () => {
       if (bdPreloadHasInitialized) return null;
       bdPreloadHasInitialized = true;
-      return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_8__/* ["default"] */ .Z;
+      return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_7__/* ["default"] */ .Z;
     };
 
     // Prevent warnings for non-existing properties during Webpack search in "nativeModules".
@@ -3213,7 +3113,7 @@ const initialize = async () => {
     }, loadBetterDiscord);
   });
 };
-initialize().then(() => common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Initialization complete."));
+initialize().then(() => common_logger__WEBPACK_IMPORTED_MODULE_11__/* ["default"].log */ .Z.log("Frontend", "Initialization complete."));
 })();
 
 /******/ })()

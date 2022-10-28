@@ -14,22 +14,8 @@ const appendMethods = ["append", "appendChild", "prepend"];
 const originalInsertBefore = document.head.insertBefore;
 
 document.head.insertBefore = function (node) {
-    if (node?.href?.includes("monaco-editor")) {
-        ipcRenderer.send(IPCEvents.MAKE_REQUESTS, { url: node.href }, data => {
-            const dataBody = new TextDecoder().decode(data.body);
-            DOM.injectCSS(node.id || "monaco-styles", dataBody);
-
-            if (typeof node.onload === "function")
-                node.onload();
-
-            Logger.log("CSP:Bypass", "Loaded monaco stylesheet.");
-        });
-        document.head.insertBefore = originalInsertBefore;
-        return;
-    }
-
     return originalInsertBefore.apply(this, arguments);
-};
+}
 
 function patchMethods(node, callback) {
     for (const method of appendMethods) {
@@ -55,7 +41,7 @@ function patchMethods(node, callback) {
             }
         }
     };
-};
+}
 
 const unpatchHead = patchMethods(document.head, data => {
     const [node] = data.args;

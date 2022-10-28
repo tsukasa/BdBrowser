@@ -137,7 +137,42 @@ const IPCEvents = {
   INJECT_THEME: "bdbrowser-inject-theme",
   GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
 };
+;// CONCATENATED MODULE: ./src/modules/loadingScreen.js
+const LOADING_ANIMATION_SELECTOR = `video[data-testid="app-spinner"]`;
+const loadingObserver = new MutationObserver(mutations => {
+  if (document.readyState === "complete") loadingObserver.disconnect();
+  let loadingAnimationElement = document.querySelector(LOADING_ANIMATION_SELECTOR);
+  if (loadingAnimationElement) {
+    loadingObserver.disconnect();
+
+    // Should be a WebM file with VP9 codec (400px x 400px) so the alpha channel gets preserved.
+    let customAnimationSource = document.createElement("source");
+    customAnimationSource.src = chrome.runtime.getURL("assets/spinner.webm");
+    customAnimationSource.type = "video/webm";
+    loadingAnimationElement.prepend(customAnimationSource);
+  }
+});
+
+/**
+ * Inserts the custom loading screen spinner animation from
+ * `assets/spinner.webm` into the playlist.
+ *
+ * If the file cannot be found, the video player will automatically
+ * choose one of the default Discord animations.
+ * @constructor
+ */
+const ReplaceLoadingAnimation = () => {
+  loadingObserver.observe(document, {
+    childList: true,
+    subtree: true
+  });
+};
+const loadingScreen = {
+  ReplaceLoadingAnimation
+};
+/* harmony default export */ const modules_loadingScreen = (loadingScreen);
 ;// CONCATENATED MODULE: ./src/index.js
+
 
 
 
@@ -165,6 +200,7 @@ function initialize() {
   // running the backend during `document_start`.
   injectPreload();
   if (document.readyState === "complete") doOnDocumentComplete();else document.addEventListener("readystatechange", documentCompleteCallback);
+  modules_loadingScreen.ReplaceLoadingAnimation();
 }
 
 /**

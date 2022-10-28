@@ -2,6 +2,7 @@ import DOM from "common/dom";
 import IPC from "common/ipc";
 import Logger from "common/logger";
 import {IPCEvents} from "common/constants";
+import LoadingScreen from "./modules/loadingScreen";
 
 /**
  * Initializes the "backend" side of BdBrowser.
@@ -33,6 +34,8 @@ function initialize() {
         doOnDocumentComplete()
     else
         document.addEventListener("readystatechange", documentCompleteCallback);
+
+    LoadingScreen.ReplaceLoadingAnimation();
 }
 
 /**

@@ -6,7 +6,6 @@ import DiscordModules from "./modules/discordmodules";
 import * as DiscordNative from "./modules/discordnative";
 import {default as fetchAPI} from "./modules/fetch";
 import fs from "./modules/fs";
-import * as Monaco from "./modules/monaco";
 import bdPreload from "./modules/bdpreload";
 import process from "./modules/process";
 import require from "./modules/require";
@@ -61,7 +60,6 @@ const initialize = async () => {
         window.DiscordNative = DiscordNative;
         window.fetchWithoutCSP = fetchAPI;
         window.global = window;
-        window.monaco = Monaco;
         window.process = process;
 
         window.BetterDiscordPreload = () => {
