@@ -1272,9 +1272,8 @@ function exportVfsBackup() {
   for (const fullName of Object.keys(cache.data)) {
     // Must be a deep copy, otherwise the source object will take damage!
     let o = Object.assign(new VfsEntry(fullName, cache.data[fullName].nodeType), cache.data[fullName]);
-
-    // Directories do not have contents.
-    if (o.nodeType === "file") o.contents = Utilities.arrayBufferToBase64(cache.data[fullName].contents);
+    if (o.nodeType === "dir") o.contents = undefined;
+    if (o.nodeType === "file" && o.contents) o.contents = Utilities.arrayBufferToBase64(cache.data[fullName].contents);
     vfsList[fullName] = o;
   }
   let jsonString = JSON.stringify(vfsList);
@@ -1321,9 +1320,8 @@ function importVfsBackup() {
         let backupData = JSON.parse(reader.result);
         for (const fullName of Object.keys(backupData)) {
           let o = Object.assign(new VfsEntry(fullName, backupData[fullName].nodeType), backupData[fullName]);
-
-          // Skip directories, they have no payload!
-          if (o.contents) o.contents = Utilities.base64ToArrayBuffer(o.contents);
+          if (o.nodeType === "dir") o.contents = undefined;
+          if (o.nodeType === "file" && o.contents) o.contents = Utilities.base64ToArrayBuffer(o.contents);
           logger/* default.log */.Z.log("VFS", `Restoring from backup: ${o.fullName}`);
           writeOrUpdateMemoryCache(o.fullName, o);
           writeOrUpdateIndexedDbKey(o.fullName, o);
