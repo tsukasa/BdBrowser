@@ -117,63 +117,258 @@ class Logger {
 
 /***/ }),
 
-/***/ 229:
+/***/ 315:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* binding */ Asar)
+/* harmony export */ });
+const headerSizeIndex = 12,
+  headerOffset = 16,
+  uInt32Size = 4,
+  textDecoder = new TextDecoder('utf-8');
 
-// EXPORTS
-__webpack_require__.d(__webpack_exports__, {
-  "Z": () => (/* binding */ ipc)
-});
+// Essentially just ripped from the chromium-pickle-js source, thanks for
+// doing my math homework.
+const alignInt = (i, alignment) => i + (alignment - i % alignment) % alignment;
 
-;// CONCATENATED MODULE: ../common/ipc.js
-const IPC_REPLY_SUFFIX = "-reply";
-class IPC {
-  constructor(context) {
-    if (!context) throw new Error("Context is required");
-    this.context = context;
+/**
+ *
+ * @param {ArrayBuffer} archive Asar archive to open
+ * @returns {ArchiveData}
+ */
+const openAsar = archive => {
+  if (archive.length > Number.MAX_SAFE_INTEGER) throw new Error('Asar archive too large.');
+  const headerSize = new DataView(archive).getUint32(headerSizeIndex, true),
+    // Pickle wants to align the headers so that the payload length is
+    // always a multiple of 4. This means you'll get "padding" bytes
+    // after the header if you don't round up the stored value.
+    //
+    // IMO why not just store the aligned int and have us trim the json,
+    // but it's whatever.
+    headerEnd = headerOffset + headerSize,
+    filesOffset = alignInt(headerEnd, uInt32Size),
+    rawHeader = archive.slice(headerOffset, headerEnd),
+    buffer = archive.slice(filesOffset);
+
+  /**
+   * @typedef {Object} ArchiveData
+   * @property {Object} header - The asar file's manifest, containing the pointers to each index's files in the buffer
+   * @property {ArrayBuffer} buffer - The contents of the archive, concatenated together.
+   */
+  return {
+    header: JSON.parse(textDecoder.decode(rawHeader)),
+    buffer
+  };
+};
+const crawlHeader = function self(files, dirname) {
+  const prefix = itemName => (dirname ? dirname + '/' : '') + itemName;
+  let children = [];
+  for (const filename in files) {
+    const extraFiles = files[filename].files;
+    if (extraFiles) {
+      const extra = self(extraFiles, filename);
+      children = children.concat(extra);
+    }
+    children.push(filename);
   }
-  createHash() {
-    return Math.random().toString(36).substring(2, 10);
+  return children.map(prefix);
+};
+
+/**
+ * These paths must be absolute and posix-style, without a leading forward slash.
+ * @typedef {String} ArchivePath
+ */
+
+/**
+ * An Asar archive
+ * @class
+ * @param {ArrayBuffer} archive The archive to open
+ */
+class Asar {
+  constructor(archive) {
+    const {
+      header,
+      buffer
+    } = openAsar(archive);
+    this.header = header;
+    this.buffer = buffer;
+    this.contents = crawlHeader(header);
   }
-  reply(message, data) {
-    this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
-  }
-  on(event, listener, once = false) {
-    const wrappedListener = message => {
-      if (message.data.event !== event || message.data.context === this.context) return;
-      const returnValue = listener(message.data, message.data.data);
-      if (returnValue === true && once) {
-        window.removeEventListener("message", wrappedListener);
+
+  /**
+   * Retrieves information on a directory or file from the archive's header
+   * @param {ArchivePath} path The path to the dirent
+   * @returns {Object}
+   */
+  find(path) {
+    const navigate = (currentItem, navigateTo) => {
+      if (currentItem.files) {
+        const nextItem = currentItem.files[navigateTo];
+        if (!nextItem) {
+          if (path == '/')
+            // This breaks it lol
+            return this.header;
+          throw new PathError(path, `${navigateTo} could not be found.`);
+        }
+        return nextItem;
+      } else {
+        throw new PathError(path, `${navigateTo} is not a directory.`);
       }
     };
-    window.addEventListener("message", wrappedListener);
+    return path.split('/').reduce(navigate, this.header);
   }
-  send(event, data, callback = null, hash) {
-    if (!hash) hash = this.createHash();
-    if (callback) {
-      this.on(event.concat(IPC_REPLY_SUFFIX), message => {
-        if (message.hash === hash) {
-          callback(message.data);
-          return true;
-        }
-        return false;
-      }, true);
-    }
-    window.postMessage({
-      source: "betterdiscord-browser".concat("-", this.context),
-      event: event,
-      context: this.context,
-      hash: hash,
-      data
-    });
+
+  /**
+   * Open a file in the archive
+   * @param {ArchivePath} path The path to the file
+   * @returns {ArrayBuffer} The file's contents
+   */
+  get(path) {
+    const {
+        offset,
+        size
+      } = this.find(path),
+      offsetInt = parseInt(offset);
+    return this.buffer.slice(offsetInt, offsetInt + size);
   }
 }
-;
-;// CONCATENATED MODULE: ./src/ipc.js
+class PathError extends Error {
+  constructor(path, message) {
+    super(`Invalid path "${path}": ${message}`);
+    this.name = "PathError";
+  }
+}
 
-const ipcRenderer = new IPC("frontend");
-/* harmony default export */ const ipc = (ipcRenderer);
+
+/***/ }),
+
+/***/ 995:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* binding */ BdAsarUpdater)
+/* harmony export */ });
+/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(602);
+/* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(432);
+/* harmony import */ var _request__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
+function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+
+
+class BdAsarUpdater {
+  /**
+   * Gets the version of BetterDiscord's asar according to the version file in the VFS.
+   * @returns {string} - Version number or `0.0.0` if no value is set yet.
+   */
+  static getLocalBetterDiscordAsarVersion() {
+    if (_fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].existsSync */ .ZP.existsSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_VERSION_PATH))) return _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].readFileSync */ .ZP.readFileSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_VERSION_PATH)).toString();else return "0.0.0";
+  }
+
+  /**
+   * Sets the version of BetterDiscord's asar in the version file within the VFS.
+   * @param {string} versionString
+   */
+  static setLocalBetterDiscordAsarVersion(versionString) {
+    _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].writeFileSync */ .ZP.writeFileSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_VERSION_PATH), versionString);
+  }
+
+  /**
+   * Returns whether a BetterDiscord asar exists in the VFS.
+   * @returns {boolean}
+   */
+  static get hasBetterDiscordAsarInVfs() {
+    return _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].existsSync */ .ZP.existsSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_PATH));
+  }
+
+  /**
+   * Returns a VfsBuffer containing the contents of the asar file.
+   * If the file is not present in the VFS, a ENOENT exception is thrown.
+   * @returns {*|VfsBuffer}
+   */
+  static get asarFile() {
+    if (this.hasBetterDiscordAsarInVfs) return _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].readFileSync */ .ZP.readFileSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_PATH));else return _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].statSync */ .ZP.statSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_PATH));
+  }
+
+  /**
+   * Checks BetterDiscord's GitHub releases for the latest version and returns
+   * the update information to the caller.
+   * @returns {Promise<{hasUpdate: boolean, data: any, remoteVersion: *}>}
+   */
+  static async getCurrentBdVersionInfo() {
+    common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), "Checking for latest BetterDiscord version...");
+    const resp = await fetch("https://api.github.com/repos/BetterDiscord/BetterDiscord/releases/latest", {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": _classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _USER_AGENT)
+      }
+    });
+    const data = await resp.json();
+    const remoteVersion = data.tag_name.startsWith("v") ? data.tag_name.slice(1) : data.tag_name;
+    const hasUpdate = remoteVersion > this.getLocalBetterDiscordAsarVersion();
+    common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), `Latest stable BetterDiscord version is ${remoteVersion}.`);
+    return {
+      data,
+      remoteVersion,
+      hasUpdate
+    };
+  }
+
+  /**
+   * Downloads the betterdiscord.asar specified in updateInfo and saves the file into the VFS.
+   * @param updateInfo
+   * @param remoteVersion
+   * @returns {Promise<boolean>}
+   */
+  static async downloadBetterDiscordAsar(updateInfo, remoteVersion) {
+    try {
+      const asar = updateInfo.assets.find(a => a.name === "betterdiscord.asar");
+      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), `Downloading BetterDiscord v${remoteVersion} into VFS...`);
+      const startTime = performance.now();
+      const buff = await new Promise((resolve, reject) => (0,_request__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z)(asar.url, {
+        headers: {
+          "Accept": "application/octet-stream",
+          "Content-Type": "application/octet-stream",
+          "User-Agent": _classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _USER_AGENT)
+        }
+      }, (err, resp, body) => {
+        if (err || resp.statusCode !== 200) return reject(err || `${resp.statusCode} ${resp.statusMessage}`);
+        return resolve(body);
+      }));
+      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].info */ .Z.info(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), "Download complete, saving into VFS...");
+      _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].writeFileSync */ .ZP.writeFileSync(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_PATH), buff);
+      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].info */ .Z.info(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), `Persisting version information in: ${_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _BD_ASAR_VERSION_PATH)}`);
+      this.setLocalBetterDiscordAsarVersion(remoteVersion);
+      const endTime = performance.now();
+      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].info */ .Z.info(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);
+      return true;
+    } catch (err) {
+      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].error */ .Z.error(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), "Failed to download BetterDiscord", err);
+      return false;
+    }
+  }
+}
+var _BD_ASAR_VERSION_PATH = {
+  writable: true,
+  value: "AppData/BetterDiscord/data/bd-asar-version.txt"
+};
+var _BD_ASAR_PATH = {
+  writable: true,
+  value: "AppData/BetterDiscord/data/betterdiscord.asar"
+};
+var _USER_AGENT = {
+  writable: true,
+  value: "BdBrowser Updater"
+};
+var _LOGGER_SECTION = {
+  writable: true,
+  value: "AsarUpdate"
+};
 
 /***/ }),
 
@@ -911,7 +1106,13 @@ class IPCRenderer {
     discordmodules/* default.RouterModule.listeners.add */.Z.RouterModule.listeners.add(callback);
   }
   static send(event, ...args) {
-    console.log("SEND:", event, args);
+    switch (event) {
+      case "bd-relaunch-app":
+        document.location.reload();
+        break;
+      default:
+        console.log("IPCRenderer SEND:", event, args);
+    }
   }
 }
 _defineProperty(IPCRenderer, "listeners", {});
@@ -1016,7 +1217,7 @@ class Events {
 /* harmony export */   "Z": () => (/* binding */ fetch)
 /* harmony export */ });
 /* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(65);
-/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(229);
+/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(523);
 
 
 function fetch(url, options) {
@@ -1069,7 +1270,7 @@ __webpack_require__.d(__webpack_exports__, {
   "AH": () => (/* binding */ normalizePath)
 });
 
-// UNUSED EXPORTS: basename, dumpVfsCache, exists, existsSync, initializeVfs, mkdir, mkdirSync, readFile, readFileSync, readdirSync, rm, rmSync, rmdir, rmdirSync, statSync, unlink, unlinkSync, watch, writeFile, writeFileSync
+// UNUSED EXPORTS: basename, dumpVfsCache, exists, existsSync, initializeVfs, isVfsInitialized, mkdir, mkdirSync, readFile, readFileSync, readdirSync, rm, rmSync, rmdir, rmdirSync, statSync, unlink, unlinkSync, watch, writeFile, writeFileSync
 
 // EXTERNAL MODULE: ./src/modules/events.js
 var events = __webpack_require__(287);
@@ -1206,6 +1407,12 @@ const emitter = new events/* default */.Z();
  * Global handle of the IndexedDB database connection.
  */
 let database;
+
+/**
+ * Global holder for initialization status.
+ * @type {boolean}
+ */
+let initialized = false;
 
 /**
  * Global handle of the memory cache.
@@ -1404,15 +1611,16 @@ function importFromLocalStorage() {
       return;
     }
     logger/* default.log */.Z.log("VFS", "Migrating existing data from Local Storage into IndexedDB...");
-    let startTime = performance.now();
+    const startTime = performance.now();
     let localStorageJson = Object.assign({}, JSON.parse(localStorageData));
 
     // Skip the root node; directly start in "files" so there are keys to evaluate!
     importLocalStorageNode(localStorageJson.files);
     setBdBrowserVfsVersion(BD_VFS_VERSION);
     setBdBrowserFilesMigrated();
-    let endTime = performance.now();
+    const endTime = performance.now();
     logger/* default.log */.Z.log("VFS", `Migration of existing data complete, took ${(endTime - startTime).toFixed(2)}ms.`);
+    initialized = true;
     resolvePromise(true);
   });
 }
@@ -1457,8 +1665,17 @@ function initializeBaseData() {
     setBdBrowserVfsVersion(BD_VFS_VERSION);
     setBdBrowserFilesMigrated();
     logger/* default.log */.Z.log("VFS", "Base VFS structure created!");
+    initialized = true;
     resolvePromise(true);
   });
+}
+
+/**
+ * Returns whether the VFS has been initialized or not.
+ * @returns {boolean} - Boolean indicating whether VFS is initialized or not.
+ */
+function isVfsInitialized() {
+  return initialized;
 }
 
 /**
@@ -2193,7 +2410,7 @@ function fillMemoryCacheFromIndexedDb() {
   return new Promise((resolvePromise, rejectPromise) => {
     if (!database) throw new Error("Database not connected!");
     logger/* default.log */.Z.log("VFS", "Pre-caching data from IndexedDB...");
-    let startTime = performance.now();
+    const startTime = performance.now();
     let store = getObjectStore("readonly");
     let vfsEntries = store.getAll();
     vfsEntries.onsuccess = function (event) {
@@ -2206,8 +2423,9 @@ function fillMemoryCacheFromIndexedDb() {
       // work on the system. Has to happen before any logic uses
       // readFileSync() or writeFileSync() because they might fail.
       if (getBdBrowserVfsVersion() < BD_VFS_VERSION) upgradeVfsData();
-      let endTime = performance.now();
+      const endTime = performance.now();
       logger/* default.log */.Z.log("VFS", `Memory cache populated, took ${(endTime - startTime).toFixed(2)}ms. VFS is ready.`);
+      initialized = true;
       resolvePromise(true);
     };
     vfsEntries.onerror = function (e) {
@@ -2259,6 +2477,7 @@ const fs = {
   getVfsSizeInBytes,
   importVfsBackup,
   initializeVfs,
+  isVfsInitialized,
   openDatabase,
   /* tooling */
   basename,
@@ -2371,6 +2590,66 @@ https.request = request;
 
 /***/ }),
 
+/***/ 523:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  "Z": () => (/* binding */ ipc)
+});
+
+;// CONCATENATED MODULE: ../common/ipc.js
+const IPC_REPLY_SUFFIX = "-reply";
+class IPC {
+  constructor(context) {
+    if (!context) throw new Error("Context is required");
+    this.context = context;
+  }
+  createHash() {
+    return Math.random().toString(36).substring(2, 10);
+  }
+  reply(message, data) {
+    this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
+  }
+  on(event, listener, once = false) {
+    const wrappedListener = message => {
+      if (message.data.event !== event || message.data.context === this.context) return;
+      const returnValue = listener(message.data, message.data.data);
+      if (returnValue === true && once) {
+        window.removeEventListener("message", wrappedListener);
+      }
+    };
+    window.addEventListener("message", wrappedListener);
+  }
+  send(event, data, callback = null, hash) {
+    if (!hash) hash = this.createHash();
+    if (callback) {
+      this.on(event.concat(IPC_REPLY_SUFFIX), message => {
+        if (message.hash === hash) {
+          callback(message.data);
+          return true;
+        }
+        return false;
+      }, true);
+    }
+    window.postMessage({
+      source: "betterdiscord-browser".concat("-", this.context),
+      event: event,
+      context: this.context,
+      hash: hash,
+      data
+    });
+  }
+}
+;
+;// CONCATENATED MODULE: ./src/modules/ipc.js
+
+const ipcRenderer = new IPC("frontend");
+/* harmony default export */ const ipc = (ipcRenderer);
+
+/***/ }),
+
 /***/ 301:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -2435,7 +2714,7 @@ function _require(path, req) {
 /* harmony import */ var common_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(706);
 /* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(65);
 /* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(602);
-/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(229);
+/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(523);
 
 
 
@@ -2620,7 +2899,90 @@ const path = {
 
 /***/ }),
 
-/***/ 820:
+/***/ 335:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* binding */ request)
+/* harmony export */ });
+/* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(65);
+/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(523);
+
+
+const methods = ["get", "put", "post", "delete", "head"];
+const aliases = {
+  del: "delete"
+};
+function parseArguments() {
+  let url, options, callback;
+  for (const arg of arguments) {
+    switch (typeof arg) {
+      case arg !== null && "object":
+        options = arg;
+        if ("url" in options) {
+          url = options.url;
+        }
+        break;
+      case !url && "string":
+        url = arg;
+        break;
+      case !callback && "function":
+        callback = arg;
+        break;
+    }
+  }
+  return {
+    url,
+    options,
+    callback
+  };
+}
+function validOptions(url, callback) {
+  return typeof url === "string" && typeof callback === "function";
+}
+function request() {
+  const {
+    url,
+    options = {},
+    callback
+  } = parseArguments.apply(this, arguments);
+  if (!validOptions(url, callback)) return null;
+  _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+    url: url,
+    options: options
+  }, data => {
+    let bodyData;
+
+    // If the "encoding" parameter is present in the original options, and it is
+    // set to null, the return value should be an ArrayBuffer. Otherwise, check
+    // the Mime database for the type to determine whether it is text or not...
+    if ("encoding" in options && options.encoding === null) bodyData = data.body;else if ("Content-Type" in Object(options.headers) && options.headers["Content-Type"] !== "text/plain") bodyData = data.body;else bodyData = new TextDecoder().decode(data.body);
+    const res = {
+      headers: data.headers,
+      aborted: !data.ok,
+      complete: true,
+      end: undefined,
+      statusCode: data.status,
+      statusMessage: data.statusText,
+      url: ""
+    };
+    callback(null, res, bodyData);
+  });
+}
+Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).map(method => [method, function () {
+  const {
+    url,
+    options = {},
+    callback
+  } = parseArguments.apply(this, arguments);
+  if (!validOptions(url, callback)) return null;
+  options.method = method;
+  request(url, options, callback);
+}])));
+
+/***/ }),
+
+/***/ 950:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 
@@ -2810,89 +3172,8 @@ function populateMaps(extensionMap, typeMap) {
 var modules_module = __webpack_require__(301);
 // EXTERNAL MODULE: ./src/modules/process.js
 var process = __webpack_require__(323);
-// EXTERNAL MODULE: ../common/constants.js
-var constants = __webpack_require__(65);
-// EXTERNAL MODULE: ./src/ipc.js + 1 modules
-var ipc = __webpack_require__(229);
-;// CONCATENATED MODULE: ./src/modules/request.js
-
-
-
-const methods = ["get", "put", "post", "delete", "head"];
-const aliases = {
-  del: "delete"
-};
-function parseArguments() {
-  let url, options, callback;
-  for (const arg of arguments) {
-    switch (typeof arg) {
-      case arg !== null && "object":
-        options = arg;
-        if ("url" in options) {
-          url = options.url;
-        }
-        break;
-      case !url && "string":
-        url = arg;
-        break;
-      case !callback && "function":
-        callback = arg;
-        break;
-    }
-  }
-  return {
-    url,
-    options,
-    callback
-  };
-}
-function validOptions(url, callback) {
-  return typeof url === "string" && typeof callback === "function";
-}
-function request() {
-  const {
-    url,
-    options = {},
-    callback
-  } = parseArguments.apply(this, arguments);
-  if (!validOptions(url, callback)) return null;
-  ipc/* default.send */.Z.send(constants/* IPCEvents.MAKE_REQUESTS */.A.MAKE_REQUESTS, {
-    url: url,
-    options: options
-  }, data => {
-    let bodyData;
-
-    // Try to evaluate whether the result is text or binary...
-    if (data.headers["content-type"]) {
-      const enc = mime_types.charset(data.headers["content-type"]);
-
-      // If the "encoding" parameter is present in the original options and it is
-      // set to null, the return value should be an ArrayBuffer. Otherwise check
-      // the Mime database for the type to determine whether it is text or not...
-      if ("encoding" in options && options.encoding === null) bodyData = data.body;else bodyData = new TextDecoder(enc).decode(data.body);
-    }
-    const res = {
-      headers: data.headers,
-      aborted: !data.ok,
-      complete: true,
-      end: undefined,
-      statusCode: data.status,
-      statusMessage: data.statusText,
-      url: ""
-    };
-    callback(null, res, bodyData);
-  });
-}
-Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).map(method => [method, function () {
-  const {
-    url,
-    options = {},
-    callback
-  } = parseArguments.apply(this, arguments);
-  if (!validOptions(url, callback)) return null;
-  options.method = method;
-  request(url, options, callback);
-}])));
+// EXTERNAL MODULE: ./src/modules/request.js
+var request = __webpack_require__(335);
 ;// CONCATENATED MODULE: ./src/modules/require.js
 
 
@@ -2930,7 +3211,7 @@ function require_require(mod) {
     case "process":
       return process/* default */.Z;
     case "request":
-      return request;
+      return request/* default */.Z;
     case "url":
       return {
         parse: urlString => {
@@ -3012,15 +3293,15 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 /* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(602);
-/* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(65);
-/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(229);
-/* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(100);
+/* harmony import */ var _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(995);
+/* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(100);
+/* harmony import */ var _modules_asar__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(315);
 /* harmony import */ var _modules_discordnative__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(735);
 /* harmony import */ var _modules_fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(551);
-/* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(432);
-/* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(154);
+/* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(154);
+/* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(432);
 /* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(323);
-/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(820);
+/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(950);
 /* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(580);
 
 
@@ -3042,28 +3323,28 @@ const initialize = async () => {
   window.require = requireFunc;
 
   // Database connection
-  const vfsDatabaseConnection = await _modules_fs__WEBPACK_IMPORTED_MODULE_5__/* ["default"].openDatabase */ .ZP.openDatabase();
+  const vfsDatabaseConnection = await _modules_fs__WEBPACK_IMPORTED_MODULE_6__/* ["default"].openDatabase */ .ZP.openDatabase();
   if (!vfsDatabaseConnection) throw new Error("BdBrowser Error: IndexedDB VFS database connection could not be established!");
 
   // VFS initialization
-  const vfsInitialize = await _modules_fs__WEBPACK_IMPORTED_MODULE_5__/* ["default"].initializeVfs */ .ZP.initializeVfs();
+  const vfsInitialize = await _modules_fs__WEBPACK_IMPORTED_MODULE_6__/* ["default"].initializeVfs */ .ZP.initializeVfs();
   if (!vfsInitialize) throw new Error("BdBrowser Error: IndexedDB VFS could not be initialized!");
-  const loadBetterDiscord = async scriptRequestResponse => {
+  const loadBetterDiscord = async bdScriptBody => {
     var _DiscordModules$UserS;
     const callback = async () => {
-      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_2__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
+      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
       common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "Preparing to load BetterDiscord...");
       try {
-        let scriptBody = new TextDecoder().decode(scriptRequestResponse.body);
+        let scriptBody = new TextDecoder().decode(bdScriptBody);
         common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
         eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
       } catch (error) {
         common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
       }
     };
-    if (!((_DiscordModules$UserS = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_2__/* ["default"].UserStore */ .Z.UserStore) !== null && _DiscordModules$UserS !== void 0 && _DiscordModules$UserS.getCurrentUser())) {
+    if (!((_DiscordModules$UserS = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].UserStore */ .Z.UserStore) !== null && _DiscordModules$UserS !== void 0 && _DiscordModules$UserS.getCurrentUser())) {
       common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
-      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_2__/* ["default"].Dispatcher.subscribe */ .Z.Dispatcher.subscribe("CONNECTION_OPEN", callback);
+      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Dispatcher.subscribe */ .Z.Dispatcher.subscribe("CONNECTION_OPEN", callback);
     } else {
       common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
       setImmediate(callback);
@@ -3071,42 +3352,45 @@ const initialize = async () => {
   };
 
   // Initialize BetterDiscord
-  _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.GET_RESOURCE_URL */ .A.GET_RESOURCE_URL, {
-    url: "dist/betterdiscord.js"
-  }, localScriptUrl => {
-    window.Buffer = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_2__/* ["default"].Buffer */ .Z.Buffer;
-    window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_3__;
-    window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z;
-    window.global = window;
-    window.process = _modules_process__WEBPACK_IMPORTED_MODULE_7__/* ["default"] */ .Z;
-    window.BetterDiscordPreload = () => {
-      if (bdPreloadHasInitialized) return null;
-      bdPreloadHasInitialized = true;
-      return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z;
-    };
+  window.Buffer = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Buffer */ .Z.Buffer;
+  window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_3__;
+  window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z;
+  window.global = window;
+  window.process = _modules_process__WEBPACK_IMPORTED_MODULE_7__/* ["default"] */ .Z;
+  window.BetterDiscordPreload = () => {
+    if (bdPreloadHasInitialized) return null;
+    bdPreloadHasInitialized = true;
+    return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_5__/* ["default"] */ .Z;
+  };
 
-    // Prevent warnings for non-existing properties during Webpack search in "nativeModules".
-    Object.defineProperty(_modules_discordmodules__WEBPACK_IMPORTED_MODULE_2__/* ["default"].ElectronModule */ .Z.ElectronModule, "canBootstrapNewUpdater", {
-      value: false,
-      configurable: true
-    });
-
-    // Prevent the _very first_ override of window.require by BetterDiscord
-    // to keep BdBrowser's own version intact.
-    // However, allow later changes to it (i.e. for Monaco).
-    Object.defineProperty(window, "require", {
-      get() {
-        return requireFunc;
-      },
-      set(newValue) {
-        if (!allowRequireOverride) return allowRequireOverride = true;
-        requireFunc = newValue;
-      }
-    });
-    _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
-      url: localScriptUrl
-    }, loadBetterDiscord);
+  // Prevent warnings for non-existing properties during Webpack search in "nativeModules".
+  Object.defineProperty(_modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].ElectronModule */ .Z.ElectronModule, "canBootstrapNewUpdater", {
+    value: false,
+    configurable: true
   });
+
+  // Prevent the _very first_ override of window.require by BetterDiscord
+  // to keep BdBrowser's own version intact.
+  // However, allow later changes to it (i.e. for Monaco).
+  Object.defineProperty(window, "require", {
+    get() {
+      return requireFunc;
+    },
+    set(newValue) {
+      if (!allowRequireOverride) return allowRequireOverride = true;
+      requireFunc = newValue;
+    }
+  });
+  if (!_modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].hasBetterDiscordAsarInVfs */ .Z.hasBetterDiscordAsarInVfs) {
+    common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "No BetterDiscord asar present in VFS, will try to download a copy...");
+    const versionCheckData = await _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].getCurrentBdVersionInfo */ .Z.getCurrentBdVersionInfo();
+    const updateWasSuccess = await _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].downloadBetterDiscordAsar */ .Z.downloadBetterDiscordAsar(versionCheckData.data, versionCheckData.remoteVersion);
+    common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].info */ .Z.info("Frontend", `Asar update reports ${updateWasSuccess ? "success" : "failure"}.`);
+  }
+  common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].info */ .Z.info("Frontend", `Reading renderer.js from betterdiscord.asar...`);
+  const bdAsar = new _modules_asar__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .Z(_modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].asarFile.buffer */ .Z.asarFile.buffer);
+  const bdBody = bdAsar.get("renderer.js");
+  await loadBetterDiscord(bdBody);
 };
 initialize().then(() => common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "Initialization complete."));
 })();

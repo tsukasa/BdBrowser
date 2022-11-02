@@ -63,6 +63,12 @@ const emitter = new Events();
 let database;
 
 /**
+ * Global holder for initialization status.
+ * @type {boolean}
+ */
+let initialized = false;
+
+/**
  * Global handle of the memory cache.
  * @type {{data: VfsEntry}}
  */
@@ -284,7 +290,7 @@ function importFromLocalStorage() {
         }
 
         Logger.log("VFS", "Migrating existing data from Local Storage into IndexedDB...");
-        let startTime = performance.now();
+        const startTime = performance.now();
 
         let localStorageJson = Object.assign({}, JSON.parse(localStorageData));
 
@@ -294,8 +300,9 @@ function importFromLocalStorage() {
         setBdBrowserVfsVersion(BD_VFS_VERSION);
         setBdBrowserFilesMigrated();
 
-        let endTime = performance.now();
+        const endTime = performance.now();
         Logger.log("VFS", `Migration of existing data complete, took ${(endTime - startTime).toFixed(2)}ms.`);
+        initialized = true;
         resolvePromise(true);
     });
 }
@@ -347,8 +354,17 @@ function initializeBaseData() {
         setBdBrowserFilesMigrated();
 
         Logger.log("VFS", "Base VFS structure created!");
+        initialized = true;
         resolvePromise(true);
     });
+}
+
+/**
+ * Returns whether the VFS has been initialized or not.
+ * @returns {boolean} - Boolean indicating whether VFS is initialized or not.
+ */
+export function isVfsInitialized() {
+    return initialized;
 }
 
 /**
@@ -1118,7 +1134,7 @@ function fillMemoryCacheFromIndexedDb() {
             throw new Error("Database not connected!");
 
         Logger.log("VFS", "Pre-caching data from IndexedDB...");
-        let startTime = performance.now();
+        const startTime = performance.now();
 
         let store = getObjectStore("readonly");
         let vfsEntries = store.getAll();
@@ -1135,8 +1151,9 @@ function fillMemoryCacheFromIndexedDb() {
             if(getBdBrowserVfsVersion() < BD_VFS_VERSION)
                 upgradeVfsData();
 
-            let endTime = performance.now();
+            const endTime = performance.now();
             Logger.log("VFS", `Memory cache populated, took ${(endTime - startTime).toFixed(2)}ms. VFS is ready.`);
+            initialized = true;
             resolvePromise(true);
         }
 
@@ -1200,6 +1217,7 @@ const fs = {
     getVfsSizeInBytes,
     importVfsBackup,
     initializeVfs,
+    isVfsInitialized,
     openDatabase,
     /* tooling */
     basename,

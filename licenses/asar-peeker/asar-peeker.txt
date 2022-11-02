@@ -1,0 +1,7 @@
+asar-peeker
+Copyright © 2021 (for territories where public domain is inapplicable), Dakedres
+Unlicense license
+
+Homepage: https://github.com/Dakedres/asar-peeker
+
+This project uses the dist/Asar.module.js from asar-peeker (commit 262900a), residing in frontend/src/modules/asar.js.

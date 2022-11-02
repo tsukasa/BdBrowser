@@ -112,7 +112,7 @@ function CreateBackup() {
 
     Push-Location -Path:$Path
 
-    foreach($item in Get-ChildItem -Path:$Path -Recurse -Depth 9 -Exclude "*.asar") {
+    foreach($item in Get-ChildItem -Path:$Path -Recurse -Depth 9 -Exclude "emotes.asar") {
         $itemPathRelative = (Resolve-Path -Path $item -Relative).TrimStart('\', '.')
         $itemPathParent   = ""
         $itemPath         = (Join-Path -Path "AppData/BetterDiscord" -ChildPath $itemPathRelative).Replace('\', '/')

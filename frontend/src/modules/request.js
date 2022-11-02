@@ -1,6 +1,5 @@
 import {IPCEvents} from "common/constants";
-import ipcRenderer from "../ipc";
-import MimeTypes from "./mime-types";
+import ipcRenderer from "./ipc";
 
 const methods = ["get", "put", "post", "delete", "head"];
 const aliases = {del: "delete"};
@@ -45,18 +44,15 @@ export default function request() {
     }, data => {
         let bodyData;
 
-        // Try to evaluate whether the result is text or binary...
-        if(data.headers["content-type"]) {
-            const enc = MimeTypes.charset(data.headers["content-type"]);
-
-            // If the "encoding" parameter is present in the original options and it is
-            // set to null, the return value should be an ArrayBuffer. Otherwise check
-            // the Mime database for the type to determine whether it is text or not...
-            if("encoding" in options && options.encoding === null)
-                bodyData = data.body;
-            else
-                bodyData = new TextDecoder(enc).decode(data.body);
-        }
+        // If the "encoding" parameter is present in the original options, and it is
+        // set to null, the return value should be an ArrayBuffer. Otherwise, check
+        // the Mime database for the type to determine whether it is text or not...
+        if("encoding" in options && options.encoding === null)
+            bodyData = data.body;
+        else if ("Content-Type" in Object(options.headers) && options.headers["Content-Type"] !== "text/plain")
+            bodyData = data.body;
+        else
+            bodyData = new TextDecoder().decode(data.body);
 
         const res = {
             headers: data.headers,

@@ -1,5 +1,5 @@
 import {IPCEvents} from "common/constants";
-import ipcRenderer from "../ipc";
+import ipcRenderer from "./ipc";
 
 export default function fetch(url, options) {
     return new Promise(resolve => {

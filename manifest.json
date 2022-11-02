@@ -1,6 +1,6 @@
 {
     "name": "BetterDiscord",
-    "version": "1.8.2.20221030",
+    "version": "1.8.2.20221102",
     "description": "Allows you to use BetterDiscord on the web client. Some plugins might not be working correctly.",
     "icons": {
         "16": "assets/logo.png",
@@ -31,7 +31,6 @@
     "web_accessible_resources": [{
         "resources": [
             "assets/spinner.webm",
-            "dist/betterdiscord.js",
             "dist/frontend.js",
             "dist/preload.js"
         ],

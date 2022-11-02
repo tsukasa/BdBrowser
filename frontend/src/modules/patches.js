@@ -1,7 +1,7 @@
 import DOM from "common/dom";
 import {IPCEvents} from "common/constants";
 import Logger from "common/logger";
-import ipcRenderer from "../ipc";
+import ipcRenderer from "./ipc";
 
 for (const method of Object.keys(console)) {
     if (console[method]?.__sentry_original__) {

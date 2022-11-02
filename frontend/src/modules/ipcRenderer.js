@@ -83,6 +83,13 @@ export default class IPCRenderer {
     }
 
     static send(event, ...args) {
-        console.log("SEND:", event, args);
+        switch (event) {
+            case "bd-relaunch-app":
+                document.location.reload();
+                break;
+
+            default:
+                console.log("IPCRenderer SEND:", event, args);
+        }
     }
 }

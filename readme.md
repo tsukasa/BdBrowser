@@ -11,8 +11,10 @@ BdBrowser is a Chrome extension that loads [BetterDiscord](https://github.com/Be
   - [Installing Prebuilt Version](#installing-prebuilt-version)
   - [Building It Youself](#building-it-yourself)
 - [Using BdBrowser](#-using-bdbrowser)
+  - [First Launch](#first-launch)
   - [Installing Plugins and Themes](#installing-plugins-and-themes)
   - [Updating Plugins or Themes](#updating-plugins-or-themes)
+  - [Updating BetterDiscord](#updating-betterdiscord)
   - [Updating BdBrowser](#updating-bdbrowser)
   - [Uninstalling BdBrowser](#uninstalling-bdbrowser)
   - [Backing up the Virtual Filesystem](#backing-up-the-virtual-filesystem)
@@ -23,10 +25,10 @@ BdBrowser is a Chrome extension that loads [BetterDiscord](https://github.com/Be
 
 &nbsp;
 
-## 👁 Features
+## 👓 Features
 
 * [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/) extension for [Chromium](https://www.chromium.org)-based browsers.
-* Enables the use of [BetterDiscord](https://github.com/BetterDiscord/BetterDiscord)'s unmodified `renderer.js` in a web browser.
+* Enables the use of [BetterDiscord](https://github.com/BetterDiscord/BetterDiscord)'s unmodified `betterdiscord.asar` in a web browser.
 * Emulates a virtual filesystem in memory and persists changes in an IndexedDB.
   
   Plugins do not have access to your real filesystem.
@@ -67,7 +69,7 @@ Installation is done by downloading this repository as a zip archive, extracting
 Building BdBrowser yourself comes with a few prerequisites:
 
 - [Git](https://git-scm.com)
-- [Node.js](https://nodejs.org) with npm (included with Node.js, required for BdBrowser) and [pnpm](https://pnpm.io) (required for BetterDiscord)
+- [Node.js](https://nodejs.org) with npm (included with Node.js, required for BdBrowser)
 - A terminal or command prompt
 
 &nbsp;
@@ -89,34 +91,25 @@ npm install
 npm run prod
 ```
 
-**Step 4: Clone the BetterDiscord repository**
-```sh
-cd ..
-git clone https://github.com/BetterDiscord/BetterDiscord.git BetterDiscord
-```
-
-**Step 5: Install BetterDiscord's dependencies**
-```sh
-cd BetterDiscord
-pnpm recursive install
-```
-
-**Step 6: Build BetterDiscord**
-```sh
-pnpm run build-prod
-```
-
-**Step 7: Copy the BetterDiscord renderer to BdBrowser's `dist` directory**
-```sh
-cp ./dist/renderer.js ../BdBrowser/dist/betterdiscord.js
-```
-
-**Step 8: [Load the extension](#installing-prebuilt-version)**
+**Step 4: [Load the extension](#installing-prebuilt-version)**
 
 &nbsp;
 
 ## 🎨 Using BdBrowser
 Using BdBrowser is almost exactly the same as using BetterDiscord on your desktop.
+
+### First Launch
+After enabling the extension and reloading Discord's web client, BdBrowser will
+initialize its internal virtual filesystem and download a copy of the latest
+`betterdiscord.asar` from BetterDiscord's official GitHub releases page.
+
+BetterDiscord will be loaded from within the asar file in the virtual filesystem
+afterwards.
+
+Subsequent starts will be quicker because no initialization or download needs
+to take place.
+
+&nbsp;
 
 ### Installing Plugins and Themes
 You can install plugins/themes by pressing the `Open [...] Folder` button in the plugins/themes
@@ -143,9 +136,28 @@ file if it already exists.
 
 &nbsp;
 
+### Updating BetterDiscord
+BetterDiscord got updated? Updating within BdBrowser is just as simple as on the desktop:
+
+* Recommended: [Create a VFS backup!](#backing-up-the-virtual-filesystem)
+* Open the Discord settings.
+* Navigate to BetterDiscord's "Update" category.
+* Install the available BetterDiscord update by clicking the "Update" button.
+* You will be prompted to reload the site.
+
+In case BetterDiscord does no longer work after the update, you should
+[restore the old version](#restoring-from-a-backup) from a backup and check
+if there might be a new version of BdBrowser available that addresses the issue.
+
+If a new version of the extension is available, please follow the instructions to
+[update BdBrowser](#updating-bdbrowser).
+
+&nbsp;
+
 ### Updating BdBrowser
-BetterDiscord or BdBrowser got updated? Then it might be time to update your local
-BdBrowser installation.
+BetterDiscord is no longer working within BdBrowser? BdBrowser got updated?
+Then it might be time to update your local BdBrowser installation to ensure
+you have all the latest compatibility improvements and bug fixes.
 
 Updating the extension is pretty much a repeat of [installing it](#-installation) with a few
 notable differences:
@@ -163,6 +175,8 @@ Note: Simply replacing the files/folder and restarting Chrome is _not_ sufficien
 ### Uninstalling BdBrowser
 To uninstall BdBrowser, simply remove the extension as you would with every other
 Chrome extension.
+
+The data stored within the virtual filesystem will be kept.
 
 &nbsp;
 
