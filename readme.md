@@ -54,7 +54,7 @@ Installation is done by downloading this repository as a zip archive, extracting
 3. Open your Chrome extensions page.
 4. Make sure the "Developer mode" toggle on the extension page is enabled.
    This enables you to load unpacked extensions from a local folder.
-5. Click the `Load unpacked` button in the toolbar:
+5. Click the <kbd>Load unpacked</kbd> button in the toolbar:
    
    ![Load unpacked extension](assets/gh-readme/chrome-load-unpacked.png)
    
@@ -112,7 +112,7 @@ to take place.
 &nbsp;
 
 ### Installing Plugins and Themes
-You can install plugins/themes by pressing the `Open [...] Folder` button in the plugins/themes
+You can install plugins/themes by pressing the <kbd>Open [...] Folder</kbd> button in the plugins/themes
 category of BetterDiscord's settings.
 
 Instead of opening the folder containing your plugins/themes, a file picker will open.
@@ -141,8 +141,8 @@ BetterDiscord got updated? Updating within BdBrowser is just as simple as on the
 
 * Recommended: [Create a VFS backup!](#backing-up-the-virtual-filesystem)
 * Open the Discord settings.
-* Navigate to BetterDiscord's "Update" category.
-* Install the available BetterDiscord update by clicking the "Update" button.
+* Navigate to BetterDiscord's "Updates" category.
+* Install the available BetterDiscord update by clicking the <kbd>Update!</kbd> button.
 * You will be prompted to reload the site.
 
 In case BetterDiscord does no longer work after the update, you should
@@ -165,8 +165,8 @@ notable differences:
 * Use the same folder as you did for the installation.
 * You do not need to load the unpacked folder again because it is already loaded.
   Uninstalling the old version does not delete your BdBrowser settings or filesystem.
-* Instead, please click the `Update` button on your Chrome extension page.
-* After updating, please perform a hard reload of Discord's page (Shift + F5).
+* Instead, please click the <kbd>Update</kbd> button on your Chrome extension page.
+* After updating, please perform a hard reload of Discord's page (<kbd>Shift</kbd> + <kbd>F5</kbd>).
 
 Note: Simply replacing the files/folder and restarting Chrome is _not_ sufficient.
 
@@ -251,3 +251,7 @@ the allowed domains beforehand as part of the onboarding/installation.
 If you know exactly which domains your specific set of themes/plugins query,
 you can harden the configuration by changing the Site Access setting from
 `On all sites` to `On specific sites` and adding the allowed domains manually.
+
+---
+
+[Back to Top](#bdbrowser)

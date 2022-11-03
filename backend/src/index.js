@@ -96,6 +96,7 @@ function registerEvents() {
             }, (response) => {
                 if (response.error) {
                     console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+                    ipcMain.reply(event, undefined);
                 }
                 else
                 {

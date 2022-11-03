@@ -1,4 +1,6 @@
 import Logger from "common/logger";
+import {IPCEvents} from "common/constants";
+import ipcRenderer from "./modules/ipc";
 import BdAsarUpdater from "./modules/bdasarupdate";
 import DiscordModules from "./modules/discordmodules";
 import {default as Asar} from "./modules/asar";
@@ -92,10 +94,25 @@ const initialize = async () => {
         Logger.info("Frontend", `Asar update reports ${updateWasSuccess ? "success" : "failure"}.`);
     }
 
-    Logger.info("Frontend", `Reading renderer.js from betterdiscord.asar...`);
-    const bdAsar = new Asar(BdAsarUpdater.asarFile.buffer);
-    const bdBody = bdAsar.get("renderer.js");
-    await loadBetterDiscord(bdBody);
+    // Support overriding the VFS betterdiscord.asar with a local copy from "dist/betterdiscord.js".
+    // This should only be used for local development/debugging purposes!
+    let bdBody;
+    const localRendererUrl = await ipcRenderer.sendAwait(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"});
+    const localRendererResp = await ipcRenderer.sendAwait(IPCEvents.MAKE_REQUESTS, {url: localRendererUrl});
+
+    if(!localRendererResp) {
+        Logger.info("Frontend", "Reading renderer.js from betterdiscord.asar...");
+        const bdAsar = new Asar(BdAsarUpdater.asarFile.buffer);
+        bdBody = bdAsar.get("renderer.js");
+    } else {
+        Logger.warn("Frontend", "Reading betterdiscord.js from extension web resources. This is for local development/debugging use only!");
+        bdBody = localRendererResp.body;
+    }
+
+    if(!bdBody)
+        Logger.error("Frontend", "No BetterDiscord renderer to execute.");
+    else
+        await loadBetterDiscord(bdBody);
 }
 
 initialize().then(() => Logger.log("Frontend", "Initialization complete."));

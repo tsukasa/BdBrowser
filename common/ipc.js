@@ -2,26 +2,22 @@ const IPC_REPLY_SUFFIX = "-reply";
 
 export default class IPC
 {
-    constructor(context)
-    {
+    constructor(context) {
         if (!context)
             throw new Error("Context is required");
 
         this.context = context;
     }
 
-    createHash()
-    {
+    createHash() {
         return Math.random().toString(36).substring(2, 10);
     }
 
-    reply(message, data)
-    {
+    reply(message, data) {
         this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
     }
 
-    on(event, listener, once = false)
-    {
+    on(event, listener, once = false) {
         const wrappedListener = message => {
             if (message.data.event !== event || message.data.context === this.context)
                 return;
@@ -42,8 +38,7 @@ export default class IPC
         if (!hash)
             hash = this.createHash();
 
-        if (callback)
-        {
+        if (callback) {
             this.on(event.concat(IPC_REPLY_SUFFIX), message => {
                 if (message.hash === hash)
                 {
@@ -63,4 +58,14 @@ export default class IPC
             data
         });
     }
-};
+
+    sendAwait(event, data, hash)
+    {
+        return new Promise((resolve) => {
+            const callback = (data) => {
+                resolve(data);
+            }
+            this.send(event, data, callback, hash);
+        });
+    }
+}

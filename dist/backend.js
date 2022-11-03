@@ -99,8 +99,15 @@ class IPC {
       data
     });
   }
+  sendAwait(event, data, hash) {
+    return new Promise(resolve => {
+      const callback = data => {
+        resolve(data);
+      };
+      this.send(event, data, callback, hash);
+    });
+  }
 }
-;
 ;// CONCATENATED MODULE: ../common/logger.js
 class Logger {
   static _parseType(type) {
@@ -251,6 +258,7 @@ function registerEvents() {
     }, response => {
       if (response.error) {
         console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+        ipcMain.reply(event, undefined);
       } else {
         // Response body comes in as a normal array, so requires
         // another round of casting into Uint8Array for the buffer.

@@ -2641,8 +2641,15 @@ class IPC {
       data
     });
   }
+  sendAwait(event, data, hash) {
+    return new Promise(resolve => {
+      const callback = data => {
+        resolve(data);
+      };
+      this.send(event, data, callback, hash);
+    });
+  }
 }
-;
 ;// CONCATENATED MODULE: ./src/modules/ipc.js
 
 const ipcRenderer = new IPC("frontend");
@@ -3292,17 +3299,21 @@ require_require.resolve = path => {
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(602);
-/* harmony import */ var _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(995);
-/* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(100);
-/* harmony import */ var _modules_asar__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(315);
-/* harmony import */ var _modules_discordnative__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(735);
-/* harmony import */ var _modules_fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(551);
-/* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(154);
-/* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(432);
-/* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(323);
-/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(950);
-/* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(580);
+/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(602);
+/* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(65);
+/* harmony import */ var _modules_ipc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(523);
+/* harmony import */ var _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(995);
+/* harmony import */ var _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(100);
+/* harmony import */ var _modules_asar__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(315);
+/* harmony import */ var _modules_discordnative__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(735);
+/* harmony import */ var _modules_fetch__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(551);
+/* harmony import */ var _modules_bdpreload__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(154);
+/* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(432);
+/* harmony import */ var _modules_process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
+/* harmony import */ var _modules_require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(950);
+/* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(580);
+
+
 
 
 
@@ -3319,52 +3330,52 @@ let bdPreloadHasInitialized = false;
 const initialize = async () => {
   // Expose `window.require` early, so we have some tools
   // available in case of a failure...
-  let requireFunc = _modules_require__WEBPACK_IMPORTED_MODULE_8__/* ["default"].bind */ .Z.bind({});
+  let requireFunc = _modules_require__WEBPACK_IMPORTED_MODULE_10__/* ["default"].bind */ .Z.bind({});
   window.require = requireFunc;
 
   // Database connection
-  const vfsDatabaseConnection = await _modules_fs__WEBPACK_IMPORTED_MODULE_6__/* ["default"].openDatabase */ .ZP.openDatabase();
+  const vfsDatabaseConnection = await _modules_fs__WEBPACK_IMPORTED_MODULE_8__/* ["default"].openDatabase */ .ZP.openDatabase();
   if (!vfsDatabaseConnection) throw new Error("BdBrowser Error: IndexedDB VFS database connection could not be established!");
 
   // VFS initialization
-  const vfsInitialize = await _modules_fs__WEBPACK_IMPORTED_MODULE_6__/* ["default"].initializeVfs */ .ZP.initializeVfs();
+  const vfsInitialize = await _modules_fs__WEBPACK_IMPORTED_MODULE_8__/* ["default"].initializeVfs */ .ZP.initializeVfs();
   if (!vfsInitialize) throw new Error("BdBrowser Error: IndexedDB VFS could not be initialized!");
   const loadBetterDiscord = async bdScriptBody => {
     var _DiscordModules$UserS;
     const callback = async () => {
-      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
-      common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "Preparing to load BetterDiscord...");
+      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe("CONNECTION_OPEN", callback);
+      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Preparing to load BetterDiscord...");
       try {
         let scriptBody = new TextDecoder().decode(bdScriptBody);
-        common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
+        common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
         eval(`(() => { ${scriptBody} })(window.fetchWithoutCSP)`);
       } catch (error) {
-        common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
+        common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
       }
     };
-    if (!((_DiscordModules$UserS = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].UserStore */ .Z.UserStore) !== null && _DiscordModules$UserS !== void 0 && _DiscordModules$UserS.getCurrentUser())) {
-      common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
-      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Dispatcher.subscribe */ .Z.Dispatcher.subscribe("CONNECTION_OPEN", callback);
+    if (!((_DiscordModules$UserS = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].UserStore */ .Z.UserStore) !== null && _DiscordModules$UserS !== void 0 && _DiscordModules$UserS.getCurrentUser())) {
+      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
+      _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Dispatcher.subscribe */ .Z.Dispatcher.subscribe("CONNECTION_OPEN", callback);
     } else {
-      common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
       setImmediate(callback);
     }
   };
 
   // Initialize BetterDiscord
-  window.Buffer = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].Buffer */ .Z.Buffer;
-  window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_3__;
-  window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z;
+  window.Buffer = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Buffer */ .Z.Buffer;
+  window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_5__;
+  window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z;
   window.global = window;
-  window.process = _modules_process__WEBPACK_IMPORTED_MODULE_7__/* ["default"] */ .Z;
+  window.process = _modules_process__WEBPACK_IMPORTED_MODULE_9__/* ["default"] */ .Z;
   window.BetterDiscordPreload = () => {
     if (bdPreloadHasInitialized) return null;
     bdPreloadHasInitialized = true;
-    return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_5__/* ["default"] */ .Z;
+    return _modules_bdpreload__WEBPACK_IMPORTED_MODULE_7__/* ["default"] */ .Z;
   };
 
   // Prevent warnings for non-existing properties during Webpack search in "nativeModules".
-  Object.defineProperty(_modules_discordmodules__WEBPACK_IMPORTED_MODULE_1__/* ["default"].ElectronModule */ .Z.ElectronModule, "canBootstrapNewUpdater", {
+  Object.defineProperty(_modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].ElectronModule */ .Z.ElectronModule, "canBootstrapNewUpdater", {
     value: false,
     configurable: true
   });
@@ -3381,18 +3392,33 @@ const initialize = async () => {
       requireFunc = newValue;
     }
   });
-  if (!_modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].hasBetterDiscordAsarInVfs */ .Z.hasBetterDiscordAsarInVfs) {
-    common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "No BetterDiscord asar present in VFS, will try to download a copy...");
-    const versionCheckData = await _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].getCurrentBdVersionInfo */ .Z.getCurrentBdVersionInfo();
-    const updateWasSuccess = await _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].downloadBetterDiscordAsar */ .Z.downloadBetterDiscordAsar(versionCheckData.data, versionCheckData.remoteVersion);
-    common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].info */ .Z.info("Frontend", `Asar update reports ${updateWasSuccess ? "success" : "failure"}.`);
+  if (!_modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_2__/* ["default"].hasBetterDiscordAsarInVfs */ .Z.hasBetterDiscordAsarInVfs) {
+    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "No BetterDiscord asar present in VFS, will try to download a copy...");
+    const versionCheckData = await _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_2__/* ["default"].getCurrentBdVersionInfo */ .Z.getCurrentBdVersionInfo();
+    const updateWasSuccess = await _modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_2__/* ["default"].downloadBetterDiscordAsar */ .Z.downloadBetterDiscordAsar(versionCheckData.data, versionCheckData.remoteVersion);
+    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].info */ .Z.info("Frontend", `Asar update reports ${updateWasSuccess ? "success" : "failure"}.`);
   }
-  common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].info */ .Z.info("Frontend", `Reading renderer.js from betterdiscord.asar...`);
-  const bdAsar = new _modules_asar__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .Z(_modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_0__/* ["default"].asarFile.buffer */ .Z.asarFile.buffer);
-  const bdBody = bdAsar.get("renderer.js");
-  await loadBetterDiscord(bdBody);
+
+  // Support overriding the VFS betterdiscord.asar with a local copy from "dist/betterdiscord.js".
+  // This should only be used for local development/debugging purposes!
+  let bdBody;
+  const localRendererUrl = await _modules_ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.GET_RESOURCE_URL */ .A.GET_RESOURCE_URL, {
+    url: "dist/betterdiscord.js"
+  });
+  const localRendererResp = await _modules_ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+    url: localRendererUrl
+  });
+  if (!localRendererResp) {
+    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].info */ .Z.info("Frontend", "Reading renderer.js from betterdiscord.asar...");
+    const bdAsar = new _modules_asar__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z(_modules_bdasarupdate__WEBPACK_IMPORTED_MODULE_2__/* ["default"].asarFile.buffer */ .Z.asarFile.buffer);
+    bdBody = bdAsar.get("renderer.js");
+  } else {
+    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].warn */ .Z.warn("Frontend", "Reading betterdiscord.js from extension web resources. This is for local development/debugging use only!");
+    bdBody = localRendererResp.body;
+  }
+  if (!bdBody) common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].error */ .Z.error("Frontend", "No BetterDiscord renderer to execute.");else await loadBetterDiscord(bdBody);
 };
-initialize().then(() => common_logger__WEBPACK_IMPORTED_MODULE_10__/* ["default"].log */ .Z.log("Frontend", "Initialization complete."));
+initialize().then(() => common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Initialization complete."));
 })();
 
 /******/ })()
