@@ -2511,7 +2511,11 @@ const fs = {
 /* harmony export */   "ZP": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* unused harmony exports request, createServer, get */
-/* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(551);
+/* harmony import */ var _discordmodules__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(100);
+/* harmony import */ var _events__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(287);
+/* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(551);
+
+
 
 function request(url, options, callback) {
   if (typeof options === "function") {
@@ -2527,48 +2531,41 @@ function request(url, options, callback) {
   // TODO: Refactor `fetch()` into a more generic function
   //       that does not require these hacks...
   options._wrapInResponse = false;
-  (0,_fetch__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(url, options).then(data => {
-    callback({
-      on: (event, callback) => {
-        switch (event) {
-          case "data":
-            return callback(data.body);
-          case "end":
-            const res = new Response(data.body);
-            Object.defineProperty(res, "headers", {
-              value: data.headers
-            });
-            Object.defineProperty(res, "ok", {
-              value: data.ok
-            });
-            Object.defineProperty(res, "redirected", {
-              value: data.redirected
-            });
-            Object.defineProperty(res, "status", {
-              value: data.status
-            });
-            Object.defineProperty(res, "statusCode", {
-              value: data.status
-            });
-            Object.defineProperty(res, "statusText", {
-              value: data.statusText
-            });
-            Object.defineProperty(res, "type", {
-              value: data.type
-            });
-            Object.defineProperty(res, "url", {
-              value: ""
-            });
-            return res;
-        }
-      }
+  const emitter = new _events__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .Z();
+  callback(emitter);
+  (0,_fetch__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z)(url, options).then(data => {
+    const dataBuffer = _discordmodules__WEBPACK_IMPORTED_MODULE_0__/* ["default"].Buffer.Buffer */ .Z.Buffer.Buffer;
+    emitter.emit("data", dataBuffer.from(data.body));
+    const res = new Response();
+    Object.defineProperty(res, "headers", {
+      value: data.headers
     });
+    Object.defineProperty(res, "ok", {
+      value: data.ok
+    });
+    Object.defineProperty(res, "redirected", {
+      value: data.redirected
+    });
+    Object.defineProperty(res, "status", {
+      value: data.status
+    });
+    Object.defineProperty(res, "statusCode", {
+      value: data.status
+    });
+    Object.defineProperty(res, "statusText", {
+      value: data.statusText
+    });
+    Object.defineProperty(res, "type", {
+      value: data.type
+    });
+    Object.defineProperty(res, "url", {
+      value: ""
+    });
+    emitter.emit("end", res);
+  }).catch(error => {
+    emitter.emit("error", error);
   });
-  return {
-    statusCode: 200,
-    on: () => {},
-    end: () => {}
-  };
+  return emitter;
 }
 function createServer() {
   return {
@@ -2577,7 +2574,6 @@ function createServer() {
   };
 }
 function get() {
-  console.log("https.get:", arguments);
   request.apply(this, arguments);
 }
 const https = request;

@@ -1,3 +1,5 @@
+import DiscordModules from "./discordmodules";
+import Events from "./events";
 import fetch from "./fetch";
 
 export function request(url, options, callback) {
@@ -16,36 +18,31 @@ export function request(url, options, callback) {
     //       that does not require these hacks...
     options._wrapInResponse = false;
 
+    const emitter = new Events();
+
+    callback(emitter);
+
     fetch(url, options)
         .then(data => {
-            callback({
-                on: (event, callback) => {
-                    switch (event) {
-                        case "data":
-                            return callback(data.body);
-                        case "end":
-                            const res = new Response(data.body);
-                            Object.defineProperty(res, "headers", { value: data.headers });
-                            Object.defineProperty(res, "ok", { value: data.ok });
-                            Object.defineProperty(res, "redirected", { value: data.redirected });
-                            Object.defineProperty(res, "status", { value: data.status });
-                            Object.defineProperty(res, "statusCode", { value: data.status });
-                            Object.defineProperty(res, "statusText", { value: data.statusText });
-                            Object.defineProperty(res, "type", { value: data.type });
-                            Object.defineProperty(res, "url", { value: "" });
-                            return res;
-                    }
-                }
-            });
+            const dataBuffer = DiscordModules.Buffer.Buffer;
+            emitter.emit("data", dataBuffer.from(data.body));
+
+            const res = new Response();
+            Object.defineProperty(res, "headers", { value: data.headers });
+            Object.defineProperty(res, "ok", { value: data.ok });
+            Object.defineProperty(res, "redirected", { value: data.redirected });
+            Object.defineProperty(res, "status", { value: data.status });
+            Object.defineProperty(res, "statusCode", { value: data.status });
+            Object.defineProperty(res, "statusText", { value: data.statusText });
+            Object.defineProperty(res, "type", { value: data.type });
+            Object.defineProperty(res, "url", { value: "" });
+            emitter.emit("end", res);
+        })
+        .catch(error => {
+            emitter.emit("error", error);
         });
 
-    return {
-        statusCode: 200,
-        on: () => {
-        },
-        end: () => {
-        }
-    }
+    return emitter;
 }
 
 export function createServer() {
@@ -58,7 +55,6 @@ export function createServer() {
 }
 
 export function get() {
-    console.log("https.get:", arguments);
     request.apply(this, arguments);
 }
 
