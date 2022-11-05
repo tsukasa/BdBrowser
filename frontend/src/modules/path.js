@@ -45,13 +45,11 @@ export function isAbsolute(path) {
     return path?.startsWith("AppData/");
 }
 
-const path = {
+export default {
     basename,
     dirname,
     extname,
     isAbsolute,
     join,
     resolve
-};
-
-export default path;
+}

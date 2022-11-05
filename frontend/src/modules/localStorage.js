@@ -1,9 +1,11 @@
 import DiscordModules from "./discordmodules";
 
-export function getItem(key) {
-    return DiscordModules.StorageModule.get(key);
-}
+export default class LocalStorage {
+    static getItem(key) {
+        return DiscordModules.StorageModule.get(key);
+    }
 
-export function setItem(key, item) {
-    DiscordModules.StorageModule.set(key, item);
+    static setItem(key, item) {
+        DiscordModules.StorageModule.set(key, item);
+    }
 }

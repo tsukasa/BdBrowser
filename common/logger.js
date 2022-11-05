@@ -1,9 +1,7 @@
 export default class Logger
 {
-    static _parseType(type)
-    {
-        switch (type)
-        {
+    static #parseType(type) {
+        switch (type) {
             case "info":
             case "warn":
             case "error":
@@ -13,29 +11,24 @@ export default class Logger
         }
     }
 
-    static _log(type, module, ...nessage)
-    {
-        type = this._parseType(type);
-        console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
+    static #log(type, module, ...message) {
+        type = this.#parseType(type);
+        console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...message);
     }
 
-    static log(module, ...message)
-    {
-        this._log("log", module, ...message);
+    static log(module, ...message) {
+        this.#log("log", module, ...message);
     }
 
-    static info(module, ...message)
-    {
-        this._log("info", module, ...message);
+    static info(module, ...message) {
+        this.#log("info", module, ...message);
     }
 
-    static warn(module, ...message)
-    {
-        this._log("warn", module, ...message);
+    static warn(module, ...message) {
+        this.#log("warn", module, ...message);
     }
 
-    static error(module, ...message)
-    {
-        this._log("error", module, ...message);
+    static error(module, ...message) {
+        this.#log("error", module, ...message);
     }
 }

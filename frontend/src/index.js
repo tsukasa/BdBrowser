@@ -1,5 +1,5 @@
 import Logger from "common/logger";
-import {IPCEvents} from "common/constants";
+import IPCEvents from "common/constants";
 import ipcRenderer from "./modules/ipc";
 import BdAsarUpdater from "./modules/bdasarupdate";
 import DiscordModules from "./modules/discordmodules";
@@ -55,7 +55,6 @@ const initialize = async () => {
         }
     };
 
-    // Initialize BetterDiscord
     window.Buffer = DiscordModules.Buffer;
     window.DiscordNative = DiscordNative;
     window.fetchWithoutCSP = fetchAPI;

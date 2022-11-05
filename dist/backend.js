@@ -58,8 +58,8 @@ const callback = () => {
 };
 if (document.readyState === "complete") DOM.headAppend = document.head.append.bind(document.head);else document.addEventListener("readystatechange", callback);
 ;// CONCATENATED MODULE: ../common/ipc.js
-const IPC_REPLY_SUFFIX = "-reply";
 class IPC {
+  #IPC_REPLY_SUFFIX = "-reply";
   constructor(context) {
     if (!context) throw new Error("Context is required");
     this.context = context;
@@ -68,22 +68,20 @@ class IPC {
     return Math.random().toString(36).substring(2, 10);
   }
   reply(message, data) {
-    this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
+    this.send(message.event.concat(this.#IPC_REPLY_SUFFIX), data, void 0, message.hash);
   }
   on(event, listener, once = false) {
     const wrappedListener = message => {
       if (message.data.event !== event || message.data.context === this.context) return;
       const returnValue = listener(message.data, message.data.data);
-      if (returnValue === true && once) {
-        window.removeEventListener("message", wrappedListener);
-      }
+      if (returnValue === true && once) window.removeEventListener("message", wrappedListener);
     };
     window.addEventListener("message", wrappedListener);
   }
   send(event, data, callback = null, hash) {
     if (!hash) hash = this.createHash();
     if (callback) {
-      this.on(event.concat(IPC_REPLY_SUFFIX), message => {
+      this.on(event.concat(this.#IPC_REPLY_SUFFIX), message => {
         if (message.hash === hash) {
           callback(message.data);
           return true;
@@ -108,9 +106,16 @@ class IPC {
     });
   }
 }
+;// CONCATENATED MODULE: ../common/constants.js
+/* harmony default export */ const constants = ({
+  INJECT_CSS: "bdbrowser-inject-css",
+  MAKE_REQUESTS: "bdbrowser-make-requests",
+  INJECT_THEME: "bdbrowser-inject-theme",
+  GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
+});
 ;// CONCATENATED MODULE: ../common/logger.js
 class Logger {
-  static _parseType(type) {
+  static #parseType(type) {
     switch (type) {
       case "info":
       case "warn":
@@ -120,64 +125,63 @@ class Logger {
         return "log";
     }
   }
-  static _log(type, module, ...nessage) {
-    type = this._parseType(type);
-    console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
+  static #log(type, module, ...message) {
+    type = this.#parseType(type);
+    console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...message);
   }
   static log(module, ...message) {
-    this._log("log", module, ...message);
+    this.#log("log", module, ...message);
   }
   static info(module, ...message) {
-    this._log("info", module, ...message);
+    this.#log("info", module, ...message);
   }
   static warn(module, ...message) {
-    this._log("warn", module, ...message);
+    this.#log("warn", module, ...message);
   }
   static error(module, ...message) {
-    this._log("error", module, ...message);
+    this.#log("error", module, ...message);
   }
 }
-;// CONCATENATED MODULE: ../common/constants.js
-const IPCEvents = {
-  INJECT_CSS: "bdbrowser-inject-css",
-  MAKE_REQUESTS: "bdbrowser-make-requests",
-  INJECT_THEME: "bdbrowser-inject-theme",
-  GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
-};
 ;// CONCATENATED MODULE: ./src/modules/loadingScreen.js
-const LOADING_ANIMATION_SELECTOR = `video[data-testid="app-spinner"]`;
-const loadingObserver = new MutationObserver(mutations => {
-  if (document.readyState === "complete") loadingObserver.disconnect();
-  let loadingAnimationElement = document.querySelector(LOADING_ANIMATION_SELECTOR);
-  if (loadingAnimationElement) {
-    loadingObserver.disconnect();
-
-    // Should be a WebM file with VP9 codec (400px x 400px) so the alpha channel gets preserved.
-    let customAnimationSource = document.createElement("source");
-    customAnimationSource.src = chrome.runtime.getURL("assets/spinner.webm");
-    customAnimationSource.type = "video/webm";
-    loadingAnimationElement.prepend(customAnimationSource);
+function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+class LoadingScreen {
+  /**
+   * Inserts the custom loading screen spinner animation from
+   * `assets/spinner.webm` into the playlist.
+   *
+   * If the file cannot be found, the video player will automatically
+   * choose one of the default Discord animations.
+   */
+  static ReplaceLoadingAnimation() {
+    _classStaticPrivateFieldSpecGet(this, LoadingScreen, _loadingObserver).observe(document, {
+      childList: true,
+      subtree: true
+    });
   }
-});
+}
+var _LOADING_ANIMATION_SELECTOR = {
+  writable: true,
+  value: `video[data-testid="app-spinner"]`
+};
+var _loadingObserver = {
+  writable: true,
+  value: new MutationObserver(mutations => {
+    if (document.readyState === "complete") _classStaticPrivateFieldSpecGet(LoadingScreen, LoadingScreen, _loadingObserver).disconnect();
+    let loadingAnimationElement = document.querySelector(_classStaticPrivateFieldSpecGet(LoadingScreen, LoadingScreen, _LOADING_ANIMATION_SELECTOR));
+    if (loadingAnimationElement) {
+      _classStaticPrivateFieldSpecGet(LoadingScreen, LoadingScreen, _loadingObserver).disconnect();
 
-/**
- * Inserts the custom loading screen spinner animation from
- * `assets/spinner.webm` into the playlist.
- *
- * If the file cannot be found, the video player will automatically
- * choose one of the default Discord animations.
- * @constructor
- */
-const ReplaceLoadingAnimation = () => {
-  loadingObserver.observe(document, {
-    childList: true,
-    subtree: true
-  });
+      // Should be a WebM file with VP9 codec (400px x 400px) so the alpha channel gets preserved.
+      let customAnimationSource = document.createElement("source");
+      customAnimationSource.src = chrome.runtime.getURL("assets/spinner.webm");
+      customAnimationSource.type = "video/webm";
+      loadingAnimationElement.prepend(customAnimationSource);
+    }
+  })
 };
-const loadingScreen = {
-  ReplaceLoadingAnimation
-};
-/* harmony default export */ const modules_loadingScreen = (loadingScreen);
 ;// CONCATENATED MODULE: ./src/index.js
 
 
@@ -207,7 +211,7 @@ function initialize() {
   // running the backend during `document_start`.
   injectPreload();
   if (document.readyState === "complete") doOnDocumentComplete();else document.addEventListener("readystatechange", documentCompleteCallback);
-  modules_loadingScreen.ReplaceLoadingAnimation();
+  LoadingScreen.ReplaceLoadingAnimation();
 }
 
 /**
@@ -233,13 +237,13 @@ function injectPreload() {
 function registerEvents() {
   Logger.log("Backend", "Registering events.");
   const ipcMain = new IPC("backend");
-  ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
+  ipcMain.on(constants.INJECT_CSS, (_, data) => {
     DOM.injectCSS(data.id, data.css);
   });
-  ipcMain.on(IPCEvents.INJECT_THEME, (_, data) => {
+  ipcMain.on(constants.INJECT_THEME, (_, data) => {
     DOM.injectTheme(data.id, data.css);
   });
-  ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
+  ipcMain.on(constants.MAKE_REQUESTS, (event, data) => {
     // If the data is an object instead of a string, we probably
     // deal with a "request"-style request and have to re-order
     // the options.
@@ -257,7 +261,7 @@ function registerEvents() {
       }
     }, response => {
       if (response.error) {
-        console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+        if (!data.url.startsWith(chrome.runtime.getURL(""))) console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
         ipcMain.reply(event, undefined);
       } else {
         // Response body comes in as a normal array, so requires
@@ -267,7 +271,7 @@ function registerEvents() {
       }
     });
   });
-  ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
+  ipcMain.on(constants.GET_RESOURCE_URL, (event, data) => {
     ipcMain.reply(event, chrome.runtime.getURL(data.url));
   });
 }

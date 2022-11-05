@@ -55,4 +55,4 @@ function _require(path, req) {
 export default {
     Module: {globalPaths, _extensions},
     _require
-};
+}

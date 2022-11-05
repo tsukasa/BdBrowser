@@ -6,14 +6,14 @@
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "A": () => (/* binding */ IPCEvents)
+/* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-const IPCEvents = {
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   INJECT_CSS: "bdbrowser-inject-css",
   MAKE_REQUESTS: "bdbrowser-make-requests",
   INJECT_THEME: "bdbrowser-inject-theme",
   GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
-};
+});
 
 /***/ }),
 
@@ -87,7 +87,7 @@ if (document.readyState === "complete") DOM.headAppend = document.head.append.bi
 /* harmony export */   "Z": () => (/* binding */ Logger)
 /* harmony export */ });
 class Logger {
-  static _parseType(type) {
+  static #parseType(type) {
     switch (type) {
       case "info":
       case "warn":
@@ -97,21 +97,21 @@ class Logger {
         return "log";
     }
   }
-  static _log(type, module, ...nessage) {
-    type = this._parseType(type);
-    console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...nessage);
+  static #log(type, module, ...message) {
+    type = this.#parseType(type);
+    console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...message);
   }
   static log(module, ...message) {
-    this._log("log", module, ...message);
+    this.#log("log", module, ...message);
   }
   static info(module, ...message) {
-    this._log("info", module, ...message);
+    this.#log("info", module, ...message);
   }
   static warn(module, ...message) {
-    this._log("warn", module, ...message);
+    this.#log("warn", module, ...message);
   }
   static error(module, ...message) {
-    this._log("error", module, ...message);
+    this.#log("error", module, ...message);
   }
 }
 
@@ -309,7 +309,7 @@ class BdAsarUpdater {
       }
     });
     const data = await resp.json();
-    const remoteVersion = data.tag_name.startsWith("v") ? data.tag_name.slice(1) : data.tag_name;
+    const remoteVersion = data["tag_name"].startsWith("v") ? data["tag_name"].slice(1) : data["tag_name"];
     const hasUpdate = remoteVersion > this.getLocalBetterDiscordAsarVersion();
     common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(_classStaticPrivateFieldSpecGet(this, BdAsarUpdater, _LOGGER_SECTION), `Latest stable BetterDiscord version is ${remoteVersion}.`);
     return {
@@ -386,7 +386,7 @@ var _LOGGER_SECTION = {
 
 
 
-const bdPreloadCatalogue = {
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   electron: _electron__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .ZP,
   filesystem: {
     readFile: _fs__WEBPACK_IMPORTED_MODULE_3__/* ["default"].readFileSync */ .ZP.readFileSync,
@@ -402,8 +402,7 @@ const bdPreloadCatalogue = {
   },
   https: _https__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .ZP,
   path: _path__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP
-};
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (bdPreloadCatalogue);
+});
 
 /***/ }),
 
@@ -1007,10 +1006,9 @@ const app = {
     location.reload();
   }
 };
-const discordNative = {
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   app
-};
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (discordNative);
+});
 
 /***/ }),
 
@@ -1020,7 +1018,7 @@ const discordNative = {
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  "ZP": () => (/* binding */ modules_electron)
+  "ZP": () => (/* binding */ electron)
 });
 
 // UNUSED EXPORTS: clipboard, ipcRenderer, remote, shell
@@ -1157,13 +1155,12 @@ const clipboard = {
   },
   writeText: text => navigator.clipboard.writeText(text)
 };
-const electron = {
+/* harmony default export */ const electron = ({
   clipboard,
   ipcRenderer: IPCRenderer,
   remote,
   shell
-};
-/* harmony default export */ const modules_electron = (electron);
+});
 
 /***/ }),
 
@@ -1206,7 +1203,6 @@ class Events {
   }
   setMaxListeners() {}
 }
-;
 
 /***/ }),
 
@@ -1222,7 +1218,7 @@ class Events {
 
 function fetch(url, options) {
   return new Promise(resolve => {
-    _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+    _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* ["default"].MAKE_REQUESTS */ .Z.MAKE_REQUESTS, {
       url: url,
       options: options
     }, data => {
@@ -1316,11 +1312,13 @@ class VfsEntry {
 var discordmodules = __webpack_require__(100);
 ;// CONCATENATED MODULE: ./src/modules/localStorage.js
 
-function getItem(key) {
-  return discordmodules/* default.StorageModule.get */.Z.StorageModule.get(key);
-}
-function setItem(key, item) {
-  discordmodules/* default.StorageModule.set */.Z.StorageModule.set(key, item);
+class LocalStorage {
+  static getItem(key) {
+    return discordmodules/* default.StorageModule.get */.Z.StorageModule.get(key);
+  }
+  static setItem(key, item) {
+    discordmodules/* default.StorageModule.set */.Z.StorageModule.set(key, item);
+  }
 }
 ;// CONCATENATED MODULE: ./src/modules/utilities.js
 
@@ -1548,7 +1546,7 @@ function importVfsBackup() {
  * @returns {number|undefined} VFS version according to LocalStorage key.
  */
 function getBdBrowserVfsVersion() {
-  return getItem(BD_VFS_VERSION_KEY) || 0;
+  return LocalStorage.getItem(BD_VFS_VERSION_KEY) || 0;
 }
 
 /**
@@ -1577,7 +1575,7 @@ function getVfsSizeInBytes() {
  * @returns {boolean}
  */
 function hasBdBrowserFiles() {
-  let bdFilesItem = getItem(BD_FILES_KEY);
+  let bdFilesItem = LocalStorage.getItem(BD_FILES_KEY);
   return bdFilesItem !== undefined;
 }
 
@@ -1586,7 +1584,7 @@ function hasBdBrowserFiles() {
  * @returns {boolean}
  */
 function hasBeenMigrated() {
-  let wasMigrated = getItem(BD_FILES_MIGRATED_KEY);
+  let wasMigrated = LocalStorage.getItem(BD_FILES_MIGRATED_KEY);
   return wasMigrated === true;
 }
 
@@ -1604,7 +1602,7 @@ function importFromLocalStorage() {
     // _not_ being emptied. Import overwrites conflicting entries in the database
     // but leaves existing ones that are not part of the LocalStorage alone.
     emptyVfsCache();
-    let localStorageData = getItem(BD_FILES_KEY);
+    let localStorageData = LocalStorage.getItem(BD_FILES_KEY);
     if (!localStorageData) {
       setBdBrowserVfsVersion(BD_VFS_VERSION);
       resolvePromise(false);
@@ -1699,7 +1697,7 @@ function initializeVfs() {
  * @see BD_FILES_MIGRATED_KEY
  */
 function setBdBrowserFilesMigrated(value = true) {
-  setItem(BD_FILES_MIGRATED_KEY, value);
+  LocalStorage.setItem(BD_FILES_MIGRATED_KEY, value);
 }
 
 /**
@@ -1708,7 +1706,7 @@ function setBdBrowserFilesMigrated(value = true) {
  * @param {number} version - New version of the VFS.
  */
 function setBdBrowserVfsVersion(version) {
-  setItem(BD_VFS_VERSION_KEY, version);
+  LocalStorage.setItem(BD_VFS_VERSION_KEY, version);
 }
 
 /**
@@ -2600,8 +2598,8 @@ __webpack_require__.d(__webpack_exports__, {
 });
 
 ;// CONCATENATED MODULE: ../common/ipc.js
-const IPC_REPLY_SUFFIX = "-reply";
 class IPC {
+  #IPC_REPLY_SUFFIX = "-reply";
   constructor(context) {
     if (!context) throw new Error("Context is required");
     this.context = context;
@@ -2610,22 +2608,20 @@ class IPC {
     return Math.random().toString(36).substring(2, 10);
   }
   reply(message, data) {
-    this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
+    this.send(message.event.concat(this.#IPC_REPLY_SUFFIX), data, void 0, message.hash);
   }
   on(event, listener, once = false) {
     const wrappedListener = message => {
       if (message.data.event !== event || message.data.context === this.context) return;
       const returnValue = listener(message.data, message.data.data);
-      if (returnValue === true && once) {
-        window.removeEventListener("message", wrappedListener);
-      }
+      if (returnValue === true && once) window.removeEventListener("message", wrappedListener);
     };
     window.addEventListener("message", wrappedListener);
   }
   send(event, data, callback = null, hash) {
     if (!hash) hash = this.createHash();
     if (callback) {
-      this.on(event.concat(IPC_REPLY_SUFFIX), message => {
+      this.on(event.concat(this.#IPC_REPLY_SUFFIX), message => {
         if (message.hash === hash) {
           callback(message.data);
           return true;
@@ -2762,7 +2758,7 @@ const unpatchHead = patchMethods(document.head, data => {
   var _node$src, _node$id;
   const [node] = data.args;
   if ((node === null || node === void 0 ? void 0 : node.id) === "monaco-style") {
-    _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+    _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* ["default"].MAKE_REQUESTS */ .Z.MAKE_REQUESTS, {
       url: node.href
     }, data => {
       const dataBody = new TextDecoder().decode(data.body);
@@ -2777,7 +2773,7 @@ const unpatchHead = patchMethods(document.head, data => {
       if (node.localName === "bd-scripts") {
         patchMethods(node, data => {
           const [node] = data.args;
-          _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+          _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* ["default"].MAKE_REQUESTS */ .Z.MAKE_REQUESTS, {
             url: node.src
           }, data => {
             const dataBody = new TextDecoder().decode(data.body);
@@ -2798,7 +2794,7 @@ const unpatchHead = patchMethods(document.head, data => {
       data.callOriginalMethod();
     });
   } else if (node !== null && node !== void 0 && (_node$src = node.src) !== null && _node$src !== void 0 && _node$src.includes("monaco-editor")) {
-    _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+    _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* ["default"].MAKE_REQUESTS */ .Z.MAKE_REQUESTS, {
       url: node.src
     }, data => {
       const dataBody = new TextDecoder().decode(data.body);
@@ -2821,7 +2817,7 @@ const unpatchHead = patchMethods(document.head, data => {
   return data.callOriginalMethod();
 });
 function injectTheme(node) {
-  _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.INJECT_THEME */ .A.INJECT_THEME, {
+  _ipc__WEBPACK_IMPORTED_MODULE_2__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* ["default"].INJECT_THEME */ .Z.INJECT_THEME, {
     id: node.id,
     css: node.textContent
   });
@@ -2876,15 +2872,14 @@ function isAbsolute(path) {
   path = (0,_fs__WEBPACK_IMPORTED_MODULE_0__/* .normalizePath */ .AH)(path);
   return (_path = path) === null || _path === void 0 ? void 0 : _path.startsWith("AppData/");
 }
-const path = {
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   basename,
   dirname,
   extname,
   isAbsolute,
   join,
   resolve
-};
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (path);
+});
 
 /***/ }),
 
@@ -2954,7 +2949,7 @@ function request() {
     callback
   } = parseArguments.apply(this, arguments);
   if (!validOptions(url, callback)) return null;
-  _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+  _ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_0__/* ["default"].MAKE_REQUESTS */ .Z.MAKE_REQUESTS, {
     url: url,
     options: options
   }, data => {
@@ -3361,8 +3356,6 @@ const initialize = async () => {
       setImmediate(callback);
     }
   };
-
-  // Initialize BetterDiscord
   window.Buffer = _modules_discordmodules__WEBPACK_IMPORTED_MODULE_3__/* ["default"].Buffer */ .Z.Buffer;
   window.DiscordNative = _modules_discordnative__WEBPACK_IMPORTED_MODULE_5__;
   window.fetchWithoutCSP = _modules_fetch__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z;
@@ -3402,10 +3395,10 @@ const initialize = async () => {
   // Support overriding the VFS betterdiscord.asar with a local copy from "dist/betterdiscord.js".
   // This should only be used for local development/debugging purposes!
   let bdBody;
-  const localRendererUrl = await _modules_ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.GET_RESOURCE_URL */ .A.GET_RESOURCE_URL, {
+  const localRendererUrl = await _modules_ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_0__/* ["default"].GET_RESOURCE_URL */ .Z.GET_RESOURCE_URL, {
     url: "dist/betterdiscord.js"
   });
-  const localRendererResp = await _modules_ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_0__/* .IPCEvents.MAKE_REQUESTS */ .A.MAKE_REQUESTS, {
+  const localRendererResp = await _modules_ipc__WEBPACK_IMPORTED_MODULE_1__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_0__/* ["default"].MAKE_REQUESTS */ .Z.MAKE_REQUESTS, {
     url: localRendererUrl
   });
   if (!localRendererResp) {

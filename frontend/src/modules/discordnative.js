@@ -32,8 +32,6 @@ export const app = {
     }
 }
 
-const discordNative = {
+export default {
     app
-};
-
-export default discordNative;
+}

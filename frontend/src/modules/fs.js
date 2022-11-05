@@ -1,7 +1,7 @@
 import Events from "./events";
 import VfsBuffer from "./fsBuffer";
 import VfsEntry from "./fsEntry";
-import {getItem, setItem} from "./localStorage";
+import LocalStorage from "./localStorage";
 import Path from "./path";
 import Utilities from "./utilities";
 import DOM from "common/dom";
@@ -223,7 +223,7 @@ function importVfsBackup() {
  * @returns {number|undefined} VFS version according to LocalStorage key.
  */
 function getBdBrowserVfsVersion() {
-    return getItem(BD_VFS_VERSION_KEY) || 0;
+    return LocalStorage.getItem(BD_VFS_VERSION_KEY) || 0;
 }
 
 /**
@@ -253,7 +253,7 @@ function getVfsSizeInBytes() {
  * @returns {boolean}
  */
 function hasBdBrowserFiles() {
-    let bdFilesItem = getItem(BD_FILES_KEY);
+    let bdFilesItem = LocalStorage.getItem(BD_FILES_KEY);
     return (bdFilesItem !== undefined);
 }
 
@@ -262,7 +262,7 @@ function hasBdBrowserFiles() {
  * @returns {boolean}
  */
 function hasBeenMigrated() {
-    let wasMigrated = getItem(BD_FILES_MIGRATED_KEY);
+    let wasMigrated = LocalStorage.getItem(BD_FILES_MIGRATED_KEY);
     return (wasMigrated === true);
 }
 
@@ -281,7 +281,7 @@ function importFromLocalStorage() {
         // but leaves existing ones that are not part of the LocalStorage alone.
         emptyVfsCache();
 
-        let localStorageData = getItem(BD_FILES_KEY);
+        let localStorageData = LocalStorage.getItem(BD_FILES_KEY);
         if(!localStorageData)
         {
             setBdBrowserVfsVersion(BD_VFS_VERSION);
@@ -392,7 +392,7 @@ export function initializeVfs() {
  * @see BD_FILES_MIGRATED_KEY
  */
 function setBdBrowserFilesMigrated(value = true) {
-    setItem(BD_FILES_MIGRATED_KEY, value);
+    LocalStorage.setItem(BD_FILES_MIGRATED_KEY, value);
 }
 
 /**
@@ -401,7 +401,7 @@ function setBdBrowserFilesMigrated(value = true) {
  * @param {number} version - New version of the VFS.
  */
 function setBdBrowserVfsVersion(version) {
-    setItem(BD_VFS_VERSION_KEY, version);
+    LocalStorage.setItem(BD_VFS_VERSION_KEY, version);
 }
 
 /**

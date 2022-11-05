@@ -1,7 +1,7 @@
 import DOM from "common/dom";
 import IPC from "common/ipc";
+import IPCEvents from "common/constants";
 import Logger from "common/logger";
-import {IPCEvents} from "common/constants";
 import LoadingScreen from "./modules/loadingScreen";
 
 /**
@@ -95,7 +95,8 @@ function registerEvents() {
                 }
             }, (response) => {
                 if (response.error) {
-                    console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+                    if(!data.url.startsWith(chrome.runtime.getURL("")))
+                        console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
                     ipcMain.reply(event, undefined);
                 }
                 else

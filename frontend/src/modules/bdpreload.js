@@ -3,7 +3,7 @@ import https from "./https";
 import path from "./path";
 import fs from "./fs";
 
-const bdPreloadCatalogue = {
+export default {
     electron: electron,
     filesystem: {
         readFile: fs.readFileSync,
@@ -20,5 +20,3 @@ const bdPreloadCatalogue = {
     https: https,
     path: path
 }
-
-export default bdPreloadCatalogue;

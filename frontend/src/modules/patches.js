@@ -1,5 +1,5 @@
 import DOM from "common/dom";
-import {IPCEvents} from "common/constants";
+import IPCEvents from "common/constants";
 import Logger from "common/logger";
 import ipcRenderer from "./ipc";
 

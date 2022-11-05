@@ -1,6 +1,6 @@
 import DOM from "common/dom";
 import fs from "./fs";
-import ipcRenderer from "ipcRenderer";
+import ipcRenderer from "./ipcRenderer";
 
 ipcRenderer.initialize();
 export {ipcRenderer};
@@ -14,7 +14,7 @@ export const remote = {
         on: () => {
         }
     })
-};
+}
 
 export const shell = {
     openItem: item => {
@@ -44,11 +44,9 @@ export const clipboard = {
     writeText: text => navigator.clipboard.writeText(text),
 }
 
-const electron = {
+export default {
     clipboard,
     ipcRenderer,
     remote,
     shell
 }
-
-export default electron;
