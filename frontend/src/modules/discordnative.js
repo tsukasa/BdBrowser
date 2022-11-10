@@ -1,6 +1,6 @@
 import process from "./process";
 
-const VERSION = "1.0.9007";
+const APP_HOST_VERSION = "1.0.9007";
 
 export const app = {
     getReleaseChannel() {
@@ -14,7 +14,7 @@ export const app = {
     },
 
     getVersion() {
-        return VERSION;
+        return APP_HOST_VERSION;
     },
 
     async getPath(path) {

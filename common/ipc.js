@@ -1,6 +1,6 @@
-export default class IPC {
-    #IPC_REPLY_SUFFIX = "-reply";
+const IPC_REPLY_SUFFIX = "-reply";
 
+export default class IPC {
     constructor(context) {
         if (!context)
             throw new Error("Context is required");
@@ -13,7 +13,7 @@ export default class IPC {
     }
 
     reply(message, data) {
-        this.send(message.event.concat(this.#IPC_REPLY_SUFFIX), data, void 0, message.hash);
+        this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
     }
 
     on(event, listener, once = false) {
@@ -35,7 +35,7 @@ export default class IPC {
             hash = this.createHash();
 
         if (callback) {
-            this.on(event.concat(this.#IPC_REPLY_SUFFIX), message => {
+            this.on(event.concat(IPC_REPLY_SUFFIX), message => {
                 if (message.hash === hash)
                 {
                     callback(message.data);

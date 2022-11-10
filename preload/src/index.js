@@ -29,7 +29,8 @@ function prepareWebpackChunk() {
                                 continue;
 
                             Object.defineProperty(target, key, {
-                                get: exports[key],
+                                get: () => exports[key](),
+                                set: v => { exports[key] = () => v; },
                                 enumerable: true,
                                 configurable: true
                             });

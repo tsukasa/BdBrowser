@@ -17,7 +17,7 @@ function _require(path, req) {
     const loader = _extensions[extension];
 
     if (!loader)
-        throw new Error("Unkown File extension " + path);
+        throw new Error("Unkown file extension " + path);
 
     const existsFile = fs.existsSync(path);
 

@@ -155,10 +155,8 @@ async function processFetchMessage(request) {
     returnValue = {
       error: err.toString()
     };
-  } finally {
-    // noinspection ReturnInsideFinallyBlockJS
-    return returnValue;
   }
+  return returnValue;
 }
 /* harmony default export */ const modules_fetch = ({
   registerEvents: fetch_registerEvents

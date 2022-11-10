@@ -35,10 +35,8 @@ async function processFetchMessage(request) {
             error: err.toString()
         }
     }
-    finally {
-        // noinspection ReturnInsideFinallyBlockJS
-        return returnValue;
-    }
+
+    return returnValue;
 }
 
 export default {

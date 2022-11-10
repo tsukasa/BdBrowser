@@ -1,4 +1,4 @@
-import DiscordModules from "./discordmodules";
+import Buffer from "./buffer";
 
 export default class Utilities {
     /**
@@ -7,8 +7,7 @@ export default class Utilities {
      * @returns {string} The base64 string representation of the ArrayBuffer's data.
      */
     static arrayBufferToBase64(buffer) {
-        const dmBuffer = DiscordModules.Buffer.Buffer;
-        let buf = dmBuffer.from(buffer);
+        let buf = Buffer.from(buffer);
         return buf.toString("base64");
     }
 
@@ -18,8 +17,7 @@ export default class Utilities {
      * @returns {Uint8Array} An Uint8Array representation of the data contained within the b64String.
      */
     static base64ToArrayBuffer(b64String) {
-        const dmBuffer = DiscordModules.Buffer.Buffer;
-        let buf = dmBuffer.from(b64String, "base64");
+        let buf = Buffer.from(b64String, "base64");
         return new Uint8Array(buf);
     }
 }

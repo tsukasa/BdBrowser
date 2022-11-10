@@ -1,20 +1,21 @@
 import DOM from "common/dom";
-import IPCEvents from "common/constants";
+import {IPCEvents} from "common/constants";
 import Logger from "common/logger";
 import ipcRenderer from "./ipc";
 
-for (const method of Object.keys(console)) {
-    if (console[method]?.__sentry_original__) {
-        console[method] = console[method].__sentry_original__;
-    }
-}
-
 const appendMethods = ["append", "appendChild", "prepend"];
-
 const originalInsertBefore = document.head.insertBefore;
 
 document.head.insertBefore = function (node) {
     return originalInsertBefore.apply(this, arguments);
+}
+
+function disableSentry() {
+    for (const method of Object.keys(console)) {
+        if (console[method]?.__sentry_original__) {
+            console[method] = console[method].__sentry_original__;
+        }
+    }
 }
 
 function patchMethods(node, callback) {
@@ -121,3 +122,5 @@ const unpatchHead = patchMethods(document.head, data => {
 function injectTheme(node) {
     ipcRenderer.send(IPCEvents.INJECT_THEME, {id: node.id, css: node.textContent});
 }
+
+disableSentry();

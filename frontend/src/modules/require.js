@@ -1,12 +1,12 @@
-import Https from "./https";
-import * as vm from "./vm";
-import electron from "./electron";
-import fs from "./fs";
-import path from "./path";
 import DiscordModules from "./discordmodules";
+import electron from "./electron";
 import Events from "./events";
+import fs from "./fs";
+import Https from "./https";
 import mimeTypes from "./mime-types";
 import Module from "./module";
+import * as vm from "./vm";
+import path from "./path";
 import process from "./process";
 import RequestModule from "./request";
 

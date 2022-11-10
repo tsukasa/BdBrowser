@@ -1,11 +1,11 @@
+import DOM from "common/dom";
+import Logger from "common/logger";
+import Buffer from "./buffer"
 import Events from "./events";
-import VfsBuffer from "./fsBuffer";
 import VfsEntry from "./fsEntry";
 import LocalStorage from "./localStorage";
 import Path from "./path";
 import Utilities from "./utilities";
-import DOM from "common/dom";
-import Logger from "common/logger";
 
 // IndexedDB constants
 const DB_NAME = "BdBrowser";
@@ -828,8 +828,7 @@ export function readFileSync(path, options) {
         // Call toString() - otherwise it is a DOMString!
         return textDecoder.decode(fsEntry.contents).toString();
     } else {
-        // Always return a VfsBuffer, so .toString() works as expected.
-        return new VfsBuffer(fsEntry.contents);
+        return new Buffer(fsEntry.contents);
     }
 }
 
@@ -1012,7 +1011,7 @@ export function writeFile(path, content, options, callback) {
 export function writeFileSync(path, content, options) {
     path = normalizePath(path);
     let filename = Path.basename(path);
-    let encodedContent = new VfsBuffer([]);
+    let encodedContent = new Buffer([]);
 
     // TODO: No idea how that would work right now...
     if(!options)

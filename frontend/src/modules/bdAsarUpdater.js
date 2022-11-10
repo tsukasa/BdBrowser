@@ -2,20 +2,19 @@ import Logger from "common/logger";
 import fs from "./fs";
 import request from "./request";
 
+const BD_ASAR_VERSION_PATH = "AppData/BetterDiscord/data/bd-asar-version.txt";
+const BD_ASAR_PATH = "AppData/BetterDiscord/data/betterdiscord.asar";
+const USER_AGENT = "BdBrowser Updater";
+const LOGGER_SECTION = "AsarUpdater";
+
 export default class BdAsarUpdater {
-
-    static #_BD_ASAR_VERSION_PATH = "AppData/BetterDiscord/data/bd-asar-version.txt";
-    static #_BD_ASAR_PATH = "AppData/BetterDiscord/data/betterdiscord.asar";
-    static #_USER_AGENT = "BdBrowser Updater";
-    static #_LOGGER_SECTION = "AsarUpdate";
-
     /**
      * Gets the version of BetterDiscord's asar according to the version file in the VFS.
      * @returns {string} - Version number or `0.0.0` if no value is set yet.
      */
     static getLocalBetterDiscordAsarVersion() {
-        if(fs.existsSync(this.#_BD_ASAR_VERSION_PATH))
-            return fs.readFileSync(this.#_BD_ASAR_VERSION_PATH).toString();
+        if(fs.existsSync(BD_ASAR_VERSION_PATH))
+            return fs.readFileSync(BD_ASAR_VERSION_PATH).toString();
         else
             return "0.0.0";
     }
@@ -25,7 +24,7 @@ export default class BdAsarUpdater {
      * @param {string} versionString
      */
     static setLocalBetterDiscordAsarVersion(versionString) {
-        fs.writeFileSync(this.#_BD_ASAR_VERSION_PATH, versionString);
+        fs.writeFileSync(BD_ASAR_VERSION_PATH, versionString);
     }
 
     /**
@@ -33,19 +32,19 @@ export default class BdAsarUpdater {
      * @returns {boolean}
      */
     static get hasBetterDiscordAsarInVfs() {
-        return fs.existsSync(this.#_BD_ASAR_PATH);
+        return fs.existsSync(BD_ASAR_PATH);
     }
 
     /**
-     * Returns a VfsBuffer containing the contents of the asar file.
+     * Returns a Buffer containing the contents of the asar file.
      * If the file is not present in the VFS, a ENOENT exception is thrown.
-     * @returns {*|VfsBuffer}
+     * @returns {*|Buffer}
      */
     static get asarFile() {
         if(this.hasBetterDiscordAsarInVfs)
-            return fs.readFileSync(this.#_BD_ASAR_PATH);
+            return fs.readFileSync(BD_ASAR_PATH);
         else
-            return fs.statSync(this.#_BD_ASAR_PATH);
+            return fs.statSync(BD_ASAR_PATH);
     }
 
     /**
@@ -54,14 +53,14 @@ export default class BdAsarUpdater {
      * @returns {Promise<{hasUpdate: boolean, data: any, remoteVersion: *}>}
      */
     static async getCurrentBdVersionInfo() {
-        Logger.log(this.#_LOGGER_SECTION, "Checking for latest BetterDiscord version...");
+        Logger.log(LOGGER_SECTION, "Checking for latest BetterDiscord version...");
 
         const resp = await fetch("https://api.github.com/repos/BetterDiscord/BetterDiscord/releases/latest", {
             method: "GET",
             headers: {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "User-Agent": this.#_USER_AGENT
+                "User-Agent": USER_AGENT
             }
         });
 
@@ -69,7 +68,7 @@ export default class BdAsarUpdater {
         const remoteVersion = data["tag_name"].startsWith("v") ? data["tag_name"].slice(1) : data["tag_name"];
         const hasUpdate = remoteVersion > this.getLocalBetterDiscordAsarVersion();
 
-        Logger.log(this.#_LOGGER_SECTION, `Latest stable BetterDiscord version is ${remoteVersion}.`);
+        Logger.log(LOGGER_SECTION, `Latest stable BetterDiscord version is ${remoteVersion}.`);
 
         return {
             data,
@@ -88,7 +87,7 @@ export default class BdAsarUpdater {
         try {
             const asar = updateInfo.assets.find(a => a.name === "betterdiscord.asar");
 
-            Logger.log(this.#_LOGGER_SECTION, `Downloading BetterDiscord v${remoteVersion} into VFS...`);
+            Logger.log(LOGGER_SECTION, `Downloading BetterDiscord v${remoteVersion} into VFS...`);
             const startTime = performance.now();
 
             const buff = await new Promise((resolve, reject) =>
@@ -96,7 +95,7 @@ export default class BdAsarUpdater {
                     headers: {
                         "Accept": "application/octet-stream",
                         "Content-Type": "application/octet-stream",
-                        "User-Agent": this.#_USER_AGENT
+                        "User-Agent": USER_AGENT
                     }}, (err, resp, body) => {
                     if (err || resp.statusCode !== 200)
                         return reject(err || `${resp.statusCode} ${resp.statusMessage}`);
@@ -104,17 +103,17 @@ export default class BdAsarUpdater {
                 })
             );
 
-            Logger.info(this.#_LOGGER_SECTION, "Download complete, saving into VFS...");
-            fs.writeFileSync(this.#_BD_ASAR_PATH, buff);
+            Logger.info(LOGGER_SECTION, "Download complete, saving into VFS...");
+            fs.writeFileSync(BD_ASAR_PATH, buff);
 
-            Logger.info(this.#_LOGGER_SECTION, `Persisting version information in: ${this.#_BD_ASAR_VERSION_PATH}`);
+            Logger.info(LOGGER_SECTION, `Persisting version information in: ${BD_ASAR_VERSION_PATH}`);
             this.setLocalBetterDiscordAsarVersion(remoteVersion);
 
             const endTime = performance.now();
-            Logger.info(this.#_LOGGER_SECTION, `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);
+            Logger.info(LOGGER_SECTION, `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);
             return true;
         } catch (err) {
-            Logger.error(this.#_LOGGER_SECTION, "Failed to download BetterDiscord", err);
+            Logger.error(LOGGER_SECTION, "Failed to download BetterDiscord", err);
             return false;
         }
     }

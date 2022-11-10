@@ -1,4 +1,4 @@
-import DiscordModules from "./discordmodules";
+import Buffer from "./buffer";
 import Events from "./events";
 import fetch from "./fetch";
 
@@ -24,8 +24,7 @@ export function request(url, options, callback) {
 
     fetch(url, options)
         .then(data => {
-            const dataBuffer = DiscordModules.Buffer.Buffer;
-            emitter.emit("data", dataBuffer.from(data.body));
+            emitter.emit("data", Buffer.from(data.body));
 
             const res = new Response();
             Object.defineProperty(res, "headers", { value: data.headers });

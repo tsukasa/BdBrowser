@@ -1,6 +1,11 @@
-export default {
+export const IPCEvents = {
+    GET_MANIFEST_INFO: "bdbrowser-get-extension-manifest",
+    GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl",
     INJECT_CSS: "bdbrowser-inject-css",
-    MAKE_REQUESTS: "bdbrowser-make-requests",
     INJECT_THEME: "bdbrowser-inject-theme",
-    GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
+    MAKE_REQUESTS: "bdbrowser-make-requests"
+}
+
+export default {
+    IPCEvents
 }

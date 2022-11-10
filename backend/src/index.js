@@ -1,6 +1,6 @@
+import {IPCEvents} from "common/constants";
 import DOM from "common/dom";
 import IPC from "common/ipc";
-import IPCEvents from "common/constants";
 import Logger from "common/logger";
 import LoadingScreen from "./modules/loadingScreen";
 
@@ -63,7 +63,16 @@ function injectPreload() {
 
 function registerEvents() {
     Logger.log("Backend", "Registering events.");
+
     const ipcMain = new IPC("backend");
+
+    ipcMain.on(IPCEvents.GET_MANIFEST_INFO, (event) => {
+        ipcMain.reply(event, chrome.runtime.getManifest());
+    })
+
+    ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
+        ipcMain.reply(event, chrome.runtime.getURL(data.url));
+    });
 
     ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
         DOM.injectCSS(data.id, data.css);
@@ -108,10 +117,6 @@ function registerEvents() {
                 }
             }
         );
-    });
-
-    ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
-        ipcMain.reply(event, chrome.runtime.getURL(data.url));
     });
 }
 

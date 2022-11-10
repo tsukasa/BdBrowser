@@ -1,4 +1,4 @@
-import IPCEvents from "common/constants";
+import {IPCEvents} from "common/constants";
 import ipcRenderer from "./ipc";
 
 const methods = ["get", "put", "post", "delete", "head"];

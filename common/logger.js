@@ -1,5 +1,4 @@
-export default class Logger
-{
+export default class Logger {
     static #parseType(type) {
         switch (type) {
             case "info":

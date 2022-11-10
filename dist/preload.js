@@ -58,7 +58,10 @@ function prepareWebpackChunk() {
             for (const key in exports) {
               if (!Reflect.has(exports, key) || target[key]) continue;
               Object.defineProperty(target, key, {
-                get: exports[key],
+                get: () => exports[key](),
+                set: v => {
+                  exports[key] = () => v;
+                },
                 enumerable: true,
                 configurable: true
               });

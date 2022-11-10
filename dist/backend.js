@@ -2,6 +2,17 @@
 /******/ 	"use strict";
 var __webpack_exports__ = {};
 
+;// CONCATENATED MODULE: ../common/constants.js
+const IPCEvents = {
+  GET_MANIFEST_INFO: "bdbrowser-get-extension-manifest",
+  GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl",
+  INJECT_CSS: "bdbrowser-inject-css",
+  INJECT_THEME: "bdbrowser-inject-theme",
+  MAKE_REQUESTS: "bdbrowser-make-requests"
+};
+/* harmony default export */ const constants = ({
+  IPCEvents
+});
 ;// CONCATENATED MODULE: ../common/dom.js
 class DOM {
   /**@returns {HTMLElement} */
@@ -58,8 +69,8 @@ const callback = () => {
 };
 if (document.readyState === "complete") DOM.headAppend = document.head.append.bind(document.head);else document.addEventListener("readystatechange", callback);
 ;// CONCATENATED MODULE: ../common/ipc.js
+const IPC_REPLY_SUFFIX = "-reply";
 class IPC {
-  #IPC_REPLY_SUFFIX = "-reply";
   constructor(context) {
     if (!context) throw new Error("Context is required");
     this.context = context;
@@ -68,7 +79,7 @@ class IPC {
     return Math.random().toString(36).substring(2, 10);
   }
   reply(message, data) {
-    this.send(message.event.concat(this.#IPC_REPLY_SUFFIX), data, void 0, message.hash);
+    this.send(message.event.concat(IPC_REPLY_SUFFIX), data, void 0, message.hash);
   }
   on(event, listener, once = false) {
     const wrappedListener = message => {
@@ -81,7 +92,7 @@ class IPC {
   send(event, data, callback = null, hash) {
     if (!hash) hash = this.createHash();
     if (callback) {
-      this.on(event.concat(this.#IPC_REPLY_SUFFIX), message => {
+      this.on(event.concat(IPC_REPLY_SUFFIX), message => {
         if (message.hash === hash) {
           callback(message.data);
           return true;
@@ -106,13 +117,6 @@ class IPC {
     });
   }
 }
-;// CONCATENATED MODULE: ../common/constants.js
-/* harmony default export */ const constants = ({
-  INJECT_CSS: "bdbrowser-inject-css",
-  MAKE_REQUESTS: "bdbrowser-make-requests",
-  INJECT_THEME: "bdbrowser-inject-theme",
-  GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl"
-});
 ;// CONCATENATED MODULE: ../common/logger.js
 class Logger {
   static #parseType(type) {
@@ -147,6 +151,7 @@ function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor)
 function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
 function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+const LOADING_ANIMATION_SELECTOR = `video[data-testid="app-spinner"]`;
 class LoadingScreen {
   /**
    * Inserts the custom loading screen spinner animation from
@@ -162,15 +167,11 @@ class LoadingScreen {
     });
   }
 }
-var _LOADING_ANIMATION_SELECTOR = {
-  writable: true,
-  value: `video[data-testid="app-spinner"]`
-};
 var _loadingObserver = {
   writable: true,
   value: new MutationObserver(mutations => {
     if (document.readyState === "complete") _classStaticPrivateFieldSpecGet(LoadingScreen, LoadingScreen, _loadingObserver).disconnect();
-    let loadingAnimationElement = document.querySelector(_classStaticPrivateFieldSpecGet(LoadingScreen, LoadingScreen, _LOADING_ANIMATION_SELECTOR));
+    let loadingAnimationElement = document.querySelector(LOADING_ANIMATION_SELECTOR);
     if (loadingAnimationElement) {
       _classStaticPrivateFieldSpecGet(LoadingScreen, LoadingScreen, _loadingObserver).disconnect();
 
@@ -237,13 +238,19 @@ function injectPreload() {
 function registerEvents() {
   Logger.log("Backend", "Registering events.");
   const ipcMain = new IPC("backend");
-  ipcMain.on(constants.INJECT_CSS, (_, data) => {
+  ipcMain.on(IPCEvents.GET_MANIFEST_INFO, event => {
+    ipcMain.reply(event, chrome.runtime.getManifest());
+  });
+  ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
+    ipcMain.reply(event, chrome.runtime.getURL(data.url));
+  });
+  ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
     DOM.injectCSS(data.id, data.css);
   });
-  ipcMain.on(constants.INJECT_THEME, (_, data) => {
+  ipcMain.on(IPCEvents.INJECT_THEME, (_, data) => {
     DOM.injectTheme(data.id, data.css);
   });
-  ipcMain.on(constants.MAKE_REQUESTS, (event, data) => {
+  ipcMain.on(IPCEvents.MAKE_REQUESTS, (event, data) => {
     // If the data is an object instead of a string, we probably
     // deal with a "request"-style request and have to re-order
     // the options.
@@ -270,9 +277,6 @@ function registerEvents() {
         ipcMain.reply(event, response);
       }
     });
-  });
-  ipcMain.on(constants.GET_RESOURCE_URL, (event, data) => {
-    ipcMain.reply(event, chrome.runtime.getURL(data.url));
   });
 }
 initialize();
