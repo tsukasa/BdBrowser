@@ -150,7 +150,6 @@ module.exports = (() => {
                     if(msg.socketId)
                         currentSocketId = msg.socketId;
 
-                    Logger.info(`Setting activity to: ${msg.activity.name || "nothing"}`);
                     Dispatcher.dispatch({ type: DISPATCH_TYPE, ...msg });
                 };
 
