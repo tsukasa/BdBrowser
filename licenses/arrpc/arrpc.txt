@@ -1,0 +1,8 @@
+arRPC
+Copyright(c) 2022 OpenAsar
+MIT Licensed
+
+Homepage: https://github.com/OpenAsar/arrpc
+
+assets/bd-plugins/arRPCBridge.plugin.js is loosely based on
+code from the arRPC repository: examples/bridge_mod.js (commit 877b71f).

@@ -1,5 +1,5 @@
 asar-peeker
-Copyright © 2021 (for territories where public domain is inapplicable), Dakedres
+Copyright © 2021, Dakedres (for territories where public domain is inapplicable)
 Unlicense license
 
 Homepage: https://github.com/Dakedres/asar-peeker

@@ -22,6 +22,9 @@ BdBrowser is a Chrome extension that loads [BetterDiscord](https://github.com/Be
   - [Formatting the Virtual Filesystem](#formatting-the-virtual-filesystem)
   - [Deleting Files in the Virtual Filesystem](#deleting-files-in-the-virtual-filesystem)
   - [Restricting Extension Site Access](#restricting-extension-site-access)
+- [Using VfsTool](#-using-vfstool)
+  - [Extracting Backup Files](#extracting-backup-files)
+  - [Creating Backup Files](#creating-backup-files)
 
 &nbsp;
 
@@ -251,6 +254,76 @@ the allowed domains beforehand as part of the onboarding/installation.
 If you know exactly which domains your specific set of themes/plugins query,
 you can harden the configuration by changing the Site Access setting from
 `On all sites` to `On specific sites` and adding the allowed domains manually.
+
+&nbsp;
+
+## 🧰 Using VfsTool
+BdBrowser comes with the `VfsTool.ps1` Powershell script that allows you to create and
+extract virtual filesystem files.
+
+The script is located under `assets/scripts/VfsTool.ps1` in the repository.
+
+&nbsp;
+
+### Extracting Backup Files
+If you have an existing [backup file](#backing-up-the-virtual-filesystem), you can extract its contents
+with this command:
+
+```powershell
+.\VfsTool.ps1 -Operation Extract -Path C:\path\to\your\bdbrowser_backup.json -OutputPath C:\temp
+```
+
+The output path has to exist already, otherwise the script will fail.
+
+&nbsp;
+
+### Creating Backup Files
+You can create a virtual filesystem backup file for use in BdBrowser from your real filesystem -
+whether this is from using your existing BetterDiscord appdata or a tailor-made structure of files
+to inject files into the virtual filesystem.
+
+The resulting files can be [imported into the virtual filesystem](#restoring-from-a-backup).
+
+&nbsp;
+
+**Create a Backup from your real AppData**
+
+Using the VfsTool you can easily create a backup that contains your current BetterDiscord configuration
+(themes, plugins and BetterDiscord settings) for use in BdBrowser.
+
+```powershell
+.\VfsTool.ps1 -Operation Create -Path "$($env:APPDATA)/betterdiscord" -OutputPath C:\temp\bdbrowser_backup_MyRealBdConfig.json
+```
+
+&nbsp;
+
+**Create a Backup containing a custom BetterDiscord asar File**
+
+Since a [restore](#restoring-from-a-backup) only overwrites files present in the backup itself,
+you can create handy partial backup files to up- or downgrade BetterDiscord via VfsTool:
+
+Step 1: Create an empty root directory.
+
+```sh
+mkdir bdtemp
+```
+
+Step 2: Create a "data" directory within the root directory.
+
+```sh
+cd bdtemp
+mkdir data
+```
+
+Step 3: Place a `betterdiscord.asar` from [GitHub](https://github.com/BetterDiscord/BetterDiscord/releases) in the `data` directory.
+
+Step 4: Create the backup file through the VfsTool.
+
+```powershell
+.\VfsTool -Operation Create -Path C:\temp\bdtemp -OutputPath C:\temp\bdbrowser_backup_bdasar.json
+```
+
+Note: Please make sure you mind the folder and file names, as the virtual filesystem is case-sensitive!
 
 ---
 
