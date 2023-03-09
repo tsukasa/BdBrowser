@@ -855,7 +855,9 @@ function removeFileOrDirectory(path, options) {
     {
         removeFromVfsCache(path);
         removeIndexedDbKey(path);
-        inotify(path, "rename");
+        /* Disable inotify for renameSync shenanigans */
+        if(!options.disableInotify || options.disableInotify === false)
+            inotify(path, "rename");
     }
     else
     {
@@ -942,6 +944,44 @@ export function rmdirSync(path, options) {
         throw getVfsErrorObject({ path: path, error: "ENOTEMPTY", syscall: "rmdir" });
 
     removeFileOrDirectory(path, { recursive: options.recursive, force: false });
+}
+
+/**
+ * Renames a file within the VFS.
+ * Requires absolute paths to be passed.
+ * @param {string} oldPath - Old absolute path
+ * @param {string} newPath - New absolute path
+ */
+export function renameSync(oldPath, newPath) {
+    if(!existsSync(oldPath))
+        throw getVfsErrorObject({ path: oldPath, dest: newPath, error: "ENOENT", syscall: "rename" });
+
+    /* TODO: We can only process files at the moment */
+    if (!isFile(oldPath))
+        throw getVfsErrorObject({ path: newPath, error: "EPERM", syscall: "rename" });
+
+    let oldContent = readFileSync(oldPath);
+
+    /* Perform writeFileSync and removeFileOrDirectory with inotify disabled. */
+    /* Otherwise, BetterDiscord will try to process the file multiple times.   */
+    writeFileSync(newPath, oldContent, { _disableInotify: true });
+    removeFileOrDirectory(oldPath, { recursive: false, force: false, disableInotify: true });
+    inotify(newPath, "rename");
+}
+
+/**
+ * Asynchronously renames a file within the VFS.
+ * @param {string} oldPath - Old absolute path
+ * @param {string} newPath - New absolute path
+ * @param {function} callback - Callback function
+ */
+export function rename(oldPath, newPath, callback) {
+    try {
+        renameSync(oldPath, newPath);
+        callback();
+    } catch (e) {
+        callback(e);
+    }
 }
 
 /**
@@ -1053,7 +1093,10 @@ export function writeFileSync(path, content, options) {
 
     writeOrUpdateMemoryCache(path, objFile);
     writeOrUpdateIndexedDbKey(path, objFile);
-    inotify(path, "change");
+
+    /* Disable inotify for renameSync shenanigans */
+    if(!options._disableInotify || options._disableInotify === false)
+        inotify(path, "change");
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1230,6 +1273,8 @@ const fs = {
     readFileSync,
     readdirSync,
     realpathSync: normalizePath,
+    rename,
+    renameSync,
     rm,
     rmSync,
     rmdir,

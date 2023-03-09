@@ -1030,7 +1030,9 @@ var fs = __webpack_require__(409);
 // EXTERNAL MODULE: ./src/modules/discordmodules.js + 1 modules
 var discordmodules = __webpack_require__(100);
 ;// CONCATENATED MODULE: ./src/modules/ipcRenderer.js
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 
 
 // https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API
@@ -1266,7 +1268,7 @@ __webpack_require__.d(__webpack_exports__, {
   "AH": () => (/* binding */ normalizePath)
 });
 
-// UNUSED EXPORTS: basename, dumpVfsCache, exists, existsSync, initializeVfs, isVfsInitialized, mkdir, mkdirSync, readFile, readFileSync, readdirSync, rm, rmSync, rmdir, rmdirSync, statSync, unlink, unlinkSync, watch, writeFile, writeFileSync
+// UNUSED EXPORTS: basename, dumpVfsCache, exists, existsSync, initializeVfs, isVfsInitialized, mkdir, mkdirSync, readFile, readFileSync, readdirSync, rename, renameSync, rm, rmSync, rmdir, rmdirSync, statSync, unlink, unlinkSync, watch, writeFile, writeFileSync
 
 // EXTERNAL MODULE: ../common/dom.js
 var dom = __webpack_require__(706);
@@ -1279,7 +1281,9 @@ var events = __webpack_require__(287);
 // EXTERNAL MODULE: ./src/modules/path.js
 var modules_path = __webpack_require__(878);
 ;// CONCATENATED MODULE: ./src/modules/fsEntry.js
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 
 
 class VfsEntry {
@@ -2115,7 +2119,8 @@ function removeFileOrDirectory(path, options) {
   if (stat.isFile()) {
     removeFromVfsCache(path);
     removeIndexedDbKey(path);
-    inotify(path, "rename");
+    /* Disable inotify for renameSync shenanigans */
+    if (!options.disableInotify || options.disableInotify === false) inotify(path, "rename");
   } else {
     if (options.recursive === true) {
       for (let vfsObject in cache.data) {
@@ -2208,6 +2213,56 @@ function rmdirSync(path, options) {
     recursive: options.recursive,
     force: false
   });
+}
+
+/**
+ * Renames a file within the VFS.
+ * Requires absolute paths to be passed.
+ * @param {string} oldPath - Old absolute path
+ * @param {string} newPath - New absolute path
+ */
+function renameSync(oldPath, newPath) {
+  if (!existsSync(oldPath)) throw getVfsErrorObject({
+    path: oldPath,
+    dest: newPath,
+    error: "ENOENT",
+    syscall: "rename"
+  });
+
+  /* TODO: We can only process files at the moment */
+  if (!isFile(oldPath)) throw getVfsErrorObject({
+    path: newPath,
+    error: "EPERM",
+    syscall: "rename"
+  });
+  let oldContent = readFileSync(oldPath);
+
+  /* Perform writeFileSync and removeFileOrDirectory with inotify disabled. */
+  /* Otherwise, BetterDiscord will try to process the file multiple times.   */
+  writeFileSync(newPath, oldContent, {
+    _disableInotify: true
+  });
+  removeFileOrDirectory(oldPath, {
+    recursive: false,
+    force: false,
+    disableInotify: true
+  });
+  inotify(newPath, "rename");
+}
+
+/**
+ * Asynchronously renames a file within the VFS.
+ * @param {string} oldPath - Old absolute path
+ * @param {string} newPath - New absolute path
+ * @param {function} callback - Callback function
+ */
+function rename(oldPath, newPath, callback) {
+  try {
+    renameSync(oldPath, newPath);
+    callback();
+  } catch (e) {
+    callback(e);
+  }
 }
 
 /**
@@ -2320,7 +2375,9 @@ function writeFileSync(path, content, options) {
   });
   writeOrUpdateMemoryCache(path, objFile);
   writeOrUpdateIndexedDbKey(path, objFile);
-  inotify(path, "change");
+
+  /* Disable inotify for renameSync shenanigans */
+  if (!options._disableInotify || options._disableInotify === false) inotify(path, "change");
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2472,6 +2529,8 @@ const fs = {
   readFileSync,
   readdirSync,
   realpathSync: normalizePath,
+  rename,
+  renameSync,
   rm,
   rmSync,
   rmdir,
