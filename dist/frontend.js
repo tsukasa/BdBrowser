@@ -503,12 +503,14 @@ class Filters {
    */
   static byStrings(...strings) {
     return module => {
+      if (!(module !== null && module !== void 0 && module.toString) || typeof (module === null || module === void 0 ? void 0 : module.toString) !== "function") return; // Not stringable
       let moduleString = "";
       try {
-        moduleString = module.toString([]);
+        moduleString = module === null || module === void 0 ? void 0 : module.toString([]);
       } catch (err) {
-        moduleString = module.toString();
+        moduleString = module === null || module === void 0 ? void 0 : module.toString();
       }
+      if (!moduleString) return false; // Could not create string
       for (const s of strings) {
         if (!moduleString.includes(s)) return false;
       }
@@ -540,6 +542,18 @@ class Filters {
   }
 }
 const hasThrown = new WeakSet();
+const wrapFilter = filter => (exports, module, moduleId) => {
+  try {
+    var _exports$default, _exports$default2, _exports$default3;
+    if (exports !== null && exports !== void 0 && (_exports$default = exports.default) !== null && _exports$default !== void 0 && _exports$default.getToken || exports !== null && exports !== void 0 && (_exports$default2 = exports.default) !== null && _exports$default2 !== void 0 && _exports$default2.getEmail || exports !== null && exports !== void 0 && (_exports$default3 = exports.default) !== null && _exports$default3 !== void 0 && _exports$default3.showToken) return false;
+    if (exports.getToken || exports.getEmail || exports.showToken) return false;
+    return filter(exports, module, moduleId);
+  } catch (err) {
+    if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
+    hasThrown.add(filter);
+    return false;
+  }
+};
 class WebpackModules {
   static find(filter, first = true) {
     return this.getModule(filter, {
@@ -564,60 +578,52 @@ class WebpackModules {
    * @param {object} [options] Set of options to customize the search
    * @param {Boolean} [options.first=true] Whether to return only the first matching module
    * @param {Boolean} [options.defaultExport=true] Whether to return default export when matching the default export
+   * @param {Boolean} [options.searchExports=false] Whether to execute the filter on webpack export getters.
    * @return {Any}
    */
   static getModule(filter, options = {}) {
     const {
       first = true,
-      defaultExport = true
+      defaultExport = true,
+      searchExports = false
     } = options;
-    const wrappedFilter = (exports, module, moduleId) => {
-      try {
-        var _exports$default, _exports$default2, _exports$default3;
-        if (exports !== null && exports !== void 0 && (_exports$default = exports.default) !== null && _exports$default !== void 0 && _exports$default.getToken || exports !== null && exports !== void 0 && (_exports$default2 = exports.default) !== null && _exports$default2 !== void 0 && _exports$default2.getEmail || exports !== null && exports !== void 0 && (_exports$default3 = exports.default) !== null && _exports$default3 !== void 0 && _exports$default3.showToken) return false;
-        if (exports.getToken || exports.getEmail || exports.showToken) return false;
-        return filter(exports, module, moduleId);
-      } catch (err) {
-        if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
-        hasThrown.add(filter);
-        return false;
-      }
-    };
+    const wrappedFilter = wrapFilter(filter);
     const modules = this.getAllModules();
     const rm = [];
     const indices = Object.keys(modules);
     for (let i = 0; i < indices.length; i++) {
       const index = indices[i];
       if (!modules.hasOwnProperty(index)) continue;
-      const module = modules[index];
+      let module = null;
+      try {
+        module = modules[index];
+      } catch {
+        continue;
+      }
+      ;
       const {
         exports
       } = module;
-      if (exports === window) continue;
-      let foundModule = null;
-      if (typeof exports === "object") {
-        const wrappers = Object.getOwnPropertyDescriptors(exports);
-        const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
-        if (getters.length) {
-          for (const getter of getters) {
-            const wrappedExport = exports[getter];
-            if (!wrappedExport) continue;
-            if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default, module, index)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
-            if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
-            if (!foundModule) continue;
-            if (first) return foundModule;
-            rm.push(foundModule);
+      if (!exports || exports === window || exports === document.documentElement) continue;
+      if (typeof exports === "object" && searchExports && exports[Symbol.toStringTag] !== "DOMTokenList") {
+        for (const key in exports) {
+          let foundModule = null,
+            wrappedExport = null;
+          try {
+            wrappedExport = exports[key];
+          } catch {
+            continue;
           }
-        } else {
-          if (!exports) continue;
-          if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
-          if (wrappedFilter(exports, module, index)) foundModule = exports;
+          if (!wrappedExport) continue;
+          if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
           if (!foundModule) continue;
           if (first) return foundModule;
           rm.push(foundModule);
         }
       } else {
-        if (!exports) continue;
+        let foundModule = null;
+        if (exports.Z && wrappedFilter(exports.Z, module, index)) foundModule = defaultExport ? exports.Z : exports;
+        if (exports.ZP && wrappedFilter(exports.ZP, module, index)) foundModule = defaultExport ? exports.ZP : exports;
         if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
         if (wrappedFilter(exports, module, index)) foundModule = exports;
         if (!foundModule) continue;
@@ -630,11 +636,12 @@ class WebpackModules {
 
   /**
    * Finds multiple modules using multiple filters.
-   *
+   * 
    * @param {...object} queries Whether to return only the first matching module
    * @param {Function} queries.filter A function to use to filter modules
    * @param {Boolean} [queries.first=true] Whether to return only the first matching module
    * @param {Boolean} [queries.defaultExport=true] Whether to return default export when matching the default export
+   * @param {Boolean} [queries.searchExports=false] Whether to execute the filter on webpack export getters.
    * @return {Any}
    */
   static getBulk(...queries) {
@@ -648,47 +655,32 @@ class WebpackModules {
       const {
         exports
       } = module;
-      if (!exports) continue;
+      if (!exports || exports === window || exports === document.documentElement) continue;
       for (let q = 0; q < queries.length; q++) {
         const query = queries[q];
         const {
           filter,
           first = true,
-          defaultExport = true
+          defaultExport = true,
+          searchExports = false
         } = query;
         if (first && returnedModules[q]) continue; // If they only want the first, and we already found it, move on
         if (!first && !returnedModules[q]) returnedModules[q] = []; // If they want multiple and we haven't setup the subarry, do it now
 
-        const wrappedFilter = (ex, mod, moduleId) => {
-          try {
-            return filter(ex, mod, moduleId);
-          } catch (err) {
-            if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getBulk", "Module filter threw an exception.", filter, err);
-            hasThrown.add(filter);
-            return false;
-          }
-        };
-        let foundModule = null;
-        if (typeof exports === "object") {
-          const wrappers = Object.getOwnPropertyDescriptors(exports);
-          const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
-          if (getters.length) {
-            for (const getter of getters) {
-              const wrappedExport = exports[getter];
-              if (!wrappedExport) continue;
-              if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default, module, index)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
-              if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
-              if (!foundModule) continue;
-              if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
-            }
-          } else {
-            if (!exports) continue;
-            if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
-            if (wrappedFilter(exports, module, index)) foundModule = exports;
+        const wrappedFilter = wrapFilter(filter);
+        if (typeof exports === "object" && searchExports) {
+          for (const key in exports) {
+            let foundModule = null;
+            const wrappedExport = exports[key];
+            if (!wrappedExport) continue;
+            if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;
             if (!foundModule) continue;
             if (first) returnedModules[q] = foundModule;else returnedModules[q].push(foundModule);
           }
         } else {
+          let foundModule = null;
+          if (exports.Z && wrappedFilter(exports.Z, module, index)) foundModule = defaultExport ? exports.Z : exports;
+          if (exports.ZP && wrappedFilter(exports.ZP, module, index)) foundModule = defaultExport ? exports.ZP : exports;
           if (exports.__esModule && exports.default && wrappedFilter(exports.default, module, index)) foundModule = defaultExport ? exports.default : exports;
           if (wrappedFilter(exports, module, index)) foundModule = exports;
           if (!foundModule) continue;
@@ -796,43 +788,36 @@ class WebpackModules {
    * @param {object} [options] Set of options to customize the search
    * @param {AbortSignal} [options.signal] AbortSignal of an AbortController to cancel the promise
    * @param {Boolean} [options.defaultExport=true] Whether to return default export when matching the default export
+   * @param {Boolean} [options.searchExports=false] Whether to execute the filter on webpack export getters.
    * @returns {Promise<any>}
    */
   static getLazy(filter, options = {}) {
-    /** @type {AbortSignal} */
-    const abortSignal = options.signal;
-    const defaultExport = options.defaultExport ?? true;
-    const fromCache = this.getModule(filter);
+    const {
+      signal: abortSignal,
+      defaultExport = true,
+      searchExports = false
+    } = options;
+    const fromCache = this.getModule(filter, {
+      defaultExport,
+      searchExports
+    });
     if (fromCache) return Promise.resolve(fromCache);
-    const wrappedFilter = exports => {
-      try {
-        return filter(exports);
-      } catch (err) {
-        if (!hasThrown.has(filter)) logger/* default.warn */.Z.warn("WebpackModules~getModule", "Module filter threw an exception.", filter, err);
-        hasThrown.add(filter);
-        return false;
-      }
-    };
+    const wrappedFilter = wrapFilter(filter);
     return new Promise(resolve => {
       const cancel = () => this.removeListener(listener);
       const listener = function (exports) {
-        if (!exports) return;
+        if (!exports || exports === window || exports === document.documentElement) return;
         let foundModule = null;
-        if (typeof exports === "object") {
-          const wrappers = Object.getOwnPropertyDescriptors(exports);
-          const getters = Object.keys(wrappers).filter(k => wrappers[k].get);
-          if (getters.length) {
-            for (const getter of getters) {
-              const wrappedExport = exports[getter];
-              if (!wrappedExport) continue;
-              if (wrappedExport.__esModule && wrappedExport.default && wrappedFilter(wrappedExport.default)) foundModule = defaultExport ? wrappedExport.default : wrappedExport;
-              if (wrappedFilter(wrappedExport)) foundModule = wrappedExport;
-            }
-          } else {
-            if (exports.__esModule && exports.default && wrappedFilter(exports.default)) foundModule = defaultExport ? exports.default : exports;
-            if (wrappedFilter(exports)) foundModule = exports;
+        if (typeof exports === "object" && searchExports) {
+          for (const key in exports) {
+            foundModule = null;
+            const wrappedExport = exports[key];
+            if (!wrappedExport) continue;
+            if (wrappedFilter(wrappedExport)) foundModule = wrappedExport;
           }
         } else {
+          if (exports.Z && wrappedFilter(exports.Z)) foundModule = defaultExport ? exports.Z : exports;
+          if (exports.ZP && wrappedFilter(exports.ZP)) foundModule = defaultExport ? exports.ZP : exports;
           if (exports.__esModule && exports.default && wrappedFilter(exports.default)) foundModule = defaultExport ? exports.default : exports;
           if (wrappedFilter(exports)) foundModule = exports;
         }
