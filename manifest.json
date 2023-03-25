@@ -1,6 +1,6 @@
 {
     "name": "BDBrowser",
-    "version": "1.8.5.20230309",
+    "version": "1.9.0.20230325",
     "description": "Allows you to use BetterDiscord on the web client. Some plugins might not be working correctly.",
     "homepage_url": "https://github.com/tsukasa/BdBrowser",
     "icons": {
