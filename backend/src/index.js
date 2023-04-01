@@ -74,6 +74,26 @@ function registerEvents() {
         ipcMain.reply(event, chrome.runtime.getURL(data.url));
     });
 
+    ipcMain.on(IPCEvents.GET_EXTENSION_OPTIONS, (event) => {
+        chrome.storage.sync.get(
+            {
+                disableBdRenderer: false,
+                deleteBdRendererOnReload: false
+            },
+            (options) => {
+                ipcMain.reply(event, options);
+            }
+        );
+    });
+
+    ipcMain.on(IPCEvents.SET_EXTENSION_OPTIONS, (event, data) => {
+        chrome.storage.sync.set(
+            data,
+            () => {
+                Logger.log("Backend", "Saved extension options:", data);
+            });
+    });
+
     ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
         DOM.injectCSS(data.id, data.css);
     });

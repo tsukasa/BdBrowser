@@ -6,6 +6,8 @@ var __webpack_exports__ = {};
 const IPCEvents = {
   GET_MANIFEST_INFO: "bdbrowser-get-extension-manifest",
   GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl",
+  GET_EXTENSION_OPTIONS: "bdbrowser-get-extension-options",
+  SET_EXTENSION_OPTIONS: "bdbrowser-set-extension-options",
   INJECT_CSS: "bdbrowser-inject-css",
   INJECT_THEME: "bdbrowser-inject-theme",
   MAKE_REQUESTS: "bdbrowser-make-requests"
@@ -243,6 +245,19 @@ function registerEvents() {
   });
   ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
     ipcMain.reply(event, chrome.runtime.getURL(data.url));
+  });
+  ipcMain.on(IPCEvents.GET_EXTENSION_OPTIONS, event => {
+    chrome.storage.sync.get({
+      disableBdRenderer: false,
+      deleteBdRendererOnReload: false
+    }, options => {
+      ipcMain.reply(event, options);
+    });
+  });
+  ipcMain.on(IPCEvents.SET_EXTENSION_OPTIONS, (event, data) => {
+    chrome.storage.sync.set(data, () => {
+      Logger.log("Backend", "Saved extension options:", data);
+    });
   });
   ipcMain.on(IPCEvents.INJECT_CSS, (_, data) => {
     DOM.injectCSS(data.id, data.css);

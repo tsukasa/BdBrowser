@@ -11,6 +11,7 @@ import ipcRenderer from "./ipc";
 import process from "./process";
 import require from "./require";
 import runtimeInfo from "./runtimeInfo";
+import RuntimeOptions from "./runtimeOptions";
 
 let allowRequireOverride = false;
 let bdPreloadHasInitialized = false;
@@ -23,6 +24,8 @@ let requireFunc;
  * @returns {Promise<boolean>} - Success or failure
  */
 async function checkAndDownloadBetterDiscordAsar() {
+    await BdAsarUpdater.processForcedAsarRemoval();
+
     if (BdAsarUpdater.hasBetterDiscordAsarInVfs)
         return true;
 
@@ -89,6 +92,11 @@ async function loadBetterDiscord() {
     };
 
     runtimeInfo.addExtensionVersionInfo();
+
+    if (RuntimeOptions.getDisableBdRenderer()) {
+        Logger.log("Frontend", "BetterDiscord renderer disabled by user.");
+        return true;
+    }
 
     if (!DiscordModules.UserStore?.getCurrentUser()) {
         Logger.log("Frontend", "getCurrentUser failed, registering callback.");

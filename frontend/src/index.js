@@ -1,10 +1,13 @@
 import fs from "./modules/fs";
 import startup from "./modules/startup";
+import RuntimeOptions from "./modules/runtimeOptions"
 
 import "./modules/patches";
 
 (async () => {
     startup.prepareWindow();
+
+    await RuntimeOptions.initializeOptions();
 
     if (!await fs.openDatabase())
         throw new Error("BdBrowser Error: IndexedDB VFS database connection could not be established!");

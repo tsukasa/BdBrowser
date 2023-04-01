@@ -11,6 +11,8 @@
 const IPCEvents = {
   GET_MANIFEST_INFO: "bdbrowser-get-extension-manifest",
   GET_RESOURCE_URL: "bdbrowser-get-extension-resourceurl",
+  GET_EXTENSION_OPTIONS: "bdbrowser-get-extension-options",
+  SET_EXTENSION_OPTIONS: "bdbrowser-set-extension-options",
   INJECT_CSS: "bdbrowser-inject-css",
   INJECT_THEME: "bdbrowser-inject-theme",
   MAKE_REQUESTS: "bdbrowser-make-requests"
@@ -253,9 +255,11 @@ class PathError extends Error {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Z": () => (/* binding */ BdAsarUpdater)
 /* harmony export */ });
-/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(602);
+/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(602);
 /* harmony import */ var _fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(409);
 /* harmony import */ var _request__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
+/* harmony import */ var _runtimeOptions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(663);
+
 
 
 
@@ -289,6 +293,19 @@ class BdAsarUpdater {
   }
 
   /**
+   * Deletes the BetterDiscord asar from the VFS if set
+   * in the extension options.
+   */
+  static async processForcedAsarRemoval() {
+    if (_runtimeOptions__WEBPACK_IMPORTED_MODULE_2__/* ["default"].getDeleteBdRendererOnReload */ .Z.getDeleteBdRendererOnReload() && _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].existsSync */ .ZP.existsSync(BD_ASAR_PATH)) {
+      _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].unlinkSync */ .ZP.unlinkSync(BD_ASAR_PATH);
+      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].log */ .Z.log(LOGGER_SECTION, "BetterDiscord asar file removal from VFS complete.");
+    }
+    _runtimeOptions__WEBPACK_IMPORTED_MODULE_2__/* ["default"].setDeleteBdRendererOnReload */ .Z.setDeleteBdRendererOnReload(false);
+    await _runtimeOptions__WEBPACK_IMPORTED_MODULE_2__/* ["default"].saveOptions */ .Z.saveOptions();
+  }
+
+  /**
    * Returns a Buffer containing the contents of the asar file.
    * If the file is not present in the VFS, a ENOENT exception is thrown.
    * @returns {*|Buffer}
@@ -303,7 +320,7 @@ class BdAsarUpdater {
    * @returns {Promise<{hasUpdate: boolean, data: any, remoteVersion: *}>}
    */
   static async getCurrentBdVersionInfo() {
-    common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(LOGGER_SECTION, "Checking for latest BetterDiscord version...");
+    common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].log */ .Z.log(LOGGER_SECTION, "Checking for latest BetterDiscord version...");
     const resp = await fetch("https://api.github.com/repos/BetterDiscord/BetterDiscord/releases/latest", {
       method: "GET",
       headers: {
@@ -315,7 +332,7 @@ class BdAsarUpdater {
     const data = await resp.json();
     const remoteVersion = data["tag_name"].startsWith("v") ? data["tag_name"].slice(1) : data["tag_name"];
     const hasUpdate = remoteVersion > this.getLocalBetterDiscordAsarVersion();
-    common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(LOGGER_SECTION, `Latest stable BetterDiscord version is ${remoteVersion}.`);
+    common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].log */ .Z.log(LOGGER_SECTION, `Latest stable BetterDiscord version is ${remoteVersion}.`);
     return {
       data,
       remoteVersion,
@@ -332,7 +349,7 @@ class BdAsarUpdater {
   static async downloadBetterDiscordAsar(updateInfo, remoteVersion) {
     try {
       const asar = updateInfo.assets.find(a => a.name === "betterdiscord.asar");
-      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].log */ .Z.log(LOGGER_SECTION, `Downloading BetterDiscord v${remoteVersion} into VFS...`);
+      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].log */ .Z.log(LOGGER_SECTION, `Downloading BetterDiscord v${remoteVersion} into VFS...`);
       const startTime = performance.now();
       const buff = await new Promise((resolve, reject) => (0,_request__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z)(asar.url, {
         headers: {
@@ -344,15 +361,15 @@ class BdAsarUpdater {
         if (err || resp.statusCode !== 200) return reject(err || `${resp.statusCode} ${resp.statusMessage}`);
         return resolve(body);
       }));
-      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].info */ .Z.info(LOGGER_SECTION, "Download complete, saving into VFS...");
+      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].info */ .Z.info(LOGGER_SECTION, "Download complete, saving into VFS...");
       _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].writeFileSync */ .ZP.writeFileSync(BD_ASAR_PATH, buff);
-      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].info */ .Z.info(LOGGER_SECTION, `Persisting version information in: ${BD_ASAR_VERSION_PATH}`);
+      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].info */ .Z.info(LOGGER_SECTION, `Persisting version information in: ${BD_ASAR_VERSION_PATH}`);
       this.setLocalBetterDiscordAsarVersion(remoteVersion);
       const endTime = performance.now();
-      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].info */ .Z.info(LOGGER_SECTION, `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);
+      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].info */ .Z.info(LOGGER_SECTION, `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);
       return true;
     } catch (err) {
-      common_logger__WEBPACK_IMPORTED_MODULE_2__/* ["default"].error */ .Z.error(LOGGER_SECTION, "Failed to download BetterDiscord", err);
+      common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].error */ .Z.error(LOGGER_SECTION, "Failed to download BetterDiscord", err);
       return false;
     }
   }
@@ -3375,6 +3392,46 @@ function setBdLoadedFromAsar(isLoadedFromAsar) {
 
 /***/ }),
 
+/***/ 663:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* binding */ RuntimeOptions)
+/* harmony export */ });
+/* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(523);
+/* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(65);
+
+
+let extensionOptions = {};
+class RuntimeOptions {
+  static async initializeOptions() {
+    extensionOptions = await _ipc__WEBPACK_IMPORTED_MODULE_0__/* ["default"].sendAwait */ .Z.sendAwait(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.GET_EXTENSION_OPTIONS */ .A.GET_EXTENSION_OPTIONS);
+  }
+  static getOption(optionName) {
+    return extensionOptions[optionName];
+  }
+  static setOption(optionName, optionValue) {
+    extensionOptions[optionName] = optionValue;
+  }
+  static getDisableBdRenderer() {
+    return this.getOption("disableBdRenderer");
+  }
+  static setDisableBdRenderer(value) {
+    this.setOption("disableBdRenderer", value);
+  }
+  static getDeleteBdRendererOnReload() {
+    return this.getOption("deleteBdRendererOnReload");
+  }
+  static setDeleteBdRendererOnReload(value) {
+    this.setOption("deleteBdRendererOnReload", value);
+  }
+  static async saveOptions() {
+    _ipc__WEBPACK_IMPORTED_MODULE_0__/* ["default"].send */ .Z.send(common_constants__WEBPACK_IMPORTED_MODULE_1__/* .IPCEvents.SET_EXTENSION_OPTIONS */ .A.SET_EXTENSION_OPTIONS, extensionOptions);
+  }
+}
+
+/***/ }),
+
 /***/ 678:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -3382,7 +3439,7 @@ function setBdLoadedFromAsar(isLoadedFromAsar) {
 /* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var common_constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(65);
-/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(602);
+/* harmony import */ var common_logger__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(602);
 /* harmony import */ var _asar__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(315);
 /* harmony import */ var _bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(883);
 /* harmony import */ var _bdPreload__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(958);
@@ -3394,6 +3451,8 @@ function setBdLoadedFromAsar(isLoadedFromAsar) {
 /* harmony import */ var _process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
 /* harmony import */ var _require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(950);
 /* harmony import */ var _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(994);
+/* harmony import */ var _runtimeOptions__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(663);
+
 
 
 
@@ -3418,11 +3477,12 @@ let requireFunc;
  * @returns {Promise<boolean>} - Success or failure
  */
 async function checkAndDownloadBetterDiscordAsar() {
+  await _bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__/* ["default"].processForcedAsarRemoval */ .Z.processForcedAsarRemoval();
   if (_bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__/* ["default"].hasBetterDiscordAsarInVfs */ .Z.hasBetterDiscordAsarInVfs) return true;
-  common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "No BetterDiscord asar present in VFS, will try to download a copy...");
+  common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].log */ .Z.log("Frontend", "No BetterDiscord asar present in VFS, will try to download a copy...");
   const versionCheckData = await _bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__/* ["default"].getCurrentBdVersionInfo */ .Z.getCurrentBdVersionInfo();
   const updateWasSuccess = await _bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__/* ["default"].downloadBetterDiscordAsar */ .Z.downloadBetterDiscordAsar(versionCheckData.data, versionCheckData.remoteVersion);
-  common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].info */ .Z.info("Frontend", `Asar update reports ${updateWasSuccess ? "success" : "failure"}.`);
+  common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].info */ .Z.info("Frontend", `Asar update reports ${updateWasSuccess ? "success" : "failure"}.`);
   return updateWasSuccess;
 }
 
@@ -3440,11 +3500,11 @@ async function getBdRendererScript() {
     url: localRendererUrl
   });
   if (!localRendererResp) {
-    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].info */ .Z.info("Frontend", "Reading renderer.js from betterdiscord.asar...");
+    common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].info */ .Z.info("Frontend", "Reading renderer.js from betterdiscord.asar...");
     bdBody = new _asar__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z(_bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__/* ["default"].asarFile.buffer */ .Z.asarFile.buffer).get("renderer.js");
     _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdLoadedFromAsar */ .ZP.setBdLoadedFromAsar(true);
   } else {
-    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].info */ .Z.info("Frontend", "Reading betterdiscord.js from local extension folder...");
+    common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].info */ .Z.info("Frontend", "Reading betterdiscord.js from local extension folder...");
     bdBody = localRendererResp.body;
     _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdLoadedFromAsar */ .ZP.setBdLoadedFromAsar(false);
   }
@@ -3466,20 +3526,24 @@ async function loadBetterDiscord() {
   const callback = async () => {
     _discordmodules__WEBPACK_IMPORTED_MODULE_5__/* ["default"].Dispatcher.unsubscribe */ .Z.Dispatcher.unsubscribe(connectionOpenEvent, callback);
     try {
-      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
+      common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].log */ .Z.log("Frontend", "Loading BetterDiscord renderer...");
       eval(`(() => {
                     ${bdScriptBody}
                 })(window.fetchWithoutCSP)`);
     } catch (error) {
-      common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
+      common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].error */ .Z.error("Frontend", "Failed to load BetterDiscord:\n", error);
     }
   };
   _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].addExtensionVersionInfo */ .ZP.addExtensionVersionInfo();
+  if (_runtimeOptions__WEBPACK_IMPORTED_MODULE_12__/* ["default"].getDisableBdRenderer */ .Z.getDisableBdRenderer()) {
+    common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].log */ .Z.log("Frontend", "BetterDiscord renderer disabled by user.");
+    return true;
+  }
   if (!((_DiscordModules$UserS = _discordmodules__WEBPACK_IMPORTED_MODULE_5__/* ["default"].UserStore */ .Z.UserStore) !== null && _DiscordModules$UserS !== void 0 && _DiscordModules$UserS.getCurrentUser())) {
-    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
+    common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser failed, registering callback.");
     _discordmodules__WEBPACK_IMPORTED_MODULE_5__/* ["default"].Dispatcher.subscribe */ .Z.Dispatcher.subscribe(connectionOpenEvent, callback);
   } else {
-    common_logger__WEBPACK_IMPORTED_MODULE_12__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
+    common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].log */ .Z.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
     setImmediate(callback);
   }
   return true;
@@ -3592,12 +3656,15 @@ var __webpack_exports__ = {};
 (() => {
 /* harmony import */ var _modules_fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(409);
 /* harmony import */ var _modules_startup__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(678);
-/* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(580);
+/* harmony import */ var _modules_runtimeOptions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(663);
+/* harmony import */ var _modules_patches__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(580);
+
 
 
 
 (async () => {
   _modules_startup__WEBPACK_IMPORTED_MODULE_1__/* ["default"].prepareWindow */ .Z.prepareWindow();
+  await _modules_runtimeOptions__WEBPACK_IMPORTED_MODULE_2__/* ["default"].initializeOptions */ .Z.initializeOptions();
   if (!(await _modules_fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].openDatabase */ .ZP.openDatabase())) throw new Error("BdBrowser Error: IndexedDB VFS database connection could not be established!");
   if (!(await _modules_fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].initializeVfs */ .ZP.initializeVfs())) throw new Error("BdBrowser Error: IndexedDB VFS could not be initialized!");
   if (!(await _modules_startup__WEBPACK_IMPORTED_MODULE_1__/* ["default"].checkAndDownloadBetterDiscordAsar */ .Z.checkAndDownloadBetterDiscordAsar())) throw new Error("BdBrowser Error: Downloading betterdiscord.asar or writing into VFS failed!");

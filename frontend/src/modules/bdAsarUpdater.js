@@ -1,6 +1,7 @@
 import Logger from "common/logger";
 import fs from "./fs";
 import request from "./request";
+import RuntimeOptions from "./runtimeOptions";
 
 const BD_ASAR_VERSION_PATH = "AppData/BetterDiscord/data/bd-asar-version.txt";
 const BD_ASAR_PATH = "AppData/BetterDiscord/data/betterdiscord.asar";
@@ -33,6 +34,20 @@ export default class BdAsarUpdater {
      */
     static get hasBetterDiscordAsarInVfs() {
         return fs.existsSync(BD_ASAR_PATH);
+    }
+
+    /**
+     * Deletes the BetterDiscord asar from the VFS if set
+     * in the extension options.
+     */
+    static async processForcedAsarRemoval() {
+        if(RuntimeOptions.getDeleteBdRendererOnReload() && fs.existsSync(BD_ASAR_PATH)) {
+            fs.unlinkSync(BD_ASAR_PATH);
+            Logger.log(LOGGER_SECTION, "BetterDiscord asar file removal from VFS complete.");
+        }
+
+        RuntimeOptions.setDeleteBdRendererOnReload(false);
+        await RuntimeOptions.saveOptions();
     }
 
     /**

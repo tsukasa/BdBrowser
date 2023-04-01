@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BDBrowser Extension Options</title>
+    <link rel="stylesheet" href="https://unpkg.com/dracula-ui@1.0.6/styles/dracula-ui.css"/>
+</head>
+<body class="drac-bg-black">
+    <div class="drac-box drac-p-sm">
+        <p>
+            <input type="checkbox" name="disableBdRenderer" id="disableBdRenderer" class="drac-switch drac-checkbox drac-switch-purple" checked=""/>
+            <label for="disableBdRenderer" class="drac-text drac-text-white">Disable BetterDiscord Renderer</label>
+        </p>
+        <p>
+            <span class="drac-text drac-text-xs drac-line-height drac-text-white">
+                Do not load the BetterDiscord renderer when the extension starts.
+                The VFS is still getting initialized, allowing you to perform tasks.
+            </span>
+        </p>
+    </div>
+    <div class="drac-box drac-p-sm">
+        <p>
+            <input type="checkbox" name="deleteBdRendererOnReload" id="deleteBdRendererOnReload" class="drac-switch drac-checkbox drac-switch-purple" checked=""/>
+            <label for="deleteBdRendererOnReload" class="drac-text drac-text-white">Delete Renderer from VFS on Reload</label>
+        </p>
+        <p>
+            <span class="drac-text drac-text-xs drac-line-height drac-text-white">
+                When checked, the BetterDiscord renderer will be deleted from the VFS when a Discord tab is reloaded.
+            </span>
+        </p>
+    </div>
+    <script src="options.js"></script>
+</body>
+</html>
