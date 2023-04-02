@@ -8,6 +8,13 @@ export const IPCEvents = {
     MAKE_REQUESTS: "bdbrowser-make-requests"
 }
 
+export const FilePaths = {
+    BD_ASAR_PATH: "AppData/BetterDiscord/data/betterdiscord.asar",
+    BD_ASAR_VERSION_PATH: "AppData/BetterDiscord/data/bd-asar-version.txt",
+    BD_CONFIG_PLUGINS: "AppData/BetterDiscord/data/&1/plugins.json"
+}
+
 export default {
-    IPCEvents
+    IPCEvents,
+    FilePaths
 }

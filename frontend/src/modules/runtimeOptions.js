@@ -1,5 +1,11 @@
-import ipcRenderer from "./ipc";
+import Logger from "common/logger";
+import {FilePaths} from "common/constants";
 import {IPCEvents} from "common/constants";
+import {app} from "./discordnative";
+import fs from "./fs";
+import ipcRenderer from "./ipc";
+
+const LOGGER_SECTION = "RuntimeOptions";
 
 let extensionOptions = {};
 
@@ -16,23 +22,52 @@ export default class RuntimeOptions {
         extensionOptions[optionName] = optionValue;
     }
 
-    static getDisableBdRenderer() {
-        return this.getOption("disableBdRenderer");
-    }
-
-    static setDisableBdRenderer(value) {
-        this.setOption("disableBdRenderer", value);
-    }
-
-    static getDeleteBdRendererOnReload() {
-        return this.getOption("deleteBdRendererOnReload");
-    }
-
-    static setDeleteBdRendererOnReload(value) {
-        this.setOption("deleteBdRendererOnReload", value);
-    }
-
     static async saveOptions() {
         ipcRenderer.send(IPCEvents.SET_EXTENSION_OPTIONS, extensionOptions);
+    }
+
+    static get shouldStartBetterDiscordRenderer() {
+        return this.getOption("disableBdRenderer") !== true;
+    }
+
+    /**
+     * Checks if the BetterDiscord asar file exists in the VFS and deletes it if it does.
+     * Setting is controlled by the "deleteBdRendererOnReload" option.
+     * @returns {Promise<void>}
+     */
+    static async checkAndPerformBetterDiscordAsarRemoval() {
+        if(this.getOption("deleteBdRendererOnReload") && fs.existsSync(FilePaths.BD_ASAR_PATH)) {
+            fs.unlinkSync(FilePaths.BD_ASAR_PATH);
+            Logger.log(LOGGER_SECTION, "Forced BetterDiscord asar file removal from VFS complete.");
+        }
+
+        this.setOption("deleteBdRendererOnReload", false);
+        await this.saveOptions();
+    }
+
+    /**
+     * Disables all BetterDiscord plugins by setting their value to false in the plugins.json file.
+     * @returns {Promise<void>}
+     */
+    static async disableAllBetterDiscordPlugins() {
+        if (!this.getOption("disableBdPluginsOnReload"))
+            return;
+
+        const pluginConfigPath = FilePaths.BD_CONFIG_PLUGINS.replace("&1", app.getReleaseChannel());
+
+        if (!fs.existsSync(pluginConfigPath))
+            return;
+
+        const rawFileData = fs.readFileSync(pluginConfigPath);
+        let plugins = JSON.parse(new TextDecoder().decode(rawFileData));
+
+        for (let plugin in plugins) {
+            plugins[plugin] = false;
+        }
+
+        fs.writeFileSync(pluginConfigPath, JSON.stringify(plugins, null, 4));
+
+        this.setOption("disableBdPluginsOnReload", false);
+        await this.saveOptions();
     }
 }

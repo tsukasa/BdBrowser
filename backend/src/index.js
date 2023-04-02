@@ -78,6 +78,7 @@ function registerEvents() {
         chrome.storage.sync.get(
             {
                 disableBdRenderer: false,
+                disableBdPluginsOnReload: false,
                 deleteBdRendererOnReload: false
             },
             (options) => {

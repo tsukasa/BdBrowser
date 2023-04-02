@@ -24,7 +24,7 @@ let requireFunc;
  * @returns {Promise<boolean>} - Success or failure
  */
 async function checkAndDownloadBetterDiscordAsar() {
-    await BdAsarUpdater.processForcedAsarRemoval();
+    await RuntimeOptions.checkAndPerformBetterDiscordAsarRemoval();
 
     if (BdAsarUpdater.hasBetterDiscordAsarInVfs)
         return true;
@@ -93,7 +93,10 @@ async function loadBetterDiscord() {
 
     runtimeInfo.addExtensionVersionInfo();
 
-    if (RuntimeOptions.getDisableBdRenderer()) {
+    // Disable all plugins if the user has requested it.
+    await RuntimeOptions.disableAllBetterDiscordPlugins();
+
+    if (!RuntimeOptions.shouldStartBetterDiscordRenderer) {
         Logger.log("Frontend", "BetterDiscord renderer disabled by user.");
         return true;
     }

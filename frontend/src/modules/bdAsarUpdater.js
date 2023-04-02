@@ -1,10 +1,8 @@
 import Logger from "common/logger";
 import fs from "./fs";
 import request from "./request";
-import RuntimeOptions from "./runtimeOptions";
+import {FilePaths} from "common/constants";
 
-const BD_ASAR_VERSION_PATH = "AppData/BetterDiscord/data/bd-asar-version.txt";
-const BD_ASAR_PATH = "AppData/BetterDiscord/data/betterdiscord.asar";
 const USER_AGENT = "BdBrowser Updater";
 const LOGGER_SECTION = "AsarUpdater";
 
@@ -14,8 +12,8 @@ export default class BdAsarUpdater {
      * @returns {string} - Version number or `0.0.0` if no value is set yet.
      */
     static getLocalBetterDiscordAsarVersion() {
-        if(fs.existsSync(BD_ASAR_VERSION_PATH))
-            return fs.readFileSync(BD_ASAR_VERSION_PATH).toString();
+        if(fs.existsSync(FilePaths.BD_ASAR_VERSION_PATH))
+            return fs.readFileSync(FilePaths.BD_ASAR_VERSION_PATH).toString();
         else
             return "0.0.0";
     }
@@ -25,7 +23,7 @@ export default class BdAsarUpdater {
      * @param {string} versionString
      */
     static setLocalBetterDiscordAsarVersion(versionString) {
-        fs.writeFileSync(BD_ASAR_VERSION_PATH, versionString);
+        fs.writeFileSync(FilePaths.BD_ASAR_VERSION_PATH, versionString);
     }
 
     /**
@@ -33,21 +31,7 @@ export default class BdAsarUpdater {
      * @returns {boolean}
      */
     static get hasBetterDiscordAsarInVfs() {
-        return fs.existsSync(BD_ASAR_PATH);
-    }
-
-    /**
-     * Deletes the BetterDiscord asar from the VFS if set
-     * in the extension options.
-     */
-    static async processForcedAsarRemoval() {
-        if(RuntimeOptions.getDeleteBdRendererOnReload() && fs.existsSync(BD_ASAR_PATH)) {
-            fs.unlinkSync(BD_ASAR_PATH);
-            Logger.log(LOGGER_SECTION, "BetterDiscord asar file removal from VFS complete.");
-        }
-
-        RuntimeOptions.setDeleteBdRendererOnReload(false);
-        await RuntimeOptions.saveOptions();
+        return fs.existsSync(FilePaths.BD_ASAR_PATH);
     }
 
     /**
@@ -57,9 +41,9 @@ export default class BdAsarUpdater {
      */
     static get asarFile() {
         if(this.hasBetterDiscordAsarInVfs)
-            return fs.readFileSync(BD_ASAR_PATH);
+            return fs.readFileSync(FilePaths.BD_ASAR_PATH);
         else
-            return fs.statSync(BD_ASAR_PATH);
+            return fs.statSync(FilePaths.BD_ASAR_PATH);
     }
 
     /**
@@ -119,9 +103,9 @@ export default class BdAsarUpdater {
             );
 
             Logger.info(LOGGER_SECTION, "Download complete, saving into VFS...");
-            fs.writeFileSync(BD_ASAR_PATH, buff);
+            fs.writeFileSync(FilePaths.BD_ASAR_PATH, buff);
 
-            Logger.info(LOGGER_SECTION, `Persisting version information in: ${BD_ASAR_VERSION_PATH}`);
+            Logger.info(LOGGER_SECTION, `Persisting version information in: ${FilePaths.BD_ASAR_VERSION_PATH}`);
             this.setLocalBetterDiscordAsarVersion(remoteVersion);
 
             const endTime = performance.now();

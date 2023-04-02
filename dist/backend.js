@@ -12,8 +12,14 @@ const IPCEvents = {
   INJECT_THEME: "bdbrowser-inject-theme",
   MAKE_REQUESTS: "bdbrowser-make-requests"
 };
+const FilePaths = {
+  BD_ASAR_PATH: "AppData/BetterDiscord/data/betterdiscord.asar",
+  BD_ASAR_VERSION_PATH: "AppData/BetterDiscord/data/bd-asar-version.txt",
+  BD_CONFIG_PLUGINS: "AppData/BetterDiscord/data/&1/plugins.json"
+};
 /* harmony default export */ const constants = ({
-  IPCEvents
+  IPCEvents,
+  FilePaths
 });
 ;// CONCATENATED MODULE: ../common/dom.js
 class DOM {
@@ -249,6 +255,7 @@ function registerEvents() {
   ipcMain.on(IPCEvents.GET_EXTENSION_OPTIONS, event => {
     chrome.storage.sync.get({
       disableBdRenderer: false,
+      disableBdPluginsOnReload: false,
       deleteBdRendererOnReload: false
     }, options => {
       ipcMain.reply(event, options);
