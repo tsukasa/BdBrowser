@@ -112,16 +112,12 @@ function CreateBackup() {
 
     Push-Location -Path:$Path
 
-    foreach($item in Get-ChildItem -Path:$Path -Recurse -Depth 9 -Exclude "emotes.asar") {
+    foreach($item in Get-ChildItem -Path:$Path -Recurse -Depth 99 -Exclude "emotes.asar") {
         $itemPathRelative = (Resolve-Path -Path $item -Relative).TrimStart('\', '.')
         $itemPathParent   = ""
         $itemPath         = (Join-Path -Path "AppData/BetterDiscord" -ChildPath $itemPathRelative).Replace('\', '/')
 
-        if($item.Directory) {
-            $itemPathParent = (Resolve-Path -Path (Split-Path $item -Parent) -Relative).TrimStart('\', '.')
-        }
-
-        $itemPathParent = (Join-Path -Path "AppData/BetterDiscord" -ChildPath $itemPathParent).TrimEnd('\').Replace('\', '/')
+        $itemPathParent = [System.IO.Path]::GetDirectoryName($itemPath).TrimEnd('\').Replace('\', '/')
 
         if($item -is [System.IO.DirectoryInfo]) {
             $pathContents[$itemPath] = @{
