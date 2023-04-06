@@ -17,6 +17,7 @@ BdBrowser is a Chrome extension that loads [BetterDiscord](https://github.com/Be
   - [Updating BetterDiscord](#updating-betterdiscord)
   - [Updating BdBrowser](#updating-bdbrowser)
   - [Uninstalling BdBrowser](#uninstalling-bdbrowser)
+  - [Extension Options](#extension-options)
   - [Backing up the Virtual Filesystem](#backing-up-the-virtual-filesystem)
   - [Restoring from a Backup](#restoring-from-a-backup)
   - [Formatting the Virtual Filesystem](#formatting-the-virtual-filesystem)
@@ -180,6 +181,51 @@ To uninstall BdBrowser, simply remove the extension as you would with every othe
 Chrome extension.
 
 The data stored within the virtual filesystem will be kept.
+
+&nbsp;
+
+### Extension Options
+BdBrowser has a few extension options that you can access either by right-clicking the
+extension icon in your toolbar or the <kbd>Details</kbd> button on Chrome's extensions page.
+
+&nbsp;
+
+**Do not load BetterDiscord Renderer**
+
+When loading a Discord tab while the option is active, BdBrowser will initialize
+the virtual filesystem but not inject BetterDiscord's renderer into the active page.
+
+This is useful if you are stuck in a reload loop or experience crashes due to a
+BetterDiscord or plugin failure and want to diagnose, backup, or import data in
+the virtual filesystem.
+
+&nbsp;
+
+**Disable all Plugins on Reload**
+
+On the next load of a Discord tab, BetterDiscord's plugin.json will be altered by
+BdBrowser to disable all BetterDiscord plugins before injecting BetterDiscord's
+renderer.
+
+This option automatically turns itself off again after it was used.
+
+&nbsp;
+
+**Delete Asar from VFS on Reload**
+
+Automatically deletes the `betterdiscord.asar` file from the virtual filesystem on
+the next load of a Discord tab. Doing so will prompt BdBrowser's asar updater to
+download a fresh copy of BetterDiscord's latest asar file from BetterDiscord's GitHub
+releases.
+
+Using this option is tantamount to re-installing BetterDiscord on a regular desktop
+client and is sometimes the only option to fix crashes caused by incompatibilities
+between BetterDiscord's renderer and the Discord web application.
+
+User data like plugins, themes, or settings are unaffected by this option and stay
+untouched.
+
+This option automatically turns itself off again after it was used.
 
 &nbsp;
 
