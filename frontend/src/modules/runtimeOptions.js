@@ -53,7 +53,7 @@ export default class RuntimeOptions {
         if (!this.getOption("disableBdPluginsOnReload"))
             return;
 
-        const pluginConfigPath = FilePaths.BD_CONFIG_PLUGINS.replace("&1", app.getReleaseChannel());
+        const pluginConfigPath = FilePaths.BD_CONFIG_PLUGINS_PATH.replace("&1", app.getReleaseChannel());
 
         if (!fs.existsSync(pluginConfigPath))
             return;

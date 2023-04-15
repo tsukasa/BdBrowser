@@ -34,7 +34,7 @@ export function request(url, options, callback) {
             Object.defineProperty(res, "statusCode", { value: data.status });
             Object.defineProperty(res, "statusText", { value: data.statusText });
             Object.defineProperty(res, "type", { value: data.type });
-            Object.defineProperty(res, "url", { value: "" });
+            Object.defineProperty(res, "url", { value: data.url });
             emitter.emit("end", res);
         })
         .catch(error => {

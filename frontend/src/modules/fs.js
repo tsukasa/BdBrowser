@@ -263,7 +263,7 @@ function hasBdBrowserFiles() {
  */
 function hasBeenMigrated() {
     let wasMigrated = LocalStorage.getItem(BD_FILES_MIGRATED_KEY);
-    return (wasMigrated === true);
+    return wasMigrated === true;
 }
 
 /**

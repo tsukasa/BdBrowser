@@ -1,7 +1,7 @@
 {
-    "name": "BDBrowser",
-    "version": "1.9.1.20230402",
-    "description": "Allows you to use BetterDiscord on the web client. Some plugins might not be working correctly.",
+    "name": "__MSG_extName__",
+    "version": "1.9.1.20230415",
+    "description": "__MSG_extDesc__",
     "homepage_url": "https://github.com/tsukasa/BdBrowser",
     "icons": {
         "16": "assets/chrome/logo.png",
@@ -9,6 +9,7 @@
         "128": "assets/chrome/logo.png"
     },
     "manifest_version": 3,
+    "default_locale": "en",
     "permissions": [
         "declarativeNetRequestWithHostAccess",
         "storage"
@@ -37,6 +38,7 @@
     "web_accessible_resources": [{
         "resources": [
             "assets/spinner.webm",
+            "dist/betterdiscord.asar",
             "dist/betterdiscord.js",
             "dist/frontend.js",
             "dist/preload.js"

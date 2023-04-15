@@ -1,0 +1,23 @@
+{
+  "extName": {
+    "message": "BDBrowser"
+  },
+  "extDesc": {
+    "message": "Allows you to use BetterDiscord on the web client. Some plugins might not be working correctly."
+  },
+  "titlePersistentOptions": {
+    "message": "Persistent Options"
+  },
+  "titleResetOnReloadOptions": {
+    "message": "Reset on Reload Options"
+  },
+  "disableBdRenderer": {
+    "message": "Do not load BetterDiscord Renderer"
+  },
+  "disableBdPluginsOnReload": {
+    "message": "Disable all Plugins on Reload"
+  },
+  "deleteBdRendererOnReload": {
+    "message": "Delete Asar from VFS on Reload"
+  }
+}

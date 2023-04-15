@@ -43,27 +43,65 @@ async function checkAndDownloadBetterDiscordAsar() {
  * @returns {Promise<string>} scriptBody - A string containing the BetterDiscord renderer source to eval.
  */
 async function getBdRendererScript() {
-    let bdBody;
 
-    const localRendererUrl = await ipcRenderer.sendAwait(IPCEvents.GET_RESOURCE_URL, {url: "dist/betterdiscord.js"});
-
-    const localRendererResp = await ipcRenderer.sendAwait(IPCEvents.MAKE_REQUESTS, {url: localRendererUrl});
-
-    if (!localRendererResp) {
-        Logger.info("Frontend", "Reading renderer.js from betterdiscord.asar...");
-        bdBody = new Asar(BdAsarUpdater.asarFile.buffer).get("renderer.js");
-        runtimeInfo.setBdLoadedFromAsar(true);
-    } else {
-        Logger.info("Frontend", "Reading betterdiscord.js from local extension folder...");
-        bdBody = localRendererResp.body;
-        runtimeInfo.setBdLoadedFromAsar(false);
+    /**
+     * Attempts to get the contents of a web_accessible_resource of the extension.
+     * @param url
+     * @returns {Promise<undefined|ArrayBuffer>}
+     */
+    const tryGetLocalFile = async (url) => {
+        const localRendererUrl = await ipcRenderer.sendAwait(IPCEvents.GET_RESOURCE_URL, {url: url});
+        return await ipcRenderer.sendAwait(IPCEvents.MAKE_REQUESTS, {url: localRendererUrl});
     }
 
-    const scriptBody = new TextDecoder().decode(bdBody);
+    /**
+     * Tries to load the betterdiscord.js from the ./dist folder.
+     * @returns {Promise<undefined|ArrayBuffer>}
+     */
+    const tryGetLocalBetterDiscordJs = async () => {
+        const localFileContents = await tryGetLocalFile("dist/betterdiscord.js");
+        if(!localFileContents)
+            return;
 
-    runtimeInfo.parseBetterDiscordVersion(scriptBody);
+        Logger.info("Frontend", "Reading betterdiscord.js from local extension folder...");
+        runtimeInfo.setBdRendererSource("betterdiscord.js", true);
+        return localFileContents.body;
+    }
 
-    return scriptBody;
+    /**
+     * Tries to load the betterdiscord.asar from the ./dist folder.
+     * @returns {Promise<undefined|ArrayBuffer>}
+     */
+    const tryGetLocalBetterDiscordAsar = async () => {
+        const localFileContents = await tryGetLocalFile("dist/betterdiscord.asar");
+        if(!localFileContents)
+            return;
+
+        Logger.info("Frontend", "Reading betterdiscord.asar from local extension folder...");
+        runtimeInfo.setBdRendererSource("betterdiscord.asar", true);
+        return new Asar(localFileContents.body).get("renderer.js");
+    }
+
+    /**
+     * Tries to load the betterdiscord.asar from the VFS.
+     * @returns {undefined|ArrayBuffer}
+     */
+    const tryGetVfsBetterDiscordAsar = () => {
+        Logger.info("Frontend", "Reading betterdiscord.asar in the VFS...");
+        runtimeInfo.setBdRendererSource("betterdiscord.asar", false);
+        return new Asar(BdAsarUpdater.asarFile.buffer).get("renderer.js");
+    }
+
+    /**
+     * Gets the BetterDiscord renderer script body.
+     * @returns {Promise<undefined|ArrayBuffer>}
+     */
+    const getRenderer = async () => {
+        return await tryGetLocalBetterDiscordJs() || await tryGetLocalBetterDiscordAsar() || tryGetVfsBetterDiscordAsar();
+    }
+
+    const bdBodyBuffer = await getRenderer();
+    return new TextDecoder().decode(bdBodyBuffer);
 }
 
 /**
@@ -78,6 +116,8 @@ async function loadBetterDiscord() {
 
     if(!bdScriptBody)
         return false;
+
+    runtimeInfo.parseBetterDiscordVersion(bdScriptBody);
 
     const callback = async () => {
         DiscordModules.Dispatcher.unsubscribe(connectionOpenEvent, callback);

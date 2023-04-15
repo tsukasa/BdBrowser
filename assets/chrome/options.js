@@ -30,7 +30,37 @@ const restoreOptions = () => {
     );
 };
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('disableBdRenderer').addEventListener('change', saveOptions);
-document.getElementById('disableBdPluginsOnReload').addEventListener('change', saveOptions);
-document.getElementById('deleteBdRendererOnReload').addEventListener('change', saveOptions);
+/**
+ * Loads the i18n messages for the options page.
+ * The i18n messages are loaded from the _locales folder.
+ */
+const loadI18n = () => {
+    let elements = document.querySelectorAll("[i18n]");
+
+    elements.forEach(element => {
+        const i18nElement = element.getAttribute("i18n");
+        const i18nMessage = chrome.i18n.getMessage(i18nElement);
+
+        if (i18nMessage) {
+            element.innerText = i18nMessage;
+        }
+    });
+}
+
+/**
+ * Operations to perform once options page has loaded.
+ */
+const onContentLoaded = () => {
+    loadI18n();
+    restoreOptions();
+}
+
+const initialize = () => {
+    document.addEventListener("DOMContentLoaded", onContentLoaded);
+
+    document.getElementById("disableBdRenderer").addEventListener("change", saveOptions);
+    document.getElementById("disableBdPluginsOnReload").addEventListener("change", saveOptions);
+    document.getElementById("deleteBdRendererOnReload").addEventListener("change", saveOptions);
+}
+
+initialize();

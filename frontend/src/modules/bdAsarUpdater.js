@@ -11,7 +11,7 @@ export default class BdAsarUpdater {
      * Gets the version of BetterDiscord's asar according to the version file in the VFS.
      * @returns {string} - Version number or `0.0.0` if no value is set yet.
      */
-    static getLocalBetterDiscordAsarVersion() {
+    static getVfsBetterDiscordAsarVersion() {
         if(fs.existsSync(FilePaths.BD_ASAR_VERSION_PATH))
             return fs.readFileSync(FilePaths.BD_ASAR_VERSION_PATH).toString();
         else
@@ -65,7 +65,7 @@ export default class BdAsarUpdater {
 
         const data = await resp.json();
         const remoteVersion = data["tag_name"].startsWith("v") ? data["tag_name"].slice(1) : data["tag_name"];
-        const hasUpdate = remoteVersion > this.getLocalBetterDiscordAsarVersion();
+        const hasUpdate = remoteVersion > this.getVfsBetterDiscordAsarVersion();
 
         Logger.log(LOGGER_SECTION, `Latest stable BetterDiscord version is ${remoteVersion}.`);
 

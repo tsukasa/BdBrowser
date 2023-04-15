@@ -13,7 +13,12 @@ export default {
         deleteDirectory: fs.rmdirSync,
         exists: fs.existsSync,
         getRealPath: fs.realpathSync,
-        rename: () => {},
+        rename: fs.renameSync,
+        renameSync: fs.renameSync,
+        rm: fs.rmSync,
+        rmSync: fs.rmSync,
+        unlinkSync: fs.unlinkSync,
+        createWriteStream: () => {},
         watch: fs.watch,
         getStats: fs.statSync
     },

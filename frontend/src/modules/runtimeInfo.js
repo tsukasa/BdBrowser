@@ -9,12 +9,13 @@ let activeVersionObserver;
 
 (async () => {
     const manifestInfo = await ipcRenderer.sendAwait(IPCEvents.GET_MANIFEST_INFO);
-    const bdVersion = BdAsarUpdater.getLocalBetterDiscordAsarVersion();
+    const bdVersion = BdAsarUpdater.getVfsBetterDiscordAsarVersion();
 
     runtimeInfo = {
         manifest: manifestInfo,
         bdVersion: bdVersion,
-        hasLoadedBdFromAsar: true
+        rendererSourceName: "Unknown",
+        isLocalFile: false
     };
 })();
 
@@ -55,7 +56,7 @@ export function addExtensionVersionInfo() {
         const bdbRendererInfo = addInfoSpanElement(
             idSpanRenderer,
             getFormattedBdRendererSourceString(),
-            [(runtimeInfo.hasLoadedBdFromAsar ? "" : "color: var(--text-warning);")]
+            [(runtimeInfo.isLocalFile ? "color: var(--text-warning);" : "")]
         );
         bdbVersionInfo.after(bdbRendererInfo);
     });
@@ -75,11 +76,9 @@ export function addExtensionVersionInfo() {
  */
 export function getFormattedBdRendererSourceString() {
     const version = (runtimeInfo.bdVersion === UNKNOWN_VERSION) ? UNKNOWN_VERSION : "v" + runtimeInfo.bdVersion;
+    const hostFs = runtimeInfo.isLocalFile ? "local" : "VFS";
 
-    if (runtimeInfo.hasLoadedBdFromAsar)
-        return `betterdiscord.asar (${version}, VFS)`;
-    else
-        return `betterdiscord.js (${version}, local)`;
+    return `${runtimeInfo.rendererSourceName} (${version}, ${hostFs})`;
 }
 
 /**
@@ -115,10 +114,12 @@ export function parseBetterDiscordVersion(bdBodyScript) {
 
 /**
  * Sets whether the BetterDiscord renderer has been loaded from an asar file within the VFS.
- * @param {boolean} isLoadedFromAsar
+ * @param {String} sourceName
+ * @param {Boolean} isLocalFile
  */
-export function setBdLoadedFromAsar(isLoadedFromAsar) {
-    runtimeInfo.hasLoadedBdFromAsar = isLoadedFromAsar;
+export function setBdRendererSource(sourceName, isLocalFile) {
+    runtimeInfo.rendererSourceName = sourceName;
+    runtimeInfo.isLocalFile = isLocalFile;
 }
 
 export default {
@@ -126,5 +127,5 @@ export default {
     getFormattedBdRendererSourceString,
     getRuntimeInfo,
     parseBetterDiscordVersion,
-    setBdLoadedFromAsar
+    setBdRendererSource
 }

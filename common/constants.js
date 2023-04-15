@@ -11,7 +11,7 @@ export const IPCEvents = {
 export const FilePaths = {
     BD_ASAR_PATH: "AppData/BetterDiscord/data/betterdiscord.asar",
     BD_ASAR_VERSION_PATH: "AppData/BetterDiscord/data/bd-asar-version.txt",
-    BD_CONFIG_PLUGINS: "AppData/BetterDiscord/data/&1/plugins.json"
+    BD_CONFIG_PLUGINS_PATH: "AppData/BetterDiscord/data/&1/plugins.json"
 }
 
 export default {
