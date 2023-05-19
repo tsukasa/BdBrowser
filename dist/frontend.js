@@ -285,7 +285,7 @@ class BdAsarUpdater {
    * Sets the version of BetterDiscord's asar in the version file within the VFS.
    * @param {string} versionString
    */
-  static setLocalBetterDiscordAsarVersion(versionString) {
+  static setVfsBetterDiscordAsarVersion(versionString) {
     _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].writeFileSync */ .ZP.writeFileSync(common_constants__WEBPACK_IMPORTED_MODULE_2__/* .FilePaths.BD_ASAR_VERSION_PATH */ .F_.BD_ASAR_VERSION_PATH, versionString);
   }
 
@@ -356,7 +356,7 @@ class BdAsarUpdater {
       common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].info */ .Z.info(LOGGER_SECTION, "Download complete, saving into VFS...");
       _fs__WEBPACK_IMPORTED_MODULE_0__/* ["default"].writeFileSync */ .ZP.writeFileSync(common_constants__WEBPACK_IMPORTED_MODULE_2__/* .FilePaths.BD_ASAR_PATH */ .F_.BD_ASAR_PATH, buff);
       common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].info */ .Z.info(LOGGER_SECTION, `Persisting version information in: ${common_constants__WEBPACK_IMPORTED_MODULE_2__/* .FilePaths.BD_ASAR_VERSION_PATH */ .F_.BD_ASAR_VERSION_PATH}`);
-      this.setLocalBetterDiscordAsarVersion(remoteVersion);
+      this.setVfsBetterDiscordAsarVersion(remoteVersion);
       const endTime = performance.now();
       common_logger__WEBPACK_IMPORTED_MODULE_3__/* ["default"].info */ .Z.info(LOGGER_SECTION, `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);
       return true;
@@ -3297,7 +3297,7 @@ let activeVersionObserver;
     manifest: manifestInfo,
     bdVersion: bdVersion,
     rendererSourceName: "Unknown",
-    isLocalFile: false
+    isVfsFile: false
   };
 })();
 
@@ -3325,7 +3325,7 @@ function addExtensionVersionInfo() {
     };
     const bdbVersionInfo = addInfoSpanElement(idSpanVersion, `${runtimeInfo.manifest.name} ${runtimeInfo.manifest.version}`);
     discordBuildInfo.after(bdbVersionInfo);
-    const bdbRendererInfo = addInfoSpanElement(idSpanRenderer, getFormattedBdRendererSourceString(), [runtimeInfo.isLocalFile ? "color: var(--text-warning);" : ""]);
+    const bdbRendererInfo = addInfoSpanElement(idSpanRenderer, getFormattedBdRendererSourceString(), [runtimeInfo.isVfsFile ? "" : "color: var(--text-warning);"]);
     bdbVersionInfo.after(bdbRendererInfo);
   });
   if (!activeVersionObserver) {
@@ -3343,7 +3343,7 @@ function addExtensionVersionInfo() {
  */
 function getFormattedBdRendererSourceString() {
   const version = runtimeInfo.bdVersion === UNKNOWN_VERSION ? UNKNOWN_VERSION : "v" + runtimeInfo.bdVersion;
-  const hostFs = runtimeInfo.isLocalFile ? "local" : "VFS";
+  const hostFs = runtimeInfo.isVfsFile ? "VFS" : "local";
   return `${runtimeInfo.rendererSourceName} (${version}, ${hostFs})`;
 }
 
@@ -3371,17 +3371,17 @@ function parseBetterDiscordVersion(bdBodyScript) {
   // If we are dealing with an asar file, we should also update the
   // version file in the VFS, so people can easily filter their
   // backups.
-  if (runtimeInfo.hasLoadedBdFromAsar) _bdAsarUpdater__WEBPACK_IMPORTED_MODULE_1__/* ["default"].setLocalBetterDiscordAsarVersion */ .Z.setLocalBetterDiscordAsarVersion(versionString);
+  if (runtimeInfo.rendererSourceName === "betterdiscord.asar" && runtimeInfo.isVfsFile) _bdAsarUpdater__WEBPACK_IMPORTED_MODULE_1__/* ["default"].setVfsBetterDiscordAsarVersion */ .Z.setVfsBetterDiscordAsarVersion(versionString);
 }
 
 /**
  * Sets whether the BetterDiscord renderer has been loaded from an asar file within the VFS.
  * @param {String} sourceName
- * @param {Boolean} isLocalFile
+ * @param {Boolean} isVfsFile
  */
-function setBdRendererSource(sourceName, isLocalFile) {
+function setBdRendererSource(sourceName, isVfsFile) {
   runtimeInfo.rendererSourceName = sourceName;
-  runtimeInfo.isLocalFile = isLocalFile;
+  runtimeInfo.isVfsFile = isVfsFile;
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   addExtensionVersionInfo,
@@ -3546,7 +3546,7 @@ async function getBdRendererScript() {
     const localFileContents = await tryGetLocalFile("dist/betterdiscord.js");
     if (!localFileContents) return;
     common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].info */ .Z.info("Frontend", "Reading betterdiscord.js from local extension folder...");
-    _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdRendererSource */ .ZP.setBdRendererSource("betterdiscord.js", true);
+    _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdRendererSource */ .ZP.setBdRendererSource("betterdiscord.js", false);
     return localFileContents.body;
   };
 
@@ -3558,7 +3558,7 @@ async function getBdRendererScript() {
     const localFileContents = await tryGetLocalFile("dist/betterdiscord.asar");
     if (!localFileContents) return;
     common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].info */ .Z.info("Frontend", "Reading betterdiscord.asar from local extension folder...");
-    _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdRendererSource */ .ZP.setBdRendererSource("betterdiscord.asar", true);
+    _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdRendererSource */ .ZP.setBdRendererSource("betterdiscord.asar", false);
     return new _asar__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z(localFileContents.body).get("renderer.js");
   };
 
@@ -3568,7 +3568,7 @@ async function getBdRendererScript() {
    */
   const tryGetVfsBetterDiscordAsar = () => {
     common_logger__WEBPACK_IMPORTED_MODULE_13__/* ["default"].info */ .Z.info("Frontend", "Reading betterdiscord.asar in the VFS...");
-    _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdRendererSource */ .ZP.setBdRendererSource("betterdiscord.asar", false);
+    _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__/* ["default"].setBdRendererSource */ .ZP.setBdRendererSource("betterdiscord.asar", true);
     return new _asar__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z(_bdAsarUpdater__WEBPACK_IMPORTED_MODULE_2__/* ["default"].asarFile.buffer */ .Z.asarFile.buffer).get("renderer.js");
   };
 

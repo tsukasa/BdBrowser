@@ -22,7 +22,7 @@ export default class BdAsarUpdater {
      * Sets the version of BetterDiscord's asar in the version file within the VFS.
      * @param {string} versionString
      */
-    static setLocalBetterDiscordAsarVersion(versionString) {
+    static setVfsBetterDiscordAsarVersion(versionString) {
         fs.writeFileSync(FilePaths.BD_ASAR_VERSION_PATH, versionString);
     }
 
@@ -106,7 +106,7 @@ export default class BdAsarUpdater {
             fs.writeFileSync(FilePaths.BD_ASAR_PATH, buff);
 
             Logger.info(LOGGER_SECTION, `Persisting version information in: ${FilePaths.BD_ASAR_VERSION_PATH}`);
-            this.setLocalBetterDiscordAsarVersion(remoteVersion);
+            this.setVfsBetterDiscordAsarVersion(remoteVersion);
 
             const endTime = performance.now();
             Logger.info(LOGGER_SECTION, `betterdiscord.asar installed, took ${(endTime - startTime).toFixed(2)}ms.`);

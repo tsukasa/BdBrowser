@@ -15,7 +15,7 @@ let activeVersionObserver;
         manifest: manifestInfo,
         bdVersion: bdVersion,
         rendererSourceName: "Unknown",
-        isLocalFile: false
+        isVfsFile: false
     };
 })();
 
@@ -56,7 +56,7 @@ export function addExtensionVersionInfo() {
         const bdbRendererInfo = addInfoSpanElement(
             idSpanRenderer,
             getFormattedBdRendererSourceString(),
-            [(runtimeInfo.isLocalFile ? "color: var(--text-warning);" : "")]
+            [(runtimeInfo.isVfsFile ? "" : "color: var(--text-warning);")]
         );
         bdbVersionInfo.after(bdbRendererInfo);
     });
@@ -76,7 +76,7 @@ export function addExtensionVersionInfo() {
  */
 export function getFormattedBdRendererSourceString() {
     const version = (runtimeInfo.bdVersion === UNKNOWN_VERSION) ? UNKNOWN_VERSION : "v" + runtimeInfo.bdVersion;
-    const hostFs = runtimeInfo.isLocalFile ? "local" : "VFS";
+    const hostFs = runtimeInfo.isVfsFile ? "VFS" : "local";
 
     return `${runtimeInfo.rendererSourceName} (${version}, ${hostFs})`;
 }
@@ -108,18 +108,18 @@ export function parseBetterDiscordVersion(bdBodyScript) {
     // If we are dealing with an asar file, we should also update the
     // version file in the VFS, so people can easily filter their
     // backups.
-    if (runtimeInfo.hasLoadedBdFromAsar)
-        BdAsarUpdater.setLocalBetterDiscordAsarVersion(versionString);
+    if (runtimeInfo.rendererSourceName === "betterdiscord.asar" && runtimeInfo.isVfsFile)
+        BdAsarUpdater.setVfsBetterDiscordAsarVersion(versionString);
 }
 
 /**
  * Sets whether the BetterDiscord renderer has been loaded from an asar file within the VFS.
  * @param {String} sourceName
- * @param {Boolean} isLocalFile
+ * @param {Boolean} isVfsFile
  */
-export function setBdRendererSource(sourceName, isLocalFile) {
+export function setBdRendererSource(sourceName, isVfsFile) {
     runtimeInfo.rendererSourceName = sourceName;
-    runtimeInfo.isLocalFile = isLocalFile;
+    runtimeInfo.isVfsFile = isVfsFile;
 }
 
 export default {

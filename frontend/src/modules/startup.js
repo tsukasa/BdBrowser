@@ -64,7 +64,7 @@ async function getBdRendererScript() {
             return;
 
         Logger.info("Frontend", "Reading betterdiscord.js from local extension folder...");
-        runtimeInfo.setBdRendererSource("betterdiscord.js", true);
+        runtimeInfo.setBdRendererSource("betterdiscord.js", false);
         return localFileContents.body;
     }
 
@@ -78,7 +78,7 @@ async function getBdRendererScript() {
             return;
 
         Logger.info("Frontend", "Reading betterdiscord.asar from local extension folder...");
-        runtimeInfo.setBdRendererSource("betterdiscord.asar", true);
+        runtimeInfo.setBdRendererSource("betterdiscord.asar", false);
         return new Asar(localFileContents.body).get("renderer.js");
     }
 
@@ -88,7 +88,7 @@ async function getBdRendererScript() {
      */
     const tryGetVfsBetterDiscordAsar = () => {
         Logger.info("Frontend", "Reading betterdiscord.asar in the VFS...");
-        runtimeInfo.setBdRendererSource("betterdiscord.asar", false);
+        runtimeInfo.setBdRendererSource("betterdiscord.asar", true);
         return new Asar(BdAsarUpdater.asarFile.buffer).get("renderer.js");
     }
 
