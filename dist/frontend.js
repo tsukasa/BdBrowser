@@ -3023,20 +3023,13 @@ Object.assign(request, Object.fromEntries(methods.concat(Object.keys(aliases)).m
 
 /***/ }),
 
-/***/ 950:
+/***/ 463:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
   "Z": () => (/* binding */ require_require)
-});
-
-// NAMESPACE OBJECT: ./src/modules/vm.js
-var vm_namespaceObject = {};
-__webpack_require__.r(vm_namespaceObject);
-__webpack_require__.d(vm_namespaceObject, {
-  "compileFunction": () => (compileFunction)
 });
 
 // EXTERNAL MODULE: ./src/modules/discordmodules.js + 1 modules
@@ -3201,16 +3194,8 @@ function populateMaps(extensionMap, typeMap) {
 });
 // EXTERNAL MODULE: ./src/modules/module.js
 var modules_module = __webpack_require__(301);
-;// CONCATENATED MODULE: ./src/modules/vm.js
-function compileFunction(code, args = []) {
-  return `((${args.join(", ")}) => {
-        try {
-            ${code}
-        } catch (e) {
-            console.error("Could not load:", e);
-        }
-    })`;
-}
+// EXTERNAL MODULE: ./src/modules/vm.js
+var vm = __webpack_require__(721);
 // EXTERNAL MODULE: ./src/modules/process.js
 var process = __webpack_require__(323);
 // EXTERNAL MODULE: ./src/modules/request.js
@@ -3260,7 +3245,7 @@ function require_require(mod) {
         }
       };
     case "vm":
-      return vm_namespaceObject;
+      return vm;
     default:
       return modules_module/* default._require */.Z._require(mod, require_require);
   }
@@ -3481,7 +3466,7 @@ class RuntimeOptions {
 /* harmony import */ var _fetch__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(551);
 /* harmony import */ var _ipc__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(523);
 /* harmony import */ var _process__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(323);
-/* harmony import */ var _require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(950);
+/* harmony import */ var _require__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(463);
 /* harmony import */ var _runtimeInfo__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(994);
 /* harmony import */ var _runtimeOptions__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(663);
 
@@ -3665,6 +3650,40 @@ function prepareWindow() {
   checkAndDownloadBetterDiscordAsar,
   loadBetterDiscord,
   prepareWindow
+});
+
+/***/ }),
+
+/***/ 721:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "compileFunction": () => (/* binding */ compileFunction),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/**
+ * Compiles a function from a string.
+ * @param code - The code to compile.
+ * @param args - The arguments to pass to the function.
+ * @returns function
+ */
+function compileFunction(code, args = []) {
+  return eval(`((${args.join(", ")}) => {
+        try {
+            ${code}
+        } catch (e) {
+            console.error("Could not load:", e);
+            return {
+                name: e.name,
+                message: e.message,
+                stack: e.stack
+            };
+        }
+    })`);
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  compileFunction
 });
 
 /***/ })
