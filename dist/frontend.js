@@ -3669,18 +3669,21 @@ __webpack_require__.r(__webpack_exports__);
  * @returns function
  */
 function compileFunction(code, args = []) {
-  return eval(`((${args.join(", ")}) => {
-        try {
-            ${code}
-        } catch (e) {
-            console.error("Could not load:", e);
-            return {
-                name: e.name,
-                message: e.message,
-                stack: e.stack
-            };
-        }
-    })`);
+  try {
+    return eval(`((${args.join(", ")}) => {
+            try {
+                ${code}
+            } catch (e) {
+                console.error("Could not load:", e);
+            }
+        })`);
+  } catch (err) {
+    return {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    };
+  }
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   compileFunction
