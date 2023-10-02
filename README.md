@@ -2,7 +2,7 @@
 
 BdBrowser is a Chrome extension that loads [BetterDiscord](https://github.com/BetterDiscord/BetterDiscord) in Discord's web client.
 
-![GitHub manifest version](https://img.shields.io/github/manifest-json/v/tsukasa/BdBrowser?style=for-the-badge)
+![GitHub manifest version](https://img.shields.io/github/manifest-json/v/tsukasa/BdBrowser?filename=assets%2Fchrome%2Fmanifest.json&style=for-the-badge)
 
 ## 🗺 Table of Contents
 
