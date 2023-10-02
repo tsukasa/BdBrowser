@@ -1,0 +1,50 @@
+{
+    "name": "__MSG_extName__",
+    "version": "1.9.3.20231002",
+    "description": "__MSG_extDesc__",
+    "homepage_url": "https://github.com/tsukasa/BdBrowser",
+    "icons": {
+        "16": "assets/chrome/logo.png",
+        "48": "assets/chrome/logo.png",
+        "128": "assets/chrome/logo.png"
+    },
+    "manifest_version": 3,
+    "default_locale": "en",
+    "permissions": [
+        "declarativeNetRequestWithHostAccess",
+        "storage"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "options_ui": {
+        "page": "assets/chrome/options.html",
+        "open_in_tab": false
+    },
+    "background": {
+        "service_worker": "js/service.js"
+    },
+    "content_scripts": [{
+        "matches": [
+            "*://discord.com/*",
+            "*://canary.discord.com/*",
+            "*://ptb.discord.com/*"
+        ],
+        "run_at": "document_start",
+        "js": [
+            "js/backend.js"
+        ]
+    }],
+    "web_accessible_resources": [{
+        "resources": [
+            "assets/spinner.webm",
+            "bd/betterdiscord.asar",
+            "bd/renderer.js",
+            "js/frontend.js",
+            "js/preload.js"
+        ],
+        "matches": [
+            "*://*.discord.com/*"
+        ]
+    }]
+}

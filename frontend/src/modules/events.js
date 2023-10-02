@@ -1,3 +1,5 @@
+import Logger from "common/logger";
+
 export default class Events {
 
     constructor() {
@@ -13,21 +15,22 @@ export default class Events {
     }
 
     emit(event, ...args) {
-        if (!this.eventListeners[event])
-            return;
+        if (!this.eventListeners[event]) return;
 
         this.eventListeners[event].forEach(listener => {
             try {
                 listener(...args);
-            } catch (error) {
-                console.error(`[BetterDiscord] Could not fire event [${event}] for ${listener.toString().slice(0, 20)}:`, error);
+            }
+            catch (error) {
+                Logger.error("Events", `Could not fire event [${event}] for ${listener.toString().slice(0, 20)}:`, error);
             }
         });
     }
 
     on(event, callback) {
-        if (!this.eventListeners[event])
+        if (!this.eventListeners[event]) {
             this.eventListeners[event] = new Set();
+        }
 
         this.eventListeners[event].add(callback);
     }
@@ -37,9 +40,7 @@ export default class Events {
     }
 
     removeListener(event, callback) {
-        if (!this.eventListeners[event])
-            return;
-
+        if (!this.eventListeners[event]) return;
         this.eventListeners[event].delete(callback);
     }
 

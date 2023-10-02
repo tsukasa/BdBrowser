@@ -1,0 +1,44 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: BdBrowser CI Build
+
+on:
+  push:
+    branches: [ "master" ]
+    tags: [ "**" ]
+
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source-code
+        uses: actions/checkout@v3
+
+      - name: Use pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.x
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build BdBrowser
+        run: pnpm run build-prod
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: bdbrowser-extension
+          path: dist/
+          retention-days: 30
+          if-no-files-found: error

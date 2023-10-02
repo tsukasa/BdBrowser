@@ -1,5 +1,6 @@
-import fs from "./fs";
-import {extname} from "./path";
+import fs from "node_shims/fs";
+import {extname} from "node_shims/path";
+import Logger from "common/logger";
 
 const globalPaths = [];
 const _extensions = {
@@ -8,7 +9,7 @@ const _extensions = {
         module.exports = JSON.parse(filecontent);
     },
     ".js": (module, filename) => {
-        console.log(module, filename)
+        Logger.warn("Module", module, filename);
     }
 };
 
@@ -16,25 +17,30 @@ function _require(path, req) {
     const extension = extname(path);
     const loader = _extensions[extension];
 
-    if (!loader)
-        throw new Error("Unkown file extension " + path);
+    if (!loader) {
+        throw new Error(`Unknown file extension ${path}`);
+    }
 
     const existsFile = fs.existsSync(path);
 
-    if (!path)
-        console.log(path);
+    if (!path) {
+        Logger.warn("Module", path);
+    }
 
-    if (!existsFile)
+    if (!existsFile) {
         throw new Error("Module not found!");
+    }
 
-    if (req.cache[path])
+    if (req.cache[path]) {
         return req.cache[path];
+    }
 
     const final = {
         exports: {},
         filename: path,
         _compile: content => {
-            let {module} = eval(`((module, global) => {
+            // eslint-disable-next-line no-eval
+            const {module} = eval(`((module, global) => {
                 ${content}
 
                 return {
@@ -42,8 +48,9 @@ function _require(path, req) {
                 };
             })({exports: {}}, window)`);
 
-            if (Object.keys(module.exports).length)
+            if (Object.keys(module.exports).length) {
                 final.exports = module.exports;
+            }
 
             return final.exports;
         }
@@ -55,4 +62,4 @@ function _require(path, req) {
 export default {
     Module: {globalPaths, _extensions},
     _require
-}
+};

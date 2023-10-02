@@ -2,7 +2,7 @@ import {IPCEvents} from "common/constants";
 import DOM from "common/dom";
 import IPC from "common/ipc";
 import Logger from "common/logger";
-import LoadingScreen from "./modules/loadingScreen";
+import LoadingScreen from "./modules/loadingscreen";
 
 /**
  * Initializes the "backend" side of BdBrowser.
@@ -15,27 +15,30 @@ function initialize() {
         registerEvents();
 
         Logger.log("Backend", "Initializing modules.");
-        injectFrontend(chrome.runtime.getURL("dist/frontend.js"));
-    }
+        injectFrontend(chrome.runtime.getURL("js/frontend.js"));
+    };
 
     const documentCompleteCallback = () => {
-        if (document.readyState !== "complete")
+        if (document.readyState !== "complete") {
             return;
+        }
 
         document.removeEventListener("readystatechange", documentCompleteCallback);
         doOnDocumentComplete();
-    }
+    };
 
     // Preload should fire as early as possible and is the reason for
     // running the backend during `document_start`.
     injectPreload();
 
-    if (document.readyState === "complete")
-        doOnDocumentComplete()
-    else
+    if (document.readyState === "complete") {
+        doOnDocumentComplete();
+    }
+    else {
         document.addEventListener("readystatechange", documentCompleteCallback);
+    }
 
-    LoadingScreen.ReplaceLoadingAnimation();
+    LoadingScreen.replaceLoadingAnimation();
 }
 
 /**
@@ -56,7 +59,7 @@ function injectPreload() {
     Logger.log("Backend", "Injecting preload.js into document to prepare environment...");
 
     const scriptElement = document.createElement("script");
-    scriptElement.src = chrome.runtime.getURL("dist/preload.js");
+    scriptElement.src = chrome.runtime.getURL("js/preload.js");
 
     (document.head || document.documentElement).appendChild(scriptElement);
 }
@@ -68,7 +71,7 @@ function registerEvents() {
 
     ipcMain.on(IPCEvents.GET_MANIFEST_INFO, (event) => {
         ipcMain.reply(event, chrome.runtime.getManifest());
-    })
+    });
 
     ipcMain.on(IPCEvents.GET_RESOURCE_URL, (event, data) => {
         ipcMain.reply(event, chrome.runtime.getURL(data.url));
@@ -107,13 +110,14 @@ function registerEvents() {
         // If the data is an object instead of a string, we probably
         // deal with a "request"-style request and have to re-order
         // the options.
-        if(data.url && typeof(data.url) === "object") {
+        if (data.url && typeof(data.url) === "object") {
             // Deep clone data.url into the options and remove the url
             data.options = JSON.parse(JSON.stringify(data.url));
             data.options.url = undefined;
 
-            if(data.url.url)
+            if (data.url.url) {
                 data.url = data.url.url;
+            }
         }
 
         chrome.runtime.sendMessage(
@@ -126,18 +130,20 @@ function registerEvents() {
             }, (response) => {
                 try {
                     if (response.error) {
-                        if(!data.url.startsWith(chrome.runtime.getURL("")))
+                        if (!data.url.startsWith(chrome.runtime.getURL(""))) {
+                            // eslint-disable-next-line no-console
                             console.error("BdBrowser Backend MAKE_REQUESTS failed:", data.url, response.error);
+                        }
                         ipcMain.reply(event, undefined);
                     }
-                    else
-                    {
+                    else {
                         // Response body comes in as a normal array, so requires
                         // another round of casting into Uint8Array for the buffer.
                         response.body = new Uint8Array(response.body).buffer;
                         ipcMain.reply(event, response);
                     }
-                } catch(error) {
+                }
+                catch (error) {
                     Logger.error("Backend", "MAKE_REQUESTS failed:", error, data.url, response);
                     ipcMain.reply(event, undefined);
                 }

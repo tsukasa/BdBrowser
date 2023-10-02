@@ -1,17 +1,16 @@
-import {IPCEvents} from "common/constants";
+import {FilePaths, IPCEvents} from "common/constants";
 import Logger from "common/logger";
-import {default as Asar} from "./asar";
-import BdAsarUpdater from "./bdAsarUpdater";
-import bdPreload from "./bdPreload";
-import Buffer from "./buffer"
-import DiscordModules from "./discordmodules";
-import DiscordNative from "./discordnative";
-import {default as fetchAPI} from "./fetch";
-import ipcRenderer from "./ipc";
-import process from "./process";
-import require from "./require";
-import runtimeInfo from "./runtimeInfo";
-import RuntimeOptions from "./runtimeOptions";
+import {default as Asar} from "modules/asar";
+import BdAsarUpdater from "modules/bdasarupdater";
+import bdPreload from "modules/bdpreload";
+import Buffer from "node_shims/buffer";
+import DiscordModules from "modules/discordmodules";
+import DiscordNative from "app_shims/discordnative";
+import ipcRenderer from "modules/ipc";
+import process from "app_shims/process";
+import require from "node_shims/require";
+import runtimeInfo from "modules/runtimeinfo";
+import RuntimeOptions from "modules/runtimeoptions";
 
 let allowRequireOverride = false;
 let bdPreloadHasInitialized = false;
@@ -26,8 +25,9 @@ let requireFunc;
 async function checkAndDownloadBetterDiscordAsar() {
     await RuntimeOptions.checkAndPerformBetterDiscordAsarRemoval();
 
-    if (BdAsarUpdater.hasBetterDiscordAsarInVfs)
+    if (BdAsarUpdater.hasBetterDiscordAsarInVfs) {
         return true;
+    }
 
     Logger.log("Frontend", "No BetterDiscord asar present in VFS, will try to download a copy...");
     const versionCheckData = await BdAsarUpdater.getCurrentBdVersionInfo();
@@ -52,35 +52,33 @@ async function getBdRendererScript() {
     const tryGetLocalFile = async (url) => {
         const localRendererUrl = await ipcRenderer.sendAwait(IPCEvents.GET_RESOURCE_URL, {url: url});
         return await ipcRenderer.sendAwait(IPCEvents.MAKE_REQUESTS, {url: localRendererUrl});
-    }
+    };
 
     /**
-     * Tries to load the betterdiscord.js from the ./dist folder.
+     * Tries to load the betterdiscord.js from the ./js folder.
      * @returns {Promise<undefined|ArrayBuffer>}
      */
     const tryGetLocalBetterDiscordJs = async () => {
-        const localFileContents = await tryGetLocalFile("dist/betterdiscord.js");
-        if(!localFileContents)
-            return;
+        const localFileContents = await tryGetLocalFile(FilePaths.LOCAL_BD_RENDERER_PATH);
+        if (!localFileContents) return;
 
-        Logger.info("Frontend", "Reading betterdiscord.js from local extension folder...");
-        runtimeInfo.setBdRendererSource("betterdiscord.js", false);
+        Logger.info("Frontend", "Reading renderer.js from local extension folder...");
+        runtimeInfo.setBdRendererSource("renderer.js", false);
         return localFileContents.body;
-    }
+    };
 
     /**
-     * Tries to load the betterdiscord.asar from the ./dist folder.
+     * Tries to load the betterdiscord.asar from the ./js folder.
      * @returns {Promise<undefined|ArrayBuffer>}
      */
     const tryGetLocalBetterDiscordAsar = async () => {
-        const localFileContents = await tryGetLocalFile("dist/betterdiscord.asar");
-        if(!localFileContents)
-            return;
+        const localFileContents = await tryGetLocalFile(FilePaths.LOCAL_BD_ASAR_PATH);
+        if (!localFileContents) return;
 
         Logger.info("Frontend", "Reading betterdiscord.asar from local extension folder...");
         runtimeInfo.setBdRendererSource("betterdiscord.asar", false);
         return new Asar(localFileContents.body).get("renderer.js");
-    }
+    };
 
     /**
      * Tries to load the betterdiscord.asar from the VFS.
@@ -90,7 +88,7 @@ async function getBdRendererScript() {
         Logger.info("Frontend", "Reading betterdiscord.asar in the VFS...");
         runtimeInfo.setBdRendererSource("betterdiscord.asar", true);
         return new Asar(BdAsarUpdater.asarFile.buffer).get("renderer.js");
-    }
+    };
 
     /**
      * Gets the BetterDiscord renderer script body.
@@ -98,7 +96,7 @@ async function getBdRendererScript() {
      */
     const getRenderer = async () => {
         return await tryGetLocalBetterDiscordJs() || await tryGetLocalBetterDiscordAsar() || tryGetVfsBetterDiscordAsar();
-    }
+    };
 
     const bdBodyBuffer = await getRenderer();
     return new TextDecoder().decode(bdBodyBuffer);
@@ -113,9 +111,7 @@ async function loadBetterDiscord() {
     const connectionOpenEvent = "CONNECTION_OPEN";
 
     const bdScriptBody = await getBdRendererScript();
-
-    if(!bdScriptBody)
-        return false;
+    if (!bdScriptBody) return false;
 
     runtimeInfo.parseBetterDiscordVersion(bdScriptBody);
 
@@ -123,10 +119,12 @@ async function loadBetterDiscord() {
         DiscordModules.Dispatcher.unsubscribe(connectionOpenEvent, callback);
         try {
             Logger.log("Frontend", "Loading BetterDiscord renderer...");
+            // eslint-disable-next-line no-eval
             eval(`(() => {
                     ${bdScriptBody}
-                })(window.fetchWithoutCSP)`);
-        } catch (error) {
+                })()`);
+        }
+        catch (error) {
             Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
         }
     };
@@ -144,7 +142,8 @@ async function loadBetterDiscord() {
     if (!DiscordModules.UserStore?.getCurrentUser()) {
         Logger.log("Frontend", "getCurrentUser failed, registering callback.");
         DiscordModules.Dispatcher.subscribe(connectionOpenEvent, callback);
-    } else {
+    }
+    else {
         Logger.log("Frontend", "getCurrentUser succeeded, running setImmediate().");
         setImmediate(callback);
     }
@@ -161,7 +160,6 @@ function prepareWindow() {
 
     window.Buffer = Buffer;
     window.DiscordNative = DiscordNative;
-    window.fetchWithoutCSP = fetchAPI;
     window.global = window;
     window.process = process;
 
@@ -186,6 +184,7 @@ function prepareWindow() {
             return requireFunc;
         },
         set(newValue) {
+            // eslint-disable-next-line no-setter-return
             if (!allowRequireOverride) return (allowRequireOverride = true);
             requireFunc = newValue;
         }
@@ -196,4 +195,4 @@ export default {
     checkAndDownloadBetterDiscordAsar,
     loadBetterDiscord,
     prepareWindow
-}
+};

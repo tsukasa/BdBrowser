@@ -1,7 +1,7 @@
 const headerSizeIndex = 12,
     headerOffset = 16,
     uInt32Size = 4,
-    textDecoder = new TextDecoder('utf-8');
+    textDecoder = new TextDecoder("utf-8");
 
 // Essentially just ripped from the chromium-pickle-js source, thanks for
 // doing my math homework.
@@ -14,8 +14,9 @@ const alignInt = (i, alignment) =>
  * @returns {ArchiveData}
  */
 const openAsar = archive => {
-  if(archive.length > Number.MAX_SAFE_INTEGER)
-    throw new Error('Asar archive too large.')
+  if (archive.length > Number.MAX_SAFE_INTEGER) {
+    throw new Error("Asar archive too large.");
+  }
 
   const headerSize = new DataView(archive).getUint32(headerSizeIndex, true),
       // Pickle wants to align the headers so that the payload length is
@@ -35,21 +36,21 @@ const openAsar = archive => {
    * @property {ArrayBuffer} buffer - The contents of the archive, concatenated together.
    */
   return {
-    header: JSON.parse( textDecoder.decode(rawHeader) ),
+    header: JSON.parse(textDecoder.decode(rawHeader)),
     buffer
-  }
+  };
 };
 
 const crawlHeader = function self(files, dirname) {
   const prefix = itemName =>
-      (dirname ? dirname + '/' : '') + itemName;
+      (dirname ? dirname + "/" : "") + itemName;
 
   let children = [];
 
-  for(const filename in files) {
+  for (const filename in files) {
     const extraFiles = files[filename].files;
 
-    if(extraFiles) {
+    if (extraFiles) {
       const extra = self(extraFiles, filename);
 
       children = children.concat(extra);
@@ -58,7 +59,7 @@ const crawlHeader = function self(files, dirname) {
     children.push(filename);
   }
 
-  return children.map(prefix)
+  return children.map(prefix);
 };
 
 /**
@@ -73,7 +74,7 @@ const crawlHeader = function self(files, dirname) {
  */
 class Asar {
   constructor(archive) {
-    const { header, buffer } = openAsar(archive);
+    const {header, buffer} = openAsar(archive);
 
     this.header = header;
     this.buffer = buffer;
@@ -87,25 +88,26 @@ class Asar {
    */
   find(path) {
     const navigate = (currentItem, navigateTo) => {
-      if(currentItem.files) {
+      if (currentItem.files) {
         const nextItem = currentItem.files[navigateTo];
 
-        if(!nextItem) {
-          if(path == '/') // This breaks it lol
-            return this.header
+        if (!nextItem) {
+          if (path == "/") { // This breaks it lol
+            return this.header;
+          }
 
-          throw new PathError(path, `${navigateTo} could not be found.`)
+          throw new PathError(path, `${navigateTo} could not be found.`);
         }
 
-        return nextItem
-      } else {
-        throw new PathError(path, `${navigateTo} is not a directory.`)
+        return nextItem;
       }
+
+      throw new PathError(path, `${navigateTo} is not a directory.`);
     };
 
     return path
-        .split('/')
-        .reduce(navigate, this.header)
+        .split("/")
+        .reduce(navigate, this.header);
   }
 
   /**
@@ -114,10 +116,10 @@ class Asar {
    * @returns {ArrayBuffer} The file's contents
    */
   get(path) {
-    const { offset, size } = this.find(path),
+    const {offset, size} = this.find(path),
         offsetInt = parseInt(offset);
 
-    return this.buffer.slice(offsetInt, offsetInt + size)
+    return this.buffer.slice(offsetInt, offsetInt + size);
   }
 }
 
@@ -129,4 +131,4 @@ class PathError extends Error {
   }
 }
 
-export { Asar as default };
+export {Asar as default};

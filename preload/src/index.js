@@ -6,9 +6,9 @@ import Logger from "common/logger";
 
 const WEBPACK_CHUNK_NAME = "webpackChunkdiscord_app";
 
-function initialize() {
+(() =>{
     prepareWebpackChunk();
-}
+})();
 
 /**
  * Makes the webpackChunkdiscord_app object configurable,
@@ -25,12 +25,11 @@ function prepareWebpackChunk() {
                     require.d = (target, exports) => {
                         for (const key in exports) {
 
-                            if (!Reflect.has(exports, key) || target[key])
-                                continue;
+                            if (!Reflect.has(exports, key) || target[key]) continue;
 
                             Object.defineProperty(target, key, {
                                 get: () => exports[key](),
-                                set: v => { exports[key] = () => v; },
+                                set: v => {exports[key] = () => v;},
                                 enumerable: true,
                                 configurable: true
                             });
@@ -61,15 +60,12 @@ function defineObjectProperty (obj, prop, child) {
 
             try {
                 child(newValue);
-            } catch (error) {
+            }
+            catch (error) {
                 Logger.error("Preload", `Error while preparing ${WEBPACK_CHUNK_NAME}:\n`, error);
             }
-
-            return newValue;
         },
 
         configurable: true
     });
 }
-
-initialize();

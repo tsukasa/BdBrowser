@@ -16,9 +16,9 @@ function registerEvents() {
 async function processFetchMessage(request) {
     let returnValue;
     try {
-        let fetchOptions = request.parameters.options || {};
-        let fetchResponse = await fetch(request.parameters.url, fetchOptions);
-        let fetchBody = await fetchResponse.arrayBuffer();
+        const fetchOptions = request.parameters.options || {};
+        const fetchResponse = await fetch(request.parameters.url, fetchOptions);
+        const fetchBody = await fetchResponse.arrayBuffer();
 
         returnValue = {
             body: Array.from(new Uint8Array(fetchBody)),
@@ -30,10 +30,11 @@ async function processFetchMessage(request) {
             type: fetchResponse.type,
             url: fetchResponse.url
         };
-    } catch (err) {
+    }
+    catch (err) {
         returnValue = {
             error: err.toString()
-        }
+        };
     }
 
     return returnValue;
@@ -41,4 +42,4 @@ async function processFetchMessage(request) {
 
 export default {
     registerEvents
-}
+};

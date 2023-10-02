@@ -1,0 +1,12 @@
+{
+  "name": "@bdbrowser/backend",
+  "description": "BDBrowser Backend",
+  "version": "0.0.0",
+  "main": "src/index.js",
+  "private": true,
+  "scripts": {
+    "build": "webpack --progress --color",
+    "build-prod": "webpack --stats minimal --mode production",
+    "lint": "eslint --ext .js src/"
+  }
+}

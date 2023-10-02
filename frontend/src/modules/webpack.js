@@ -159,7 +159,12 @@ export default class WebpackModules {
             if (!modules.hasOwnProperty(index)) continue;
             
             let module = null;
-            try {module = modules[index]} catch {continue;};
+            try {
+                module = modules[index];
+            }
+            catch {
+                continue;
+            }
 
             const {exports} = module;
             if (!exports || exports === window || exports === document.documentElement) continue;
@@ -167,7 +172,12 @@ export default class WebpackModules {
             if (typeof(exports) === "object" && searchExports && exports[Symbol.toStringTag] !== "DOMTokenList") {
                 for (const key in exports) {
                     let foundModule = null, wrappedExport = null;
-                    try {wrappedExport = exports[key];} catch {continue;}
+                    try {
+                        wrappedExport = exports[key];
+                    }
+                    catch {
+                        continue;
+                    }
 
                     if (!wrappedExport) continue;
                     if (wrappedFilter(wrappedExport, module, index)) foundModule = wrappedExport;

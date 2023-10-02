@@ -1,5 +1,7 @@
 export default class DOM {
-    /**@returns {HTMLElement} */
+    /**
+     * @returns {HTMLElement}
+     */
     static createElement(type, options = {}, ...children) {
         const node = document.createElement(type);
 
@@ -52,22 +54,26 @@ export default class DOM {
 
         this.headAppend(script);
 
-        if (silent)
+        if (silent) {
             script.addEventListener("load", () => {
                 script.remove();
             }, {once: true});
+        }
     }
 }
 
 const callback = () => {
-    if (document.readyState !== "complete")
+    if (document.readyState !== "complete") {
         return;
+    }
 
     document.removeEventListener("readystatechange", callback);
     DOM.headAppend = document.head.append.bind(document.head);
-}
+};
 
-if (document.readyState === "complete")
+if (document.readyState === "complete") {
     DOM.headAppend = document.head.append.bind(document.head);
-else
+}
+else {
     document.addEventListener("readystatechange", callback);
+}

@@ -12,6 +12,7 @@ export default class Logger {
 
     static #log(type, module, ...message) {
         type = this.#parseType(type);
+        // eslint-disable-next-line no-console
         console[type](`%c[BDBrowser]%c %c[${module}]%c`, "color: #3E82E5; font-weight: 700;", "", "color: #396CB8", "", ...message);
     }
 

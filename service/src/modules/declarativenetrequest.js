@@ -11,7 +11,7 @@ function getBlockWebhookRule() {
         priority: 100,
         condition: {
             initiatorDomains: DISCORD_APP_DOMAINS.concat([location.hostname]),
-            regexFilter: "(http|https):\/\/discord\.com\/api\/webhooks\/.*"
+            regexFilter: "(http|https)://discord.com/api/webhooks/.*"
         },
         action: {
             type: "block"
@@ -44,13 +44,13 @@ function getAlterContentSecurityPolicyRule(cspHeaderValue) {
 function installOrUpdateRules() {
     // Remove the rules before trying to work with the CSP headers!
     // Otherwise, we potentially work with pre-tainted headers...
-    chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: NET_REQUEST_RULE_IDS }).then(() => {
-        let netRequestRulesList = [];
+    chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: NET_REQUEST_RULE_IDS}).then(() => {
+        const netRequestRulesList = [];
         netRequestRulesList.push(getBlockWebhookRule());
         netRequestRulesList.push(getAlterContentSecurityPolicyRule());
 
         Logger.log("Service", "Installing/updating Declarative Net Request rules...");
-        chrome.declarativeNetRequest.updateSessionRules({ addRules: netRequestRulesList }).then(() => {
+        chrome.declarativeNetRequest.updateSessionRules({addRules: netRequestRulesList}).then(() => {
             Logger.log("Service", "Declarative Net Request rules updated!");
         });
     });
@@ -58,7 +58,7 @@ function installOrUpdateRules() {
 
 function removeRules() {
     Logger.log("Service", "Removing Declarative Net Request rules.");
-    chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: NET_REQUEST_RULE_IDS });
+    chrome.declarativeNetRequest.updateSessionRules({removeRuleIds: NET_REQUEST_RULE_IDS});
 }
 
 function registerEvents() {
@@ -70,4 +70,4 @@ function registerEvents() {
 
 export default {
     registerEvents
-}
+};
