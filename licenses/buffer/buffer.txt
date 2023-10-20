@@ -1,0 +1,8 @@
+buffer
+Copyright (c) Feross Aboukhadijeh, and other contributors.
+MIT Licensed
+
+Homepage: https://github.com/feross/buffer
+
+This project uses the index.js from buffer (commit: 50cae94), residing in frontend/src/node_shims/buffer.js.
+Some minor changes were made to the file to make it work in the scope of this project.

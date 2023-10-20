@@ -1,0 +1,8 @@
+ieee754
+Copyright 2008 Fair Oaks Labs, Inc.
+BSD 3-Clause "New" or "Revised" License
+
+Homepage: https://github.com/feross/ieee754
+
+This project uses the index.js from ieee754 (commit: 8a0041f), residing in frontend/src/node_shims/ieee754.js.
+Some minor changes were made to the file to make it work in the scope of this project.

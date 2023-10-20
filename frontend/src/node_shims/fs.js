@@ -2,7 +2,7 @@ import DOM from "common/dom";
 import Logger from "common/logger";
 import Events from "modules/events";
 import LocalStorage from "modules/localstorage";
-import Buffer from "node_shims/buffer";
+import buffer from "node_shims/buffer";
 import VfsEntry from "node_shims/fsentry";
 import Path from "node_shims/path";
 import Utilities from "modules/utilities";
@@ -851,7 +851,7 @@ export function readFileSync(path, options) {
         return textDecoder.decode(fsEntry.contents).toString();
     }
 
-    return new Buffer(fsEntry.contents);
+    return new buffer.Buffer(fsEntry.contents);
 }
 
 /**
@@ -1082,7 +1082,7 @@ export function writeFile(path, content, options, callback) {
 export function writeFileSync(path, content, options) {
     path = normalizePath(path);
     const filename = Path.basename(path);
-    let encodedContent = new Buffer([]);
+    let encodedContent = new buffer.Buffer([]);
 
     // TODO: No idea how that would work right now...
     if (!options) {

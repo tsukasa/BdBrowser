@@ -1,0 +1,8 @@
+base64-js
+Copyright (c) 2014 Jameson Little
+MIT Licensed
+
+Homepage: https://github.com/beatgammit/base64-js
+
+This project uses the index.js from base64-js (commit: 88957c9), residing in frontend/src/node_shims/base64-js.js.
+Some minor changes were made to the file to make it work in the scope of this project.

@@ -1,4 +1,3 @@
-import DiscordModules from "discordmodules";
 import electron from "app_shims/electron";
 import Events from "modules/events";
 import fs from "node_shims/fs";
@@ -9,11 +8,12 @@ import * as vm from "node_shims/vm";
 import path from "node_shims/path";
 import process from "app_shims/process";
 import RequestModule from "node_shims/request";
+import buffer from "node_shims/buffer";
 
 export default function require(mod) {
     switch (mod) {
         case "buffer":
-            return DiscordModules.Buffer;
+            return buffer.Buffer;
 
         case "child_process":
             return;

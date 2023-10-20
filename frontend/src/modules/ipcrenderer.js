@@ -47,27 +47,14 @@ export default class IPCRenderer {
     }
 
     static async invoke(event) {
-        Logger.log("IPCRenderer", "INVOKE:", event);
         switch (event) {
-            case "bd-config":
-                return {
-                    version: "0.6.0",
-                    local: false,
-                    localPath: "",
-                    branch: "development",
-                    bdVersion: "1.0.0",
-                    minSupportedVersion: "0.3.0",
-                    hash: "gh-pages",
-                    dataPath: "AppData/BetterDiscord/"
-                };
-
-            case "bd-injector-info":
-                return {
-                    version: "1.0.0"
-                };
+            case "bd-get-accent-color":
+                // Right now it appears there is no proper cross-platform way to get the system accent color.
+                // According https://stackoverflow.com/a/71539151 this seems to be the best compromise.
+                return "Highlight";
 
             default:
-                null;
+                Logger.log("IPCRenderer", "INVOKE:", event);
         }
     }
 
