@@ -1,5 +1,5 @@
 import fetch from "modules/fetch";
-import Buffer from "node_shims/buffer";
+import {Buffer} from "node_shims/buffer";
 
 function nativeFetch(url, options) {
     let state = "PENDING";

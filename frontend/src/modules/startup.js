@@ -3,7 +3,7 @@ import Logger from "common/logger";
 import {default as Asar} from "modules/asar";
 import BdAsarUpdater from "modules/bdasarupdater";
 import bdPreload from "modules/bdpreload";
-import Buffer from "node_shims/buffer";
+import {Buffer} from "node_shims/buffer";
 import DiscordModules from "modules/discordmodules";
 import DiscordNative from "app_shims/discordnative";
 import ipcRenderer from "modules/ipc";

@@ -1,4 +1,4 @@
-import Buffer from "node_shims/buffer";
+import {Buffer} from "node_shims/buffer";
 import Events from "modules/events";
 import fetch from "modules/fetch";
 

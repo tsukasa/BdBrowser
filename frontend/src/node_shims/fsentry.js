@@ -1,4 +1,4 @@
-import buffer from "node_shims/buffer";
+import {Buffer} from "node_shims/buffer";
 import path from "node_shims/path";
 
 export default class VfsEntry {
@@ -15,6 +15,6 @@ export default class VfsEntry {
     atime = Date.now();
     ctime = Date.now();
     mtime = Date.now();
-    contents = new buffer.Buffer([]);
+    contents = new Buffer([]);
     size = 0;
 }

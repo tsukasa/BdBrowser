@@ -98,7 +98,7 @@ function createBuffer (length) {
  * The `Uint8Array` prototype remains unmodified.
  */
 
-function Buffer (arg, encodingOrOffset, length) {
+export function Buffer (arg, encodingOrOffset, length) {
     // Common case.
     if (typeof arg === 'number') {
         if (typeof encodingOrOffset === 'string') {
