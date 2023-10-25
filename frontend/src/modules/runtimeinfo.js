@@ -26,7 +26,7 @@ let activeVersionObserver;
 export function addExtensionVersionInfo() {
     const idSpanVersion = "bdbrowser-ver-info";
     const idSpanRenderer = "bdbrowser-rndr-info";
-    const versionSelector = `div[class*="side-"] div[class*="info-"] span[class*="line-"] span[class*="versionHash-"]`;
+    const versionSelector = `div[class*="side"] div[class*="info"] span[class*="line"] span[class*="versionHash"]`;
 
     const addVersionInfoObserver = new MutationObserver(() => {
         if (document.querySelector(`#${idSpanVersion}`)) return;
