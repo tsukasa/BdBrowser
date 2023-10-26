@@ -1,9 +1,6 @@
 import Webpack from "modules/webpack";
 
 export default {
-    /* Current User Info, State and Settings */
-    get ThemeStore() {return Webpack.getByProps("addChangeListener", "theme");},
-
     /* User Stores and Utils */
     get UserStore() {return Webpack.getByProps("getCurrentUser", "getUser");},
 

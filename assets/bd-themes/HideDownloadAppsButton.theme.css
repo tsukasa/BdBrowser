@@ -6,8 +6,8 @@
  * @description Removes the unwanted "Download Apps" button from the guild list in the web-client.
 */
 
-ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(2),
-ul[data-list-id='guildsnav'] > div[class^='scroller-'] > div[class^='listItem-']:nth-last-of-type(3) {
+ul[data-list-id='guildsnav'] > div[class^='scroller'] > div[class^='listItem']:nth-last-of-type(2),
+ul[data-list-id='guildsnav'] > div[class^='scroller'] > div[class^='listItem']:nth-last-of-type(3) {
     visibility: hidden;
     display: none;
 }
