@@ -1,7 +1,7 @@
 /**
  * @name arRpcBridge
  * @author tsukasa, OpenAsar
- * @version 0.0.1
+ * @version 0.0.2
  * @description Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar.
  */
 
@@ -22,7 +22,7 @@ module.exports = (() => {
                     "github_username": "OpenAsar"
                 }
             ],
-            "version": "0.0.1",
+            "version": "0.0.2",
             "description": "Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar."
         }
     };
@@ -60,15 +60,8 @@ module.exports = (() => {
             const WEBSOCKET_ADDRESS = "ws://127.0.0.1:1337";
             const DISPATCH_TYPE = "LOCAL_ACTIVITY_UPDATE";
 
-            const AssetManager = Webpack.getModule(m => Object.values(m)
-                .toString().includes("getAssetImage"));
-            AssetManager.getAsset = Object.values(AssetManager)
-                .find(f => typeof f === "function" && f.toString().includes("apply"));
-
-            const ApplicationManager = Webpack.getModule(m => Object.values(m)
-                .toString().includes("e.application={"));
-            ApplicationManager.getApplication = Object.values(ApplicationManager)
-                .find(f => typeof f === "function" && f.toString().includes("e.application={"));
+            const AssetManager = Webpack.getByKeys("fetchAssetIds", "getAssetImage");
+            const ApplicationManager = Webpack.getByKeys("fetchApplicationsRPC", "getRemoteIconURL", "validateApplication");
 
             let apps = {};
             let connectErrorNotice;
@@ -85,12 +78,12 @@ module.exports = (() => {
 
                 async getApplication(applicationId) {
                     let socket = {};
-                    await ApplicationManager.getApplication(socket, applicationId);
+                    await ApplicationManager.fetchApplicationsRPC(socket, applicationId);
                     return socket.application;
                 }
 
                 async getAsset(applicationId, key) {
-                    const asset = await AssetManager.getAsset(applicationId, [key, undefined]);
+                    const asset = await AssetManager.fetchAssetIds(applicationId, [key, undefined]);
                     return asset.find(e => typeof e !== 'undefined');
                 }
 
