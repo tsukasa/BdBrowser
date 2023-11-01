@@ -4,29 +4,47 @@
  */
 import Logger from "common/logger";
 
-const WEBPACK_CHUNK_NAME = "webpackChunkdiscord_app";
-
-(() =>{
-    prepareWebpackChunk();
-})();
-
 /**
- * Makes the webpackChunkdiscord_app object configurable,
- * so it can be patched later on.
- *
- * Based on `preload/src/patcher.js` from BetterDiscord.
+ * This code is taken from BetterDiscord's preload/src/patcher.js.
+ * Keep it as vanilla as possible to make it easier to update.
  */
-function prepareWebpackChunk() {
-    if (!Reflect.has(window, WEBPACK_CHUNK_NAME)) {
-        Logger.log("Preload", `Preparing ${WEBPACK_CHUNK_NAME} to be configurable...`);
-        defineObjectProperty(window, WEBPACK_CHUNK_NAME, instance => {
-            defineObjectProperty(instance, "push", () => {
-                instance.push([[Symbol()], {}, require => {
-                    require.d = (target, exports) => {
-                        for (const key in exports) {
+(() =>{
+    const chunkName = "webpackChunkdiscord_app";
+    const predefine = function (target, prop, effect) {
+        const value = target[prop];
+        Object.defineProperty(target, prop, {
+            get() {return value;},
+            set(newValue) {
+                Object.defineProperty(target, prop, {
+                    value: newValue,
+                    configurable: true,
+                    enumerable: true,
+                    writable: true
+                });
 
-                            if (!Reflect.has(exports, key) || target[key]) continue;
+                try {
+                    effect(newValue);
+                }
+                catch (error) {
+                    Logger.error("Preload", error);
+                }
 
+                // eslint-disable-next-line no-setter-return
+                return newValue;
+            },
+            configurable: true
+        });
+    };
+
+    if (!Reflect.has(window, chunkName)) {
+        Logger.log("Preload", `Preparing ${chunkName} to be configurable...`);
+        predefine(window, chunkName, instance => {
+            instance.push([[Symbol()], {}, require => {
+                require.d = (target, exports) => {
+                    for (const key in exports) {
+                        if (!Reflect.has(exports, key)) continue;
+
+                        try {
                             Object.defineProperty(target, key, {
                                 get: () => exports[key](),
                                 set: v => {exports[key] = () => v;},
@@ -34,38 +52,12 @@ function prepareWebpackChunk() {
                                 configurable: true
                             });
                         }
-                    };
-                }]);
-                instance.pop();
-            });
+                        catch (error) {
+                            Logger.error("Preload", error);
+                        }
+                    }
+                };
+            }]);
         });
     }
-}
-
-function defineObjectProperty (obj, prop, child) {
-    const currentValue = obj[prop];
-
-    Object.defineProperty(obj, prop, {
-        get() {
-            return currentValue;
-        },
-
-        set(newValue) {
-            Object.defineProperty(obj, prop, {
-                value: newValue,
-                configurable: true,
-                enumerable: true,
-                writable: true
-            });
-
-            try {
-                child(newValue);
-            }
-            catch (error) {
-                Logger.error("Preload", `Error while preparing ${WEBPACK_CHUNK_NAME}:\n`, error);
-            }
-        },
-
-        configurable: true
-    });
-}
+})();
