@@ -139,7 +139,7 @@ async function loadBetterDiscord() {
         return true;
     }
 
-    if (!DiscordModules.UserStore?.getCurrentUser()) {
+    if (!DiscordModules.UserStore?.getCurrentUser() || !DiscordModules.GuildStore?.getGuilds()) {
         Logger.log("Frontend", "getCurrentUser failed, registering callback.");
         DiscordModules.Dispatcher.subscribe(connectionOpenEvent, callback);
     }
