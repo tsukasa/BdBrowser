@@ -26,6 +26,7 @@
     "keyword-spacing": "error",
     "new-cap": ["error", {"newIsCap": true}],
     "no-array-constructor": "error",
+    "no-case-declarations": "warn",
     "no-caller": "error",
     "no-console": "error",
     "no-duplicate-imports": "error",

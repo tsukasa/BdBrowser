@@ -1,5 +1,7 @@
 import DiscordModules from "modules/discordmodules";
 import Logger from "common/logger";
+import DOM from "common/dom";
+import fs from "node_shims/fs";
 
 // https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API
 const [hidden, visibilityChange] = (() => {
@@ -78,7 +80,39 @@ export default class IPCRenderer {
             case "bd-relaunch-app":
                 document.location.reload();
                 break;
-
+            case "bd-open-path":
+                // In case there is more than one argument, we cannot deal with this.
+                if (args.length !== 1) {
+                    Logger.log("IPCRenderer", "IPCRenderer bd-open-path called:", args);
+                    break;
+                }
+                // If this becomes a more prominent issue, a proper implementation might be required...
+                const pathElement = args[0].split("/").pop();
+                let acceptedFileTypes = "*.*";
+                if (pathElement !== "themes" && pathElement !== "plugins") {
+                    Logger.log("IPCRenderer", "IPCRenderer bd-open-path called with unsupported path type:", args);
+                    break;
+                }
+                switch (pathElement.toLowerCase()) {
+                    case "themes":
+                        acceptedFileTypes = ".theme.css";
+                        break;
+                    case "plugins":
+                        acceptedFileTypes = ".plugin.js";
+                        break;
+                }
+                const inputEl = DOM.createElement("input", {type: "file", multiple: "multiple", accept: acceptedFileTypes});
+                inputEl.addEventListener("change", () => {
+                    for (const file of inputEl.files) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            fs.writeFileSync(`AppData/BetterDiscord/${pathElement}/${file.name}`, new Uint8Array(reader.result));
+                        };
+                        reader.readAsArrayBuffer(file);
+                    }
+                });
+                inputEl.click();
+                break;
             default:
                 Logger.log("IPCRenderer", "IPCRenderer SEND:", event, args);
         }
