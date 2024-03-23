@@ -122,7 +122,7 @@ async function loadBetterDiscord() {
             // eslint-disable-next-line no-eval
             eval(`(() => {
                     ${bdScriptBody}
-                })()`);
+                })()\n//# sourceURL=bdbrowser://renderer.js`);
         }
         catch (error) {
             Logger.error("Frontend", "Failed to load BetterDiscord:\n", error);
