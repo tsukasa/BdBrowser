@@ -10,5 +10,5 @@ export default {
     get RouterModule() {return Webpack.getByProps("listeners", "rewrites", "flushRoute");},
 
     /* Other Utils */
-    get StorageModule() {return Webpack.getByProps("get", "set", "clear", "stringify");}
+    get StorageModule() {return Webpack.getByProps("ObjectStorage", "impl")?.impl;}
 };
