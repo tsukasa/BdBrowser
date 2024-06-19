@@ -61,7 +61,7 @@ module.exports = (() => {
             const DISPATCH_TYPE = "LOCAL_ACTIVITY_UPDATE";
 
             const AssetManager = Webpack.getByKeys("fetchAssetIds", "getAssetImage");
-            const fetchApplicationsRPC = Webpack.getByRegex("APPLICATION_RPC", "cover_image");
+            const fetchApplicationsRPC = Webpack.getByRegex("IPC.*APPLICATION_RPC");
 
             let apps = {};
             let connectErrorNotice;
