@@ -1,7 +1,7 @@
 /**
  * @name arRpcBridge
  * @author tsukasa, OpenAsar
- * @version 0.0.2
+ * @version 0.0.3
  * @description Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar.
  */
 
@@ -22,7 +22,7 @@ module.exports = (() => {
                     "github_username": "OpenAsar"
                 }
             ],
-            "version": "0.0.2",
+            "version": "0.0.3",
             "description": "Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar."
         }
     };
@@ -61,7 +61,7 @@ module.exports = (() => {
             const DISPATCH_TYPE = "LOCAL_ACTIVITY_UPDATE";
 
             const AssetManager = Webpack.getByKeys("fetchAssetIds", "getAssetImage");
-            const ApplicationManager = Webpack.getByKeys("fetchApplicationsRPC", "getRemoteIconURL", "validateApplication");
+            const fetchApplicationsRPC = Webpack.getByRegex("APPLICATION_RPC", "cover_image");
 
             let apps = {};
             let connectErrorNotice;
@@ -78,7 +78,7 @@ module.exports = (() => {
 
                 async getApplication(applicationId) {
                     let socket = {};
-                    await ApplicationManager.fetchApplicationsRPC(socket, applicationId);
+                    await fetchApplicationsRPC(socket, applicationId);
                     return socket.application;
                 }
 
