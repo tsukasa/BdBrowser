@@ -36,8 +36,17 @@ import Logger from "common/logger";
         });
     };
 
+    if (Reflect.has(window, "localStorage")) {
+        Logger.log("Preload", "Saving instance of localStorage for internal use...");
+
+        // Normally this should be considered problematic, however the bdbrowserLocalStorage
+        // will be picked up and deleted by the LocalStorage class in the frontend.
+        window.bdbrowserLocalStorage = window.localStorage;
+    }
+
     if (!Reflect.has(window, chunkName)) {
         Logger.log("Preload", `Preparing ${chunkName} to be configurable...`);
+
         predefine(window, chunkName, instance => {
             instance.push([[Symbol()], {}, require => {
                 require.d = (target, exports) => {

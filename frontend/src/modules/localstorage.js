@@ -1,11 +1,31 @@
-import DiscordModules from "modules/discordmodules";
-
 export default class LocalStorage {
-    static getItem(key) {
-        return DiscordModules.StorageModule.get(key);
+
+    static {
+        if (!this.localStorage && window.bdbrowserLocalStorage) {
+            this.localStorage = window.bdbrowserLocalStorage;
+            delete window.bdbrowserLocalStorage;
+        }
+    }
+
+    static getItem(key, fallbackValue) {
+        let value = this.localStorage.getItem(key);
+
+        if (value != null) {
+            try {
+                value = JSON.parse(value);
+            }
+            catch (e) {
+                value = fallbackValue;
+            }
+        }
+        else {
+            value = fallbackValue;
+        }
+
+        return value;
     }
 
     static setItem(key, item) {
-        DiscordModules.StorageModule.set(key, item);
+        this.localStorage.setItem(key, JSON.stringify(item));
     }
 }

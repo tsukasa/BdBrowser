@@ -7,8 +7,5 @@ export default {
     /* Electron & Other Internals with Utils */
     get ElectronModule() {return Webpack.getByProps("setBadge");},
     get Dispatcher() {return Webpack.getByProps("dispatch", "subscribe", "wait", "unsubscribe", "register");},
-    get RouterModule() {return Webpack.getByProps("listeners", "rewrites", "flushRoute");},
-
-    /* Other Utils */
-    get StorageModule() {return Webpack.getByProps("ObjectStorage", "impl")?.impl;}
+    get RouterModule() {return Webpack.getByProps("listeners", "rewrites", "flushRoute");}
 };
