@@ -27,7 +27,7 @@
     "copyfiles": "^2.4.1",
     "eslint": "^8.23.0",
     "mkdirp": "^3.0.1",
-    "webpack": "5.76.0",
+    "webpack": "5.94.0",
     "webpack-cli": "^4.10.0"
   }
 }
