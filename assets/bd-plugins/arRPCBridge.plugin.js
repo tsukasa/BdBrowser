@@ -1,184 +1,143 @@
 /**
  * @name arRpcBridge
  * @author tsukasa, OpenAsar
- * @version 0.0.3
+ * @version 0.0.4
  * @description Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar.
+ * @website https://github.com/tsukasa/BdBrowser
+ * @source https://github.com/tsukasa/BdBrowser/blob/main/assets/bd-plugins/arRPCBridge.plugin.js
  */
 
 // This plugin is loosely based on bridge_mod.js by OpenAsar, which is licensed under the MIT license.
 // See licenses/arrpc/arrpc.txt for more details.
 
-module.exports = (() => {
-    const config = {
-        "info": {
-            "name": "arRpcBridge",
-            "authors": [
-                {
-                    "name": "tsukasa",
-                    "github_username": "tsukasa"
-                },
-                {
-                    "name": "OpenAsar",
-                    "github_username": "OpenAsar"
-                }
-            ],
-            "version": "0.0.3",
-            "description": "Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar."
+const WEBSOCKET_ADDRESS = "ws://127.0.0.1:1337";
+const DISPATCH_TYPE = "LOCAL_ACTIVITY_UPDATE";
+
+module.exports = class arRpcBridgePlugin {
+    constructor(meta) {
+        this.meta = meta;
+        this.api = new BdApi(this.meta.name);
+
+        const {Webpack, Logger} = this.api;
+
+        this.Webpack = Webpack;
+        this.Logger = Logger;
+
+        this.Dispatcher = this.Webpack.getModule(m => m.dispatch && m.subscribe);;
+        this.AssetManager = this.Webpack.getByKeys("fetchAssetIds", "getAssetImage");
+        this.fetchApplicationsRPC = this.Webpack.getByRegex("IPC.*APPLICATION_RPC");
+
+        this.apps = {};
+        this.connectErrorNotice = undefined;
+        this.currentPid = 0;
+        this.currentSocketId = 0;
+        this.webSocket = undefined;
+        this.pluginIsStarted = false;
+    }
+
+    closeNotice() {
+        this.connectErrorNotice?.apply();
+        this.connectErrorNotice = undefined;
+    }
+
+    async getApplication(applicationId) {
+        let socket = {};
+        await this.fetchApplicationsRPC(socket, applicationId);
+        return socket.application;
+    }
+
+    async getAsset(applicationId, key) {
+        const asset = await this.AssetManager.fetchAssetIds(applicationId, [key, undefined]);
+        return asset.find(e => typeof e !== 'undefined');
+    }
+
+    onWebSocketCloseHandler = async () => {
+        const isConnected = await new Promise(res =>
+            setTimeout(() => res(this.webSocket.readyState === WebSocket.OPEN), 1000));
+
+        if (!isConnected) {
+            this.Logger.log("Connection to arRPC server failed.");
+
+            if(this.connectErrorNotice)
+                return;
+
+            this.connectErrorNotice = this.api.showNotice("Connection to arRPC failed, please ensure the local server is running.", {
+                type: "error",
+                buttons: [{
+                    label: "Connect",
+                    onClick: () => {
+                        this.closeNotice();
+                        this.openWebSocketConnection();
+                    }
+                }]
+            });
         }
     };
 
-    return !global.ZeresPluginLibrary ? class {
-        constructor() {
-            this._config = config;
+    onWebSocketOpenHandler = (event) => {
+        this.Logger.info(`Connected to arRPC server via ${WEBSOCKET_ADDRESS}.`);
+    }
+
+    onWebSocketMessageHandler = async (event) => {
+        const msg = JSON.parse(event.data);
+
+        if (msg.activity?.assets?.large_image)
+            msg.activity.assets.large_image =
+                await this.getAsset(msg.activity.application_id, msg.activity.assets.large_image);
+
+        if (msg.activity?.assets?.small_image)
+            msg.activity.assets.small_image =
+                await this.getAsset(msg.activity.application_id, msg.activity.assets.small_image);
+
+        if (msg.activity) {
+            const appId = msg.activity.application_id;
+
+            if (!this.apps[appId])
+                this.apps[appId] = await this.getApplication(appId);
+
+            const app = this.apps[appId];
+
+            if(!msg.activity.name)
+                msg.activity.name = app.name;
         }
 
-        getName() { return config.info.name; }
-        getAuthor() { return config.info.authors.map(a => a.name).join(", "); }
-        getDescription() { return config.info.description; }
-        getVersion() { return config.info.version; }
+        if(msg.pid)
+            this.currentPid = msg.pid;
 
-        load() {
-            BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
-                confirmText: "Download Now",
-                cancelText: "Cancel",
-                onConfirm: () => {
-                    require("request").get("https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js", async (error, response, body) => {
-                        if (error) return require("electron").shell.openExternal("https://betterdiscord.app/Download?id=9");
-                        await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0PluginLibrary.plugin.js"), body, r));
-                    });
-                }
-            });
-        }
-        start() { }
-        stop() { }
-    } : (([Plugin, Api]) => {
-        const plugin = (Plugin, Api) => {
-            const { DiscordModules, Logger } = Api;
-            const { Dispatcher } = DiscordModules;
-            const { Webpack } = BdApi;
+        if(msg.socketId)
+            this.currentSocketId = msg.socketId;
 
-            const WEBSOCKET_ADDRESS = "ws://127.0.0.1:1337";
-            const DISPATCH_TYPE = "LOCAL_ACTIVITY_UPDATE";
+        this.Dispatcher.dispatch({type: DISPATCH_TYPE, ...msg});
+    };
 
-            const AssetManager = Webpack.getByKeys("fetchAssetIds", "getAssetImage");
-            const fetchApplicationsRPC = Webpack.getByRegex("IPC.*APPLICATION_RPC");
+    openWebSocketConnection() {
+        if(!this.pluginIsStarted)
+            return;
 
-            let apps = {};
-            let connectErrorNotice;
-            let currentPid;
-            let currentSocketId;
-            let webSocket;
-            let pluginIsStarted = false;
+        this.webSocket?.close();
+        this.webSocket = new WebSocket(WEBSOCKET_ADDRESS);
+        this.webSocket.addEventListener("close", this.onWebSocketCloseHandler);
+        this.webSocket.addEventListener("open", this.onWebSocketOpenHandler);
+        this.webSocket.addEventListener("message", this.onWebSocketMessageHandler);
+    }
 
-            return class arRpcBridgePlugin extends Plugin {
-                closeNotice() {
-                    connectErrorNotice?.apply();
-                    connectErrorNotice = undefined;
-                }
+    start() {
+        this.pluginIsStarted = true;
 
-                async getApplication(applicationId) {
-                    let socket = {};
-                    await fetchApplicationsRPC(socket, applicationId);
-                    return socket.application;
-                }
+        this.openWebSocketConnection();
+    }
 
-                async getAsset(applicationId, key) {
-                    const asset = await AssetManager.fetchAssetIds(applicationId, [key, undefined]);
-                    return asset.find(e => typeof e !== 'undefined');
-                }
+    stop() {
+        this.pluginIsStarted = false;
 
-                onWebSocketCloseHandler = async () => {
-                    const isConnected = await new Promise(res =>
-                        setTimeout(() => res(webSocket.readyState === WebSocket.OPEN), 1000));
+        this.closeNotice();
 
-                    if (!isConnected) {
-                        Logger.log("Connection to arRPC server failed.");
+        this.webSocket?.removeEventListener("close", this.onWebSocketCloseHandler);
+        this.webSocket?.removeEventListener("open", this.onWebSocketOpenHandler);
+        this.webSocket?.removeEventListener("message", this.onWebSocketMessageHandler);
+        this.webSocket?.close();
 
-                        if(connectErrorNotice)
-                            return;
-
-                        connectErrorNotice = BdApi.showNotice("Connection to arRPC failed, please ensure the local server is running.", {
-                            type: "error",
-                            buttons: [{
-                                label: "Connect",
-                                onClick: () => {
-                                    this.closeNotice();
-                                    this.openWebSocketConnection();
-                                }
-                            }]
-                        });
-                    }
-                };
-
-                onWebSocketOpenHandler = (event) => {
-                    Logger.info(`Connected to arRPC server via ${WEBSOCKET_ADDRESS}.`);
-                }
-
-                onWebSocketMessageHandler = async (event) => {
-                    const msg = JSON.parse(event.data);
-
-                    if (msg.activity?.assets?.large_image)
-                        msg.activity.assets.large_image =
-                            await this.getAsset(msg.activity.application_id, msg.activity.assets.large_image);
-
-                    if (msg.activity?.assets?.small_image)
-                        msg.activity.assets.small_image =
-                            await this.getAsset(msg.activity.application_id, msg.activity.assets.small_image);
-
-                    if (msg.activity) {
-                        const appId = msg.activity.application_id;
-
-                        if (!apps[appId])
-                            apps[appId] = await this.getApplication(appId);
-
-                        const app = apps[appId];
-
-                        if(!msg.activity.name)
-                            msg.activity.name = app.name;
-                    }
-
-                    if(msg.pid)
-                        currentPid = msg.pid;
-
-                    if(msg.socketId)
-                        currentSocketId = msg.socketId;
-
-                    Dispatcher.dispatch({ type: DISPATCH_TYPE, ...msg });
-                };
-
-                openWebSocketConnection() {
-                    if(!pluginIsStarted)
-                        return;
-
-                    webSocket?.close();
-                    webSocket = new WebSocket(WEBSOCKET_ADDRESS);
-                    webSocket.addEventListener("close", this.onWebSocketCloseHandler);
-                    webSocket.addEventListener("open", this.onWebSocketOpenHandler);
-                    webSocket.addEventListener("message", this.onWebSocketMessageHandler);
-                }
-
-                onStart() {
-                    pluginIsStarted = true;
-
-                    this.openWebSocketConnection();
-                }
-
-                onStop() {
-                    pluginIsStarted = false;
-
-                    this.closeNotice();
-
-                    webSocket?.removeEventListener("close", this.onWebSocketCloseHandler);
-                    webSocket?.removeEventListener("open", this.onWebSocketOpenHandler);
-                    webSocket?.removeEventListener("message", this.onWebSocketMessageHandler);
-                    webSocket?.close();
-
-                    const emptyActivity = { activity: null, pid: currentPid, socketId: currentSocketId };
-                    Dispatcher.dispatch({ type: DISPATCH_TYPE, ...emptyActivity });
-                }
-            }
-        }
-
-        return plugin(Plugin, Api);
-    })(global.ZeresPluginLibrary.buildPlugin(config));
-})();
+        const emptyActivity = {activity: null, pid: this.currentPid, socketId: this.currentSocketId};
+        this.Dispatcher.dispatch({type: DISPATCH_TYPE, ...emptyActivity});
+    }
+};

@@ -22,7 +22,8 @@ module.exports = (env, argv) => ({
             common: path.join(__dirname, "..", "common"),
             modules: path.join(__dirname, "src", "modules"),
             app_shims: path.join(__dirname, "src", "app_shims"),
-            node_shims: path.join(__dirname, "src", "node_shims")
+            node_shims: path.join(__dirname, "src", "node_shims"),
+            native_shims: path.join(__dirname, "src", "native_shims")
         }
     }
 });

@@ -1,4 +1,5 @@
 import process from "app_shims/process";
+import discord_voice from "native_shims/discord_voice";
 import {AppHostVersion} from "common/constants";
 
 export const app = {
@@ -27,6 +28,19 @@ export const app = {
     }
 };
 
+export const nativeModules = {
+    requireModule(module) {
+        switch (module) {
+            case "discord_voice":
+                return discord_voice;
+
+            default:
+                throw new Error("Cannot find module: " + module);
+        }
+    }
+};
+
 export default {
-    app
+    app,
+    nativeModules
 };
