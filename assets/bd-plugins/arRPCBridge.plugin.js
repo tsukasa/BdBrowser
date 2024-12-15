@@ -4,7 +4,7 @@
  * @version 0.0.4
  * @description Connect to arRPC, an open Discord RPC server for atypical setups. Loosely based on bridge_mod.js by OpenAsar.
  * @website https://github.com/tsukasa/BdBrowser
- * @source https://github.com/tsukasa/BdBrowser/blob/main/assets/bd-plugins/arRPCBridge.plugin.js
+ * @source https://raw.githubusercontent.com/tsukasa/BdBrowser/refs/heads/master/assets/bd-plugins/arRPCBridge.plugin.js
  */
 
 // This plugin is loosely based on bridge_mod.js by OpenAsar, which is licensed under the MIT license.
