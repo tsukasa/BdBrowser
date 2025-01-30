@@ -20,14 +20,25 @@ async function processFetchMessage(request) {
         const fetchResponse = await fetch(request.parameters.url, fetchOptions);
         const fetchBody = await fetchResponse.arrayBuffer();
 
+        const defaultStatusMessages = {
+            200: "OK",
+            201: "Created",
+            204: "No Content",
+            400: "Bad Request",
+            401: "Unauthorized",
+            403: "Forbidden",
+            404: "Not Found",
+            500: "Internal Server Error",
+        };
+
         returnValue = {
-            body: Array.from(new Uint8Array(fetchBody)),
-            headers: Object.fromEntries(fetchResponse.headers),
             ok: fetchResponse.ok,
             redirected: fetchResponse.redirected,
             status: fetchResponse.status,
-            statusText: fetchResponse.statusText,
+            statusText: fetchResponse.statusText || defaultStatusMessages[fetchResponse.status],
             type: fetchResponse.type,
+            body: Array.from(new Uint8Array(fetchBody)),
+            headers: Object.fromEntries(fetchResponse.headers),
             url: fetchResponse.url
         };
     }

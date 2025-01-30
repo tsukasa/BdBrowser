@@ -3,6 +3,8 @@ import fs from "node_shims/fs";
 import https from "node_shims/https";
 import path from "node_shims/path";
 import {default as nativeFetch} from "modules/fetch/nativefetch";
+import ipcRenderer from "modules/ipc";
+import {IPCEvents} from "common/constants";
 
 export default {
     electron: electron,
@@ -25,5 +27,8 @@ export default {
     },
     nativeFetch: nativeFetch,
     https: https,
-    path: path
+    path: path,
+    setProtocolListener: (callback) => {
+        ipcRenderer.on(IPCEvents.HANDLE_PROTOCOL, (url) => callback(url));
+    }
 };

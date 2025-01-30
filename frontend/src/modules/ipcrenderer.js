@@ -2,6 +2,7 @@ import DiscordModules from "modules/discordmodules";
 import Logger from "common/logger";
 import DOM from "common/dom";
 import fs from "node_shims/fs";
+import {IPCEvents} from "common/constants";
 
 // https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API
 const [hidden, visibilityChange] = (() => {
@@ -63,6 +64,9 @@ export default class IPCRenderer {
     static on(event, callback) {
         switch (event) {
             case "bd-did-navigate-in-page":
+                return this.onSwitch(callback);
+
+            case IPCEvents.HANDLE_PROTOCOL:
                 return this.onSwitch(callback);
 
             default:
